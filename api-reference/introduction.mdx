@@ -1,0 +1,312 @@
+---
+title: "API Reference"
+description: "Complete API documentation for the Paycrest Aggregator API - Sender, Provider, and General endpoints"
+---
+
+# API Reference
+
+The Paycrest Aggregator API provides a comprehensive interface for interacting with the Paycrest Protocol. This API enables senders to create payment orders, providers to fulfill orders, and general access to protocol information.
+
+## Base URL
+
+```bash
+# Production
+https://api.paycrest.io/v1
+
+# Sandbox
+https://sandbox-api.paycrest.io/v1
+```
+
+## Authentication
+
+All API requests require authentication using an API key. Include your API key in the request header:
+
+```bash
+X-API-Key: YOUR_API_KEY
+```
+
+### Getting Your API Key
+
+1. **Register** at [app.paycrest.io](https://app.paycrest.io)
+2. **Complete KYC verification** (required for compliance)
+3. **Generate API credentials** in your dashboard
+4. **Save your API key** securely
+
+<Note>
+  Your API key should be kept secure and never shared publicly. It's used to authenticate all API requests and identify your account.
+</Note>
+
+## API Endpoints
+
+The Paycrest API is organized into three main categories:
+
+### Sender Endpoints
+
+For entities that create payment orders:
+
+- **`POST /sender/orders`** - Create a new payment order
+- **`GET /sender/orders`** - List payment orders with filtering
+- **`GET /sender/orders/{id}`** - Get specific payment order details
+- **`GET /sender/stats`** - Get sender statistics
+
+### Provider Endpoints
+
+For liquidity providers that fulfill orders:
+
+- **`GET /provider/orders`** - List available orders for fulfillment
+- **`POST /provider/orders/{id}/accept`** - Accept an order for fulfillment
+- **`POST /provider/orders/{id}/decline`** - Decline an order
+- **`POST /provider/orders/{id}/fulfill`** - Fulfill an order with payment details
+- **`POST /provider/orders/{id}/cancel`** - Cancel an order with reason
+- **`GET /provider/rates/{token}/{fiat}`** - Get market rates
+- **`GET /provider/stats`** - Get provider statistics
+- **`GET /provider/node-info`** - Get node information
+
+### General Endpoints
+
+For protocol information and utilities:
+
+- **`GET /currencies`** - List supported fiat currencies
+- **`GET /institutions/{currency_code}`** - List supported institutions
+- **`GET /tokens`** - List supported tokens
+- **`GET /rates/{token}/{amount}/{fiat}`** - Get token rates
+- **`GET /pubkey`** - Get aggregator public key
+- **`POST /verify-account`** - Verify bank account details
+- **`GET /orders/{chain_id}/{id}`** - Get lock payment order status
+- **`GET /reindex/{network}/{tx_hash}`** - Reindex transactions
+
+## Request Format
+
+All requests should include the following headers:
+
+```bash
+Content-Type: application/json
+X-API-Key: YOUR_API_KEY
+```
+
+### Example Request
+
+```bash
+curl -X POST "https://api.paycrest.io/v1/sender/orders" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "amount": "100",
+    "token": "USDT",
+    "network": "base",
+    "rate": "1.0",
+    "recipient": {
+      "institution": "GTB",
+      "accountIdentifier": "1234567890",
+      "accountName": "John Doe",
+      "currency": "NGN"
+    },
+    "reference": "payment-123",
+    "returnAddress": "0x1234567890123456789012345678901234567890",
+    "feePercent": "0.5",
+    "feeAddress": "0x1234567890123456789012345678901234567890"
+  }'
+```
+
+## Response Format
+
+All API responses follow a consistent format:
+
+```json
+{
+  "status": "success",
+  "message": "Operation completed successfully",
+  "data": {
+    // Response data here
+  }
+}
+```
+
+### Error Responses
+
+Error responses include detailed information:
+
+```json
+{
+  "status": "error",
+  "message": "Validation failed",
+  "data": [
+    {
+      "field": "amount",
+      "message": "Amount must be greater than 0"
+    }
+  ]
+}
+```
+
+## Rate Limiting
+
+API requests are rate-limited to ensure fair usage:
+
+- **Senders**: 100 requests per minute
+- **Providers**: 200 requests per minute
+- **General endpoints**: 1000 requests per minute
+
+Rate limit headers are included in responses:
+
+```bash
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+```
+
+## Pagination
+
+List endpoints support pagination with the following parameters:
+
+- **`page`** - Page number (default: 1)
+- **`pageSize`** - Items per page (default: 20, max: 100)
+
+### Example
+
+```bash
+GET /sender/orders?page=2&pageSize=10
+```
+
+Response includes pagination metadata:
+
+```json
+{
+  "status": "success",
+  "message": "Orders retrieved successfully",
+  "data": {
+    "total": 150,
+    "page": 2,
+    "pageSize": 10,
+    "orders": [...]
+  }
+}
+```
+
+## Webhooks
+
+Set up webhooks to receive real-time updates:
+
+### Webhook Events
+
+- **`order.created`** - New payment order created
+- **`order.processing`** - Order assigned to provider
+- **`order.fulfilled`** - Order fulfilled by provider
+- **`order.settled`** - Order settled on blockchain
+- **`order.cancelled`** - Order cancelled
+
+### Webhook Payload
+
+```json
+{
+  "event": "order.fulfilled",
+  "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "fulfilled",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "txHash": "0x1234567890abcdef...",
+    "providerId": "provider-123",
+    "settlementAmount": "50000"
+  }
+}
+```
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `400` | Bad Request - Invalid parameters |
+| `401` | Unauthorized - Invalid API key |
+| `403` | Forbidden - Insufficient permissions |
+| `404` | Not Found - Resource not found |
+| `429` | Too Many Requests - Rate limit exceeded |
+| `500` | Internal Server Error - Server error |
+
+## SDKs and Libraries
+
+Official SDKs are available for popular languages:
+
+### JavaScript/Node.js
+
+```bash
+npm install @paycrest/sdk
+```
+
+```javascript
+import { PaycrestClient } from '@paycrest/sdk';
+
+const client = new PaycrestClient({
+  apiKey: 'YOUR_API_KEY',
+  environment: 'production' // or 'sandbox'
+});
+
+// Create payment order
+const order = await client.sender.createOrder({
+  amount: '100',
+  token: 'USDT',
+  network: 'base',
+  recipient: {
+    institution: 'GTB',
+    accountIdentifier: '1234567890',
+    accountName: 'John Doe',
+    currency: 'NGN'
+  }
+});
+```
+
+### Python
+
+```bash
+pip install paycrest-sdk
+```
+
+```python
+from paycrest import PaycrestClient
+
+client = PaycrestClient(
+    api_key='YOUR_API_KEY',
+    environment='production'  # or 'sandbox'
+)
+
+# Create payment order
+order = client.sender.create_order(
+    amount='100',
+    token='USDT',
+    network='base',
+    recipient={
+        'institution': 'GTB',
+        'accountIdentifier': '1234567890',
+        'accountName': 'John Doe',
+        'currency': 'NGN'
+    }
+)
+```
+
+## Testing
+
+### Sandbox Environment
+
+For testing and development, use the sandbox environment:
+
+- **Base URL**: `https://sandbox-api.paycrest.io/v1`
+- **Test API Key**: `11f93de0-d304-4498-8b7b-6cecbc5b2dd8`
+- **Test Networks**: Use testnet tokens from public faucets
+
+### Test Tokens
+
+- **Base Sepolia**: DAI testnet tokens
+- **Ethereum Sepolia**: USDT testnet tokens
+- **Arbitrum Sepolia**: USDT testnet tokens
+
+<Note>
+  Always test your integration in the sandbox environment before going live. The sandbox provides a safe environment to verify your implementation.
+</Note>
+
+## Support
+
+Need help with the API?
+
+- **Documentation**: Browse our comprehensive guides
+- **Discord**: Join our community at [discord.gg/paycrest](https://discord.gg/paycrest)
+- **GitHub**: Report issues at [github.com/paycrest](https://github.com/paycrest)
+- **Email**: Contact support at [support@paycrest.io](mailto:support@paycrest.io) 

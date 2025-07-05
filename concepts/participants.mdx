@@ -1,0 +1,256 @@
+---
+title: "Protocol Participants"
+description: "Understanding the key participants in the Paycrest Protocol ecosystem"
+---
+
+# Protocol Participants
+
+The Paycrest Protocol ecosystem consists of four main participant types, each with specific roles and responsibilities. Understanding these participants is crucial for building on the protocol.
+
+## Sender
+
+A **KYC-verified entity** that initiates either a fiat-to-stablecoin or stablecoin-to-fiat transaction.
+
+### Characteristics
+
+- **KYC Required**: Must complete identity verification
+- **API Access**: Uses the Sender API to create orders
+- **Fee Structure**: Zero transaction fees (borne by protocol)
+- **Flexibility**: Can be smart contracts, dApps, or traditional applications
+
+### Responsibilities
+
+- **Order Creation**: Specify amount, token, recipient, and rate
+- **Recipient Information**: Provide accurate bank account or wallet details
+- **Compliance**: Maintain KYC status and regulatory compliance
+- **Monitoring**: Track order status and handle webhooks
+
+### Use Cases
+
+- **Remittance Services**: Send money to family abroad
+- **Business Payments**: Pay suppliers in different currencies
+- **DeFi Applications**: Bridge between crypto and traditional finance
+- **E-commerce**: Accept crypto payments and settle in fiat
+
+### Example Integration
+
+```javascript
+// Create a payment order
+const order = await paycrest.sender.createOrder({
+  amount: '100',
+  token: 'USDT',
+  network: 'base',
+  recipient: {
+    institution: 'GTB',
+    accountIdentifier: '1234567890',
+    accountName: 'John Doe',
+    currency: 'NGN'
+  },
+  reference: 'payment-123'
+});
+```
+
+## Recipient
+
+The **beneficiary** of the transaction who receives funds without interacting with the protocol directly.
+
+### Characteristics
+
+- **Passive Role**: No direct protocol interaction required
+- **Multiple Options**: Can receive fiat or stablecoins
+- **Flexible Delivery**: Bank accounts, mobile wallets, or crypto wallets
+- **Zero Complexity**: Doesn't need to understand blockchain technology
+
+### Delivery Methods
+
+- **Bank Transfer**: Direct deposit to local bank account
+- **Mobile Money**: Transfer to mobile wallet (M-Pesa, etc.)
+- **Crypto Wallet**: Receive stablecoins in specified wallet
+- **Cash Pickup**: Physical cash pickup at local agents
+
+### Example Scenarios
+
+- **Family Remittance**: Receive USD in local bank account
+- **Freelancer Payment**: Get paid in local currency for crypto work
+- **Business Settlement**: Receive supplier payments in preferred currency
+- **Investment Returns**: Convert crypto gains to fiat
+
+## Provider
+
+A **KYC-verified participant** that supplies fiat liquidity in exchange for stablecoins or provides stablecoins in exchange for fiat.
+
+### Characteristics
+
+- **Liquidity Supply**: Provides fiat or crypto liquidity
+- **KYC/KYB Required**: Business verification for compliance
+- **PSP Integration**: Connects to Payment Service Providers
+- **Competitive Rates**: Sets rates based on market conditions
+
+### Responsibilities
+
+- **Order Fulfillment**: Execute payments to recipients
+- **Rate Management**: Set competitive rates for currency pairs
+- **Compliance**: Maintain regulatory compliance and reporting
+- **Infrastructure**: Operate reliable payment infrastructure
+
+### Revenue Model
+
+- **Bid-Ask Spreads**: Profit from currency exchange spreads
+- **Volume Incentives**: Earn bonuses for high transaction volume
+- **Quality Bonuses**: Rewards for reliable fulfillment
+- **Geographic Premiums**: Higher rates for underserved markets
+
+### Provider Types
+
+<CardGroup cols={2}>
+  <Card title="Traditional PSPs">
+    - Banks and financial institutions
+    - Money transfer operators
+    - Payment processors
+    - Mobile money providers
+  </Card>
+  <Card title="Crypto-Native Providers">
+    - Crypto exchanges
+    - DeFi protocols
+    - OTC desks
+    - Crypto payment processors
+  </Card>
+</CardGroup>
+
+### Example Provider Setup
+
+```javascript
+// Register as a provider
+const provider = await paycrest.provider.register({
+  businessName: 'Global Payments Ltd',
+  supportedCurrencies: ['NGN', 'GHS', 'KES'],
+  supportedTokens: ['USDT', 'USDC'],
+  pspIntegrations: ['bank_transfer', 'mobile_money']
+});
+
+// Set rates for currency pairs
+await paycrest.provider.setRates({
+  'USDT/NGN': { buy: 1200, sell: 1180 },
+  'USDT/GHS': { buy: 12.5, sell: 12.3 }
+});
+```
+
+## Aggregator
+
+A **KYC-verified entity** that coordinates the entire payment process and ensures protocol efficiency.
+
+### Characteristics
+
+- **Order Matching**: Matches orders with suitable providers
+- **Quality Assurance**: Ensures reliable order fulfillment
+- **Compliance Oversight**: Manages KYC and regulatory compliance
+- **Infrastructure**: Operates high-availability nodes
+
+### Responsibilities
+
+- **Order Indexing**: Monitor blockchain for new orders
+- **Provider Management**: Maintain provider registry and ratings
+- **Order Assignment**: Match orders with optimal providers
+- **Settlement Coordination**: Coordinate multi-provider settlements
+- **Compliance Verification**: Verify KYC and regulatory compliance
+- **Dispute Resolution**: Handle failed orders and disputes
+
+### Aggregator Functions
+
+<Steps>
+  <Step title="Order Detection">
+    Monitor Gateway contract for new payment orders
+  </Step>
+  <Step title="Provider Matching">
+    Find suitable providers based on rates, limits, and availability
+  </Step>
+  <Step title="Order Assignment">
+    Assign orders to providers with optimal conditions
+  </Step>
+  <Step title="Fulfillment Monitoring">
+    Track order fulfillment and validate completion
+  </Step>
+  <Step title="Settlement Coordination">
+    Coordinate onchain settlement and fee distribution
+  </Step>
+</Steps>
+
+### Aggregator Types
+
+- **Protocol Aggregators**: Official Paycrest aggregator nodes
+- **Third-Party Aggregators**: Independent aggregator services
+- **Hybrid Aggregators**: Providers that also run aggregator nodes
+
+## Participant Relationships
+
+### Sender → Aggregator
+
+- **Order Submission**: Senders submit orders through API
+- **Status Updates**: Receive real-time order status updates
+- **Webhook Notifications**: Get notified of order lifecycle events
+
+### Aggregator → Provider
+
+- **Order Assignment**: Aggregators assign orders to providers
+- **Rate Management**: Providers set competitive rates
+- **Fulfillment Coordination**: Coordinate payment execution
+
+### Provider → Recipient
+
+- **Payment Execution**: Providers execute payments to recipients
+- **PSP Integration**: Use local payment service providers
+- **Delivery Confirmation**: Confirm successful payment delivery
+
+### Aggregator → Blockchain
+
+- **Order Monitoring**: Monitor Gateway contract events
+- **Settlement Coordination**: Coordinate onchain settlements
+- **Attestation Issuance**: Issue compliance attestations
+
+## Compliance Requirements
+
+### KYC/KYB Verification
+
+All participants must complete identity verification:
+
+- **Individuals**: Government-issued ID verification
+- **Businesses**: Business registration and KYB verification
+- **Ongoing Monitoring**: Regular compliance checks and updates
+
+### Regulatory Compliance
+
+- **AML/CFT**: Anti-money laundering and counter-terrorism financing
+- **Local Regulations**: Compliance with local financial regulations
+- **Reporting**: Regular regulatory reporting and audits
+- **Data Protection**: GDPR and local privacy law compliance
+
+## Participant Onboarding
+
+### Sender Onboarding
+
+1. **Account Registration**: Create account on Paycrest platform
+2. **KYC Verification**: Complete identity verification process
+3. **API Access**: Generate API credentials
+4. **Integration**: Integrate with Paycrest API
+5. **Testing**: Test integration in sandbox environment
+
+### Provider Onboarding
+
+1. **Business Registration**: Register business entity
+2. **KYB Verification**: Complete business verification
+3. **PSP Integration**: Connect payment service providers
+4. **Rate Configuration**: Set competitive rates for currency pairs
+5. **Infrastructure Setup**: Deploy provider node infrastructure
+6. **Testing**: Test order fulfillment in sandbox
+
+### Aggregator Onboarding
+
+1. **Infrastructure Setup**: Deploy aggregator node infrastructure
+2. **Blockchain Access**: Connect to supported blockchain networks
+3. **Provider Registry**: Build provider database and ratings
+4. **Compliance Integration**: Integrate KYC and compliance systems
+5. **Testing**: Test order matching and settlement processes
+
+<Note>
+  The Paycrest Protocol is designed to be inclusive and accessible to both traditional financial institutions and crypto-native businesses. The modular architecture allows participants to focus on their core competencies while the protocol handles the complex coordination.
+</Note> 

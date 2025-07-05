@@ -1,0 +1,110 @@
+---
+title: "Introduction"
+description: "Welcome to the Paycrest Protocol - A decentralized liquidity protocol for fast, secure, and low-cost fiat-to-stablecoin exchange"
+---
+
+# Welcome to Paycrest Protocol
+
+Paycrest is a **decentralized liquidity protocol** that enables **fast**, **secure**, and **low-cost fiat-to-stablecoin and stablecoin-to-fiat exchange** using stablecoins and KYC-linked Providers.
+
+## The Problem
+
+Cross-border payments — especially in Africa and other emerging markets — remain globally expensive, slow, and fragmented. This is largely due to:
+
+- Reliance on legacy intermediaries
+- Closed banking networks  
+- Compliance bottlenecks
+- Fragmented liquidity
+- Informal exchange networks
+- Poor user experience
+
+## The Solution
+
+Paycrest addresses these challenges by introducing a decentralized liquidity protocol that enables:
+
+- **Near-instant fiat/stablecoin conversion** via a decentralized network of Providers
+- **Zero transaction fees for senders**, with protocol fees borne by Providers
+- **Embedded compliance** through user-friendly KYC and attestation flows
+- **Streamlined crypto-free UX**, enabling adoption without requiring users to understand wallets or chains
+- **Multi-chain interoperability**, beginning with support for Ethereum L2s and expanding to modular chains
+
+## How It Works
+
+<Steps>
+  <Step title="Create Order">
+    A sender creates a payment order on the Gateway Smart Contract, specifying the amount, token, recipient details, and rate.
+  </Step>
+  <Step title="Aggregate">
+    The aggregator node indexes the order and assigns it to one or more provision nodes run by liquidity providers.
+  </Step>
+  <Step title="Fulfill">
+    The provisioning node automatically disburses funds to the recipient's local bank account or mobile wallet via connections to payment service providers (PSPs).
+  </Step>
+</Steps>
+
+## Key Participants
+
+- **Sender**: KYC-verified entities that initiate fiat-to-stablecoin or stablecoin-to-fiat transactions
+- **Recipient**: The beneficiary who receives local fiat or stablecoins without interacting with the protocol
+- **Provider**: KYC-verified participants that supply fiat liquidity in exchange for stablecoins
+- **Aggregator**: KYC-verified entities that match orders with suitable Providers and coordinate fulfillment
+
+## Protocol Vision
+
+Paycrest exists to bridge the gap between digital assets and real-world financial systems, especially in underbanked and high-friction economies. Our long-term vision includes:
+
+- **Modular architecture**: Storage, KYC, and execution may occur across different chains and systems
+- **Multi-chain support**: Beginning with Ethereum L2s and expanding to modular chains and app-specific rollups
+- **Embedded compliance**: User-friendly KYC and attestation flows
+- **Zero-fee experience**: Protocol fees borne by Providers, not senders
+
+## Get Started
+
+Ready to integrate with Paycrest? Choose your path:
+
+<CardGroup cols={2}>
+  <Card
+    title="For Senders"
+    href="/quickstart"
+    icon="zap"
+  >
+    Learn how to create payment orders and integrate with the Paycrest API
+  </Card>
+  <Card
+    title="For Providers"
+    href="/implementation/provider-setup"
+    icon="building"
+  >
+    Set up a provider node to supply liquidity and earn fees
+  </Card>
+</CardGroup>
+
+## Supported Networks
+
+Paycrest currently supports multiple blockchain networks:
+
+- **Ethereum L2s**: Base, Arbitrum, Optimism
+- **Tron Network**: For USDT transactions
+- **More coming soon**: Modular chains and app-specific rollups
+
+## Supported Currencies
+
+### Fiat Currencies
+- **African Currencies**: NGN, GHS, KES, UGX, TZS, XOF, MWK
+- **Global Currencies**: USD, EUR, GBP, and more
+
+### Stablecoins
+- **USDT**: Multi-chain support
+- **USDC**: Ethereum and L2 networks
+- **DAI**: Ethereum and L2 networks
+
+## Security & Compliance
+
+- **KYC/KYB Verification**: All participants undergo identity verification
+- **Smart Contract Security**: Audited Gateway contracts with escrow functionality
+- **Multi-signature Governance**: Protocol changes require multi-signature approval
+- **Compliance Integration**: Built-in support for regulatory requirements
+
+<Note>
+  Paycrest is designed for both Web3-native users and those who may never need to know they're using crypto. The protocol abstracts away the complexity of blockchain technology while maintaining the benefits of decentralization.
+</Note> 

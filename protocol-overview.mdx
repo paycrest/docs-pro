@@ -1,0 +1,244 @@
+---
+title: "Protocol Overview"
+description: "Deep dive into the Paycrest Protocol architecture, participants, and core components"
+---
+
+# Protocol Overview
+
+The Paycrest Protocol is a decentralized liquidity protocol designed to bridge the gap between digital assets and real-world financial systems. This overview covers the core architecture, participants, and key components.
+
+## Protocol Vision
+
+Paycrest exists to solve the fundamental problems with cross-border payments in emerging markets:
+
+- **High costs** from legacy intermediaries and fragmented liquidity
+- **Slow settlement** due to closed banking networks
+- **Poor user experience** with complex compliance requirements
+- **Limited accessibility** for underbanked populations
+
+Our solution enables **near-instant fiat/stablecoin conversion** via a decentralized network of KYC-verified Providers, with **zero transaction fees for senders** and **embedded compliance** through user-friendly flows.
+
+## Core Architecture
+
+The Paycrest Protocol consists of several key components working together:
+
+### 1. Gateway Smart Contract
+
+The core multi-chain contract deployed on fast EVM-compatible networks (e.g., Base, Arbitrum, Lisk). It manages:
+
+- **Order creation** and validation
+- **Token escrow** and conditional settlement
+- **Fee distribution** and protocol governance
+- **Multi-chain interoperability**
+
+### 2. Paycrest Node
+
+The unified protocol client that can operate in three modes:
+
+<CardGroup cols={3}>
+  <Card title="Aggregator Mode">
+    - Listens to onchain payment order events
+    - Indexes registered Providers
+    - Performs matching logic
+    - Validates KYC data off-chain
+    - Issues onchain attestations
+  </Card>
+  <Card title="Provision Mode">
+    - Registers liquidity parameters
+    - Monitors order matching
+    - Integrates with Payment Service Providers (PSPs)
+    - Performs last-mile fiat delivery
+    - Submits fulfillment proofs
+  </Card>
+  <Card title="Hybrid Mode">
+    - Operates as both Aggregator and Provider
+    - Useful for participants with both capabilities
+    - Optimizes for participants with full-stack operations
+  </Card>
+</CardGroup>
+
+### 3. Sender API & Webhooks
+
+Interfaces that allow businesses and apps to:
+
+- **Create payment orders** with operational settings
+- **Configure refund addresses**, fee addresses, and fee percentages
+- **Manage API keys** and authentication
+- **Receive real-time updates** on status transitions
+- **Handle webhook notifications** for order lifecycle events
+
+### 4. KYC Attestation Registry
+
+A registry of attestations for both Senders and Providers:
+
+- **Onchain attestations** for identity verification
+- **Off-chain verifiable credentials** support
+- **Encrypted KYC data** stored on decentralized storage
+- **Compliance integration** with regulatory requirements
+
+## Protocol Participants
+
+### Sender
+
+A KYC-verified entity that initiates either a fiat-to-stablecoin or stablecoin-to-fiat transaction. This can be:
+
+- **Smart contracts** or dApps
+- **API clients** integrating with the protocol
+- **EIP-4337 smart accounts** for advanced wallet functionality
+- **Traditional applications** abstracting away blockchain complexity
+
+The sender supplies the recipient's fiat account information and initiates the payment order.
+
+### Recipient
+
+The beneficiary of the transaction who receives:
+
+- **Local fiat** in a bank account or mobile wallet
+- **Stablecoins** in a crypto wallet
+
+The recipient doesn't need to interact with the protocol directly - they simply receive the funds through their preferred method.
+
+### Provider
+
+A KYC-verified participant that supplies fiat liquidity in exchange for stablecoins or provides stablecoins in exchange for fiat. Providers:
+
+- **Connect to the aggregator** and register rates and limits
+- **Fulfill payment orders** (off-ramp or on-ramp)
+- **Receive corresponding assets** post-validation
+- **Integrate with Payment Service Providers (PSPs)** for last-mile delivery
+
+### Aggregator
+
+A KYC-verified entity that coordinates the entire payment process:
+
+- **Listens to payment order events** from the Gateway contract
+- **Matches orders** with suitable Providers
+- **Coordinates fulfillment** and settlement
+- **Performs off-chain KYC verification** for both Senders and Providers
+- **Splits large orders** across multiple Providers
+- **Issues onchain attestations** for compliance
+- **Enforces penalties** for failed delivery
+
+## Order Lifecycle
+
+<Steps>
+  <Step title="Order Creation">
+    Sender creates a payment order on the Gateway contract with recipient details, amount, and rate.
+  </Step>
+  <Step title="Aggregation">
+    Aggregator indexes the order and matches it with suitable Providers based on rates, limits, and availability.
+  </Step>
+  <Step title="Provider Assignment">
+    One or more Providers are assigned to fulfill the order, with the order potentially split across multiple Providers.
+  </Step>
+  <Step title="Fulfillment">
+    Providers execute the payment through their PSP integrations, delivering fiat to the recipient.
+  </Step>
+  <Step title="Validation">
+    Aggregator validates the fulfillment and issues attestations onchain.
+  </Step>
+  <Step title="Settlement">
+    Smart contract releases escrowed stablecoins to Providers and settles all fees.
+  </Step>
+</Steps>
+
+## Multi-Chain Support
+
+Paycrest is designed for multi-chain interoperability:
+
+### Current Support
+
+- **Ethereum L2s**: Base, Arbitrum, Optimism
+- **Tron Network**: For USDT transactions
+- **Ethereum Mainnet**: For high-value transactions
+
+### Future Expansion
+
+- **Modular chains**: App-specific rollups and Layer 3s
+- **App-specific rollups**: Custom chains for specific use cases
+- **Cross-chain bridges**: Seamless asset movement between chains
+
+## Security & Compliance
+
+### Smart Contract Security
+
+- **Audited Gateway contracts** with escrow functionality
+- **Multi-signature governance** for protocol upgrades
+- **Timelock mechanisms** for critical parameter changes
+- **Emergency pause functionality** for security incidents
+
+### Compliance Integration
+
+- **KYC/KYB verification** for all participants
+- **Identity attestation registry** onchain
+- **Regulatory reporting** capabilities
+- **AML/CFT compliance** through integrated providers
+
+### Privacy Protection
+
+- **Encrypted recipient data** stored off-chain
+- **Zero-knowledge proofs** for compliance verification
+- **Selective disclosure** of sensitive information
+- **GDPR compliance** for user data protection
+
+## Fee Structure
+
+The Paycrest Protocol implements a **zero-fee experience for senders**:
+
+- **Sender fees**: 0% (borne by the protocol)
+- **Provider fees**: Competitive rates based on market conditions
+- **Protocol fees**: Minimal fees for network maintenance
+- **Network fees**: Gas costs for blockchain transactions
+
+Providers earn fees by:
+- **Bid-ask spreads** on currency pairs
+- **Volume-based incentives** for high-frequency providers
+- **Quality bonuses** for reliable fulfillment
+- **Geographic premiums** for underserved markets
+
+## Governance
+
+### Early Stage
+
+In early stages, protocol changes are ratified by a **Paycrest Core Multisig**:
+
+- **Founding contributors** and technical leads
+- **Multi-signature requirements** for all changes
+- **Transparent proposal process** with community input
+- **Emergency procedures** for critical updates
+
+### Future Decentralization
+
+As the protocol matures, governance will transition to:
+
+- **Community-led structure** with token-weighted voting
+- **Delegate-based technical councils** for specialized decisions
+- **Onchain governance** for parameter changes
+- **Off-chain coordination** for complex upgrades
+
+## Technical Specifications
+
+### Smart Contracts
+
+- **Gateway Contract**: Core order management and escrow
+- **Token Contracts**: Standard ERC-20 implementations
+- **Governance Contracts**: Multi-signature and timelock mechanisms
+- **Attestation Registry**: KYC and compliance verification
+
+### API Standards
+
+- **RESTful API** for all interactions
+- **WebSocket support** for real-time updates
+- **Webhook integration** for event notifications
+- **Rate limiting** and authentication
+
+### Network Requirements
+
+- **High availability** aggregator nodes
+- **Low latency** blockchain connections
+- **Redundant infrastructure** for reliability
+- **Geographic distribution** for global access
+
+<Note>
+  The Paycrest Protocol is designed to be both Web3-native and accessible to traditional financial applications. The modular architecture allows for different deployment models while maintaining the core benefits of decentralization.
+</Note> 

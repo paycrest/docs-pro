@@ -1,0 +1,774 @@
+openapi: 3.0.3
+info:
+  title: Paycrest Aggregator API
+  version: 1.0.0
+  description: |
+    OpenAPI schema for the Paycrest Aggregator API. This covers sender, provider, and general endpoints.
+servers:
+  - url: /v1
+security:
+  - ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+
+    # Sender Schemas
+    NewPaymentOrderPayload:
+      type: object
+      properties:
+        amount:
+          type: string
+        token:
+          type: string
+        rate:
+          type: string
+        network:
+          type: string
+        recipient:
+          $ref: '#/components/schemas/PaymentOrderRecipient'
+        reference:
+          type: string
+        returnAddress:
+          type: string
+        feePercent:
+          type: string
+        feeAddress:
+          type: string
+    PaymentOrderRecipient:
+      type: object
+      properties:
+        institution:
+          type: string
+        accountIdentifier:
+          type: string
+        accountName:
+          type: string
+        memo:
+          type: string
+        providerId:
+          type: string
+        metadata:
+          type: object
+        currency:
+          type: string
+    ReceiveAddressResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: string
+        token:
+          type: string
+        network:
+          type: string
+        receiveAddress:
+          type: string
+        validUntil:
+          type: string
+          format: date-time
+        senderFee:
+          type: string
+        transactionFee:
+          type: string
+        reference:
+          type: string
+    PaymentOrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: string
+        amountPaid:
+          type: string
+        amountReturned:
+          type: string
+        token:
+          type: string
+        senderFee:
+          type: string
+        transactionFee:
+          type: string
+        rate:
+          type: string
+        network:
+          type: string
+        gatewayId:
+          type: string
+        recipient:
+          $ref: '#/components/schemas/PaymentOrderRecipient'
+        fromAddress:
+          type: string
+        returnAddress:
+          type: string
+        receiveAddress:
+          type: string
+        feeAddress:
+          type: string
+        reference:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        txHash:
+          type: string
+        status:
+          type: string
+        transactionLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionLog'
+    SenderPaymentOrderList:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentOrderResponse'
+    SenderStatsResponse:
+      type: object
+      properties:
+        totalOrders:
+          type: integer
+        totalOrderVolume:
+          type: string
+        totalFeeEarnings:
+          type: string
+
+    # Provider Schemas
+    ProviderLockOrderList:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/LockPaymentOrderResponse'
+    LockPaymentOrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        token:
+          type: string
+        gatewayId:
+          type: string
+        amount:
+          type: string
+        rate:
+          type: string
+        blockNumber:
+          type: integer
+        txHash:
+          type: string
+        institution:
+          type: string
+        accountIdentifier:
+          type: string
+        accountName:
+          type: string
+        providerId:
+          type: string
+        memo:
+          type: string
+        network:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        transactionLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionLog'
+        cancellationReasons:
+          type: array
+          items:
+            type: string
+    AcceptOrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: string
+        institution:
+          type: string
+        accountIdentifier:
+          type: string
+        accountName:
+          type: string
+        memo:
+          type: string
+        metadata:
+          type: object
+    FulfillLockOrderPayload:
+      type: object
+      properties:
+        psp:
+          type: string
+        txId:
+          type: string
+        validationStatus:
+          type: string
+        validationError:
+          type: string
+    CancelLockOrderPayload:
+      type: object
+      properties:
+        reason:
+          type: string
+    MarketRateResponse:
+      type: object
+      properties:
+        marketRate:
+          type: string
+        minimumRate:
+          type: string
+        maximumRate:
+          type: string
+    ProviderStatsResponse:
+      type: object
+      properties:
+        totalOrders:
+          type: integer
+        totalFiatVolume:
+          type: string
+        totalCryptoVolume:
+          type: string
+
+    # General Schemas
+    SupportedCurrencies:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        shortName:
+          type: string
+        decimals:
+          type: integer
+        symbol:
+          type: string
+        marketRate:
+          type: string
+    SupportedInstitutions:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+    SupportedTokenResponse:
+      type: object
+      properties:
+        symbol:
+          type: string
+        contractAddress:
+          type: string
+        decimals:
+          type: integer
+        baseCurrency:
+          type: string
+        network:
+          type: string
+
+    # Order Status Schemas
+    LockPaymentOrderStatusResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+        amount:
+          type: string
+        token:
+          type: string
+        network:
+          type: string
+        settlePercent:
+          type: string
+        status:
+          type: string
+        txHash:
+          type: string
+        settlements:
+          type: array
+          items:
+            $ref: '#/components/schemas/LockPaymentOrderSplitOrder'
+        txReceipts:
+          type: array
+          items:
+            $ref: '#/components/schemas/LockPaymentOrderTxReceipt'
+        updatedAt:
+          type: string
+          format: date-time
+    LockPaymentOrderSplitOrder:
+      type: object
+      properties:
+        splitOrderId:
+          type: string
+        amount:
+          type: string
+        rate:
+          type: string
+        orderPercent:
+          type: string
+    LockPaymentOrderTxReceipt:
+      type: object
+      properties:
+        status:
+          type: string
+        txHash:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    # Common Schemas
+    TransactionLog:
+      type: object
+      properties:
+        id:
+          type: string
+        gateway_id:
+          type: string
+        status:
+          type: string
+        tx_hash:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    # System Schemas
+    VerifyAccountRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+        accountIdentifier:
+          type: string
+
+paths:
+
+  # Sender Endpoints
+  /sender/orders:
+    post:
+      tags:
+        - Sender
+      summary: Initiate payment order
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPaymentOrderPayload'
+      responses:
+        '201':
+          description: Payment order initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiveAddressResponse'
+    get:
+      tags:
+        - Sender
+      summary: List payment orders
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: token
+          schema:
+            type: string
+        - in: query
+          name: network
+          schema:
+            type: string
+        - in: query
+          name: ordering
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of payment orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SenderPaymentOrderList'
+  /sender/orders/{id}:
+    get:
+      tags:
+        - Sender
+      summary: Get payment order by ID
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrderResponse'
+  /sender/stats:
+    get:
+      tags:
+        - Sender
+      summary: Get sender stats
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Sender stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SenderStatsResponse'
+  /orders/{chain_id}/{id}:
+    get:
+      tags:
+        - Sender
+      summary: Get lock payment order status
+      parameters:
+        - in: path
+          name: chain_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockPaymentOrderStatusResponse'
+
+  # Provider Endpoints
+  /provider/orders:
+    get:
+      tags:
+        - Provider
+      summary: List lock payment orders
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: currency
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: ordering
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of lock payment orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderLockOrderList'
+  /provider/orders/{id}/accept:
+    post:
+      tags:
+        - Provider
+      summary: Accept order
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Order accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptOrderResponse'
+  /provider/orders/{id}/decline:
+    post:
+      tags:
+        - Provider
+      summary: Decline order
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order declined
+  /provider/orders/{id}/fulfill:
+    post:
+      tags:
+        - Provider
+      summary: Fulfill order
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FulfillLockOrderPayload'
+      responses:
+        '200':
+          description: Order fulfilled
+  /provider/orders/{id}/cancel:
+    post:
+      tags:
+        - Provider
+      summary: Cancel order
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelLockOrderPayload'
+      responses:
+        '200':
+          description: Order cancelled
+  /provider/rates/{token}/{fiat}:
+    get:
+      tags:
+        - Provider
+      summary: Get market rate
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fiat
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Market rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketRateResponse'
+  /provider/stats:
+    get:
+      tags:
+        - Provider
+      summary: Get provider stats
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: currency
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderStatsResponse'
+  /provider/node-info:
+    get:
+      tags:
+        - Provider
+      summary: Get node info
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Node info
+
+  # General Endpoints
+  /currencies:
+    get:
+      tags:
+        - General
+      summary: List supported fiat currencies
+      responses:
+        '200':
+          description: List of currencies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportedCurrencies'
+  /institutions/{currency_code}:
+    get:
+      tags:
+        - General
+      summary: List supported institutions for a currency
+      parameters:
+        - in: path
+          name: currency_code
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of institutions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportedInstitutions'
+  /tokens:
+    get:
+      tags:
+        - General
+      summary: List supported tokens
+      parameters:
+        - in: query
+          name: network
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportedTokenResponse'
+  /rates/{token}/{amount}/{fiat}:
+    get:
+      tags:
+        - General
+      summary: Get token rate
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: amount
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fiat
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: provider_id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token rate
+  /pubkey:
+    get:
+      tags:
+        - General
+      summary: Get aggregator public key
+      responses:
+        '200':
+          description: Public key
+  /verify-account:
+    post:
+      tags:
+        - General
+      summary: Verify account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyAccountRequest'
+      responses:
+        '200':
+          description: Account verified
+  /reindex/{network}/{tx_hash}:
+    get:
+      tags:
+        - General
+      summary: Reindex transaction
+      parameters:
+        - in: path
+          name: network
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: tx_hash
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction reindexed 

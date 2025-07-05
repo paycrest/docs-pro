@@ -1,11 +1,11 @@
 ---
 title: "Quickstart"
-description: "Get started with Paycrest Protocol in minutes - Learn how to create payment orders and integrate with the API"
+description: "Get started with Paycrest in minutes - Learn how to create payment orders and integrate with the API"
 ---
 
 # Quickstart Guide
 
-Get started with Paycrest Protocol in minutes. This guide will walk you through creating your first payment order and integrating with the Paycrest API.
+Get started with Paycrest in minutes. This guide will walk you through creating your first payment order and integrating with the Paycrest API.
 
 ## Prerequisites
 
@@ -44,16 +44,15 @@ curl -X POST "https://api.paycrest.io/v1/sender/orders" \
     "token": "USDT",
     "network": "base",
     "rate": "1.0",
-    "recipient": {
-      "institution": "GTB",
-      "accountIdentifier": "1234567890",
-      "accountName": "John Doe",
-      "currency": "NGN"
-    },
+          "recipient": {
+        "institution": "GTB",
+        "accountIdentifier": "1234567890",
+        "accountName": "John Doe",
+        "currency": "NGN",
+        "memo": "Salary payment for January 2024"
+      },
     "reference": "payment-123",
-    "returnAddress": "0x1234567890123456789012345678901234567890",
-    "feePercent": "0.5",
-    "feeAddress": "0x1234567890123456789012345678901234567890"
+    "returnAddress": "0x1234567890123456789012345678901234567890"
   }'
 ```
 
@@ -154,16 +153,15 @@ async function createPaymentOrder() {
       token: 'USDT',
       network: 'base',
       rate: '1.0',
-      recipient: {
-        institution: 'GTB',
-        accountIdentifier: '1234567890',
-        accountName: 'John Doe',
-        currency: 'NGN'
-      },
+              recipient: {
+          institution: 'GTB',
+          accountIdentifier: '1234567890',
+          accountName: 'John Doe',
+          currency: 'NGN',
+          memo: 'Salary payment for January 2024'
+        },
       reference: 'payment-123',
-      returnAddress: '0x1234567890123456789012345678901234567890',
-      feePercent: '0.5',
-      feeAddress: '0x1234567890123456789012345678901234567890'
+      returnAddress: '0x1234567890123456789012345678901234567890'
     }, {
       headers: {
         'X-API-Key': API_KEY,
@@ -215,16 +213,15 @@ def create_payment_order():
         'token': 'USDT',
         'network': 'base',
         'rate': '1.0',
-        'recipient': {
-            'institution': 'GTB',
-            'accountIdentifier': '1234567890',
-            'accountName': 'John Doe',
-            'currency': 'NGN'
+                'recipient': {
+          'institution': 'GTB',
+          'accountIdentifier': '1234567890',
+          'accountName': 'John Doe',
+          'currency': 'NGN',
+          'memo': 'Salary payment for January 2024'
         },
         'reference': 'payment-123',
-        'returnAddress': '0x1234567890123456789012345678901234567890',
-        'feePercent': '0.5',
-        'feeAddress': '0x1234567890123456789012345678901234567890'
+        'returnAddress': '0x1234567890123456789012345678901234567890'
     }
     
     response = requests.post(f'{BASE_URL}/sender/orders', json=payload, headers=headers)
@@ -240,17 +237,13 @@ def get_order_status(order_id):
 
 ### Sandbox Environment
 
-For testing, use the sandbox environment:
+For development and testing, use the sandbox environment:
 
 - **Base URL**: `https://sandbox-api.paycrest.io/v1`
 - **Test API Key**: `11f93de0-d304-4498-8b7b-6cecbc5b2dd8`
-- **Test Tokens**: Use testnet tokens from public faucets
+- **Low Minimum Orders**: Start with as little as $0.50
 
-### Test Networks
 
-- **Base Sepolia**: DAI testnet tokens
-- **Ethereum Sepolia**: USDT testnet tokens
-- **Arbitrum Sepolia**: USDT testnet tokens
 
 ## Next Steps
 
@@ -278,9 +271,9 @@ Now that you've created your first payment order, explore:
 Need help? Get support through:
 
 - **Documentation**: Browse our comprehensive guides
-- **Discord**: Join our community at [discord.gg/paycrest](https://discord.gg/paycrest)
+- **Telegram**: Join our community at [t.me/+Stx-wLOdj49iNDM0](https://t.me/+Stx-wLOdj49iNDM0)
 - **GitHub**: Report issues and contribute at [github.com/paycrest](https://github.com/paycrest)
 
 <Note>
-  Remember to always test your integration in the sandbox environment before going live. The sandbox provides a safe environment to verify your implementation.
+  Paycrest supports very low minimum orders ($0.50) and uses cost-effective EVM L2s, making it perfect for testing with real transactions. Start small and scale up as you gain confidence.
 </Note> 

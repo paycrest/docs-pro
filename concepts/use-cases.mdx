@@ -1,0 +1,417 @@
+---
+title: "Use Cases"
+description: "Explore how businesses and developers can leverage Paycrest for various payment scenarios"
+---
+
+# Use Cases
+
+Paycrest enables a wide range of payment scenarios across different industries and use cases. From crypto businesses to traditional fintech applications, our protocol provides the infrastructure for seamless cross-border payments.
+
+## Crypto Businesses
+
+### DeFi Payouts
+
+**Overview:** Enable DeFi protocols to pay out yields and rewards directly to users' bank accounts.
+
+**How it works:**
+- DeFi protocols integrate directly with Paycrest Gateway contract
+- Users receive stablecoin rewards from yield farming, staking, or trading
+- Protocol automatically converts rewards to fiat and sends to user's bank account
+- No manual withdrawal process required
+
+**Benefits:**
+- Automated payout system reduces operational overhead
+- Users receive funds in their preferred local currency
+- Eliminates need for users to manage crypto-to-fiat conversion
+- Improves user experience and retention
+- Direct smart contract integration for better composability
+
+**Example Implementation:**
+```javascript
+// DeFi protocol payout using Gateway contract
+const gateway = new Contract(gatewayAddress, gatewayAbi, signer);
+
+const payoutOrder = await gateway.createOrder(
+  usdtAddress,
+  parseUnits('150.00', 6),
+  rate,
+  ZeroAddress,
+  0,
+  refundAddress,
+  messageHash
+);
+```
+
+### NFT Marketplace Payouts
+
+**Overview:** Enable NFT marketplaces to pay out sales proceeds to creators and sellers.
+
+**How it works:**
+- NFT marketplace integrates Paycrest for automatic payouts
+- When NFT sells, proceeds are converted to fiat
+- Funds are sent directly to creator's bank account
+- Supports multiple currencies and regions
+
+**Benefits:**
+- Creators receive payments in their local currency
+- Reduces payment processing fees
+- Faster settlement compared to traditional payment methods
+- Global reach for international creators
+
+### Crypto Exchange Offramp
+
+**Overview:** Provide users with seamless offramp capabilities directly from crypto exchanges.
+
+**How it works:**
+- Exchange integrates Paycrest Sender API
+- Users can sell crypto and receive fiat directly
+- Supports multiple cryptocurrencies and fiat currencies
+- Real-time exchange rates and instant settlement
+
+**Benefits:**
+- One-click crypto-to-fiat conversion
+- Competitive exchange rates
+- Fast settlement times
+- Global currency support
+
+## Traditional Businesses
+
+### Cross-Border Payroll
+
+**Overview:** Enable companies to pay international employees and contractors using stablecoins.
+
+**How it works:**
+- Company holds stablecoins for payroll
+- Integrates Paycrest to convert to local currencies
+- Employees receive payments in their preferred currency
+- Automated payroll processing with real-time rates
+
+**Benefits:**
+- Reduced international transfer fees
+- Faster payment processing
+- Transparent exchange rates
+- Simplified compliance and reporting
+
+**Example Implementation:**
+```javascript
+// Automated payroll system
+const payrollOrder = await paycrest.createOrder({
+  amount: '2500.00',
+  token: 'USDC',
+  network: 'polygon',
+  recipient: {
+    institution: 'KCB',
+    accountIdentifier: '9876543210',
+    accountName: 'Sarah Johnson',
+    currency: 'KES'
+  },
+  reference: 'payroll-2024-01-sarah-johnson'
+});
+```
+
+### E-commerce Payment Processing
+
+**Overview:** Enable e-commerce platforms to accept crypto payments and settle in fiat.
+
+**How it works:**
+- Customers pay with crypto at checkout
+- Platform converts to fiat using Paycrest
+- Merchants receive payments in their local currency
+- Real-time conversion with competitive rates
+
+**Benefits:**
+- Access to crypto-paying customers
+- Reduced payment processing fees
+- Global market expansion
+- Automated settlement process
+
+### Freelancer and Gig Economy Payments
+
+**Overview:** Streamline payments for freelancers and gig economy workers globally.
+
+**How it works:**
+- Platforms integrate Paycrest for contractor payments
+- Workers receive payments in their local currency
+- Automated payment processing
+- Support for multiple payment methods
+
+**Benefits:**
+- Faster payment processing
+- Reduced international transfer fees
+- Improved worker satisfaction
+- Simplified platform operations
+
+## Financial Services
+
+### Remittance Services
+
+**Overview:** Enable remittance companies to offer faster, cheaper international transfers.
+
+**How it works:**
+- Remittance company uses stablecoins for transfers
+- Paycrest converts to local currencies
+- Recipients receive funds in their bank account
+- Real-time settlement and competitive rates
+
+**Benefits:**
+- Lower transfer fees compared to traditional methods
+- Faster settlement times
+- Transparent exchange rates
+- Global reach with local compliance
+
+### Microfinance and Lending
+
+**Overview:** Enable microfinance institutions to disburse loans and collect repayments efficiently.
+
+**How it works:**
+- Lenders use stablecoins for loan disbursement
+- Paycrest converts to local currencies for borrowers
+- Repayments can be collected in crypto or fiat
+- Automated payment processing
+
+**Benefits:**
+- Reduced operational costs
+- Faster loan disbursement
+- Improved repayment tracking
+- Access to unbanked populations
+
+## Gaming and Entertainment
+
+### Gaming Platform Payouts
+
+**Overview:** Enable gaming platforms to pay out winnings and rewards to players globally.
+
+**How it works:**
+- Gaming platform integrates Paycrest for payouts
+- Players receive winnings in their local currency
+- Supports multiple payment methods
+- Real-time conversion and settlement
+
+**Benefits:**
+- Global player base support
+- Faster payout processing
+- Reduced payment fees
+- Improved player experience
+
+### Content Creator Payments
+
+**Overview:** Enable platforms to pay content creators and influencers globally.
+
+**How it works:**
+- Platform uses Paycrest for creator payments
+- Creators receive payments in their local currency
+- Automated payment processing
+- Support for multiple currencies
+
+**Benefits:**
+- Global creator network
+- Faster payment processing
+- Reduced international fees
+- Simplified platform operations
+
+## Enterprise Solutions
+
+### B2B Payment Processing
+
+**Overview:** Enable businesses to make international payments to suppliers and partners.
+
+**How it works:**
+- Company holds stablecoins for international payments
+- Paycrest converts to supplier's local currency
+- Real-time settlement with competitive rates
+- Automated payment processing
+
+**Benefits:**
+- Reduced international transfer costs
+- Faster payment processing
+- Transparent exchange rates
+- Simplified treasury management
+
+### Treasury Management
+
+**Overview:** Enable companies to manage international cash flows using stablecoins and Paycrest.
+
+**How it works:**
+- Company holds stablecoins for international operations
+- Paycrest provides conversion to local currencies
+- Automated payment processing
+- Real-time rate management
+
+**Benefits:**
+- Reduced currency risk
+- Lower transaction costs
+- Faster international payments
+- Simplified cash management
+
+## Integration Examples
+
+### Web Application Integration
+
+```javascript
+// Express.js server with Paycrest integration
+const express = require('express');
+const crypto = require('crypto');
+const app = express();
+
+app.use(express.json());
+
+// Webhook signature verification
+function verifySignature(payload, signature, secret) {
+  const hash = crypto.createHmac('sha256', secret)
+    .update(JSON.stringify(payload))
+    .digest('hex');
+  return signature === hash;
+}
+
+// Webhook endpoint for order updates
+app.post('/webhooks/paycrest', async (req, res) => {
+  const signature = req.get('X-Paycrest-Signature');
+  
+  if (!verifySignature(req.body, signature, process.env.WEBHOOK_SECRET)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  const { event, orderId, status, data } = req.body;
+  
+  try {
+    // Update order status in database
+    await updateOrderStatus(orderId, status);
+    
+    // Send notification to user based on status
+    if (status === 'settled') {
+      await notifyUserSuccess(orderId, data);
+    } else if (status === 'expired') {
+      await notifyUserExpired(orderId);
+    }
+    
+    res.status(200).send('Webhook processed');
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// API endpoint to create payment order
+app.post('/api/payments', async (req, res) => {
+  try {
+    const { amount, recipient } = req.body;
+    
+    const order = await paycrest.createOrder({
+      amount: amount.toString(),
+      token: 'USDT',
+      network: 'base',
+      recipient: recipient,
+      reference: `payment-${Date.now()}`
+    });
+    
+    res.json({
+      success: true,
+      orderId: order.id,
+      receiveAddress: order.receiveAddress,
+      validUntil: order.validUntil
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+```
+
+### Mobile Application Integration
+
+```javascript
+// React Native payment flow
+// Direct API integration
+
+// Direct API integration using fetch
+const API_BASE_URL = 'https://api.paycrest.io/v1';
+const API_KEY = 'YOUR_API_KEY';
+
+const initiatePayment = async (amount, recipient) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'API-Key': API_KEY
+  },
+  body: JSON.stringify({
+    amount: amount.toString(),
+    token: 'USDT',
+    network: 'base',
+    recipient: recipient,
+    reference: `mobile-payment-${Date.now()}`
+  })
+});
+
+if (!response.ok) {
+  throw new Error(`API request failed: ${response.statusText}`);
+}
+
+const order = await response.json();
+    
+    // Show payment instructions to user
+    showPaymentInstructions(order.receiveAddress, order.validUntil);
+    
+    // Start polling for status updates
+    pollOrderStatus(order.id);
+    
+    return order;
+  } catch (error) {
+    console.error('Payment initiation failed:', error);
+    throw error;
+  }
+};
+
+const pollOrderStatus = async (orderId) => {
+  const checkStatus = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+  headers: {
+    'API-Key': API_KEY
+  }
+});
+
+if (!response.ok) {
+  throw new Error(`Status check failed: ${response.statusText}`);
+}
+
+const orderData = await response.json();
+const status = orderData.status;
+      
+      if (status === 'settled') {
+        showSuccessMessage('Payment completed successfully!');
+        stopPolling();
+      } else if (status === 'expired') {
+        showErrorMessage('Payment expired. Please try again.');
+        stopPolling();
+      }
+    } catch (error) {
+      console.error('Status check failed:', error);
+    }
+  };
+  
+  // Poll every 10 seconds
+  const interval = setInterval(checkStatus, 10000);
+  
+  // Stop polling after 5 minutes
+  setTimeout(() => {
+    clearInterval(interval);
+  }, 300000);
+};
+```
+
+## Getting Started
+
+To implement any of these use cases:
+
+1. **Sign up** for a Paycrest account
+2. **Complete KYC/KYB** requirements
+3. **Get API credentials** from your dashboard
+4. **Integrate the Sender API** using our documentation
+5. **Test thoroughly** with small amounts ($0.50+)
+6. **Go live** with production integration
+
+For detailed implementation guides, see our [Sender API Integration](/implementation/sender-api-integration) documentation. 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Paycrest Protocol",
+  "name": "Paycrest",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -18,13 +18,17 @@
       "url": "https://github.com/paycrest"
     },
     {
-      "name": "Discord",
-      "url": "https://discord.gg/paycrest"
+      "name": "Telegram",
+      "url": "https://t.me/+Stx-wLOdj49iNDM0"
+    },
+    {
+      "name": "Support",
+      "url": "mailto:support@paycrest.io"
     }
   ],
   "topbarCtaButton": {
     "name": "Get Started",
-    "url": "/quickstart"
+    "url": "https://app.paycrest.io"
   },
   "navigation": {
     "groups": [
@@ -39,7 +43,23 @@
       {
         "group": "Core Concepts",
         "pages": [
-          "concepts/participants"
+          "concepts/participants",
+          "concepts/architecture",
+          "concepts/compliance-security",
+          "concepts/transaction-lifecycle"
+        ]
+      },
+      {
+        "group": "Implementation",
+        "pages": [
+          "implementation/sender-api-integration",
+          "implementation/smart-contract-interaction"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "guides/provider-setup-guide"
         ]
       },
       {
@@ -52,9 +72,12 @@
         }
       },
       {
-        "group": "Implementation",
+        "group": "Resources",
         "pages": [
-          "implementation/sender-integration"
+          "resources/supported-stablecoins",
+          "resources/supported-currencies",
+          "resources/code-standards",
+          "resources/gateway-contract-addresses"
         ]
       }
     ]
@@ -62,7 +85,7 @@
   "footerSocials": {
     "twitter": "https://twitter.com/paycrest",
     "github": "https://github.com/paycrest",
-    "discord": "https://discord.gg/paycrest"
+    "linkedin": "https://www.linkedin.com/company/paycrest"
   },
   "api": {
     "playground": {

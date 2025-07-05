@@ -1,11 +1,16 @@
 ---
 title: "API Reference"
-description: "Complete API documentation for the Paycrest Aggregator API - Sender, Provider, and General endpoints"
+description: "API Reference for Paycrest. Explore endpoints, request/response formats, and integration details."
 ---
 
 # API Reference
 
-The Paycrest Aggregator API provides a comprehensive interface for interacting with the Paycrest Protocol. This API enables senders to create payment orders, providers to fulfill orders, and general access to protocol information.
+Welcome to the Paycrest API Reference. Here you'll find detailed documentation for all available endpoints, including request/response formats, authentication, and integration tips.
+
+- For a quick start, see the [Quickstart](/quickstart) guide.
+- For OpenAPI playground, see the interactive API explorer below (if available).
+
+The Paycrest Aggregator API provides a comprehensive interface for interacting with the Paycrest protocol. This API enables senders to create payment orders, providers to fulfill orders, and general access to protocol information.
 
 ## Base URL
 
@@ -99,12 +104,11 @@ curl -X POST "https://api.paycrest.io/v1/sender/orders" \
       "institution": "GTB",
       "accountIdentifier": "1234567890",
       "accountName": "John Doe",
-      "currency": "NGN"
+      "currency": "NGN",
+      "memo": "Salary payment for January 2024"
     },
     "reference": "payment-123",
-    "returnAddress": "0x1234567890123456789012345678901234567890",
-    "feePercent": "0.5",
-    "feeAddress": "0x1234567890123456789012345678901234567890"
+    "returnAddress": "0x1234567890123456789012345678901234567890"
   }'
 ```
 
@@ -189,19 +193,20 @@ Set up webhooks to receive real-time updates:
 
 ### Webhook Events
 
-- **`order.created`** - New payment order created
-- **`order.processing`** - Order assigned to provider
-- **`order.fulfilled`** - Order fulfilled by provider
+- **`order.initiated`** - Order initiated via API (before Gateway creation)
+- **`order.pending`** - Order awaiting provider assignment
+- **`order.validated`** - Order validated and ready for settlement
 - **`order.settled`** - Order settled on blockchain
-- **`order.cancelled`** - Order cancelled
+- **`order.refunded`** - Order refunded to sender
+- **`order.expired`** - Order expired because no transfer was made to the receive address within the time limit
 
 ### Webhook Payload
 
 ```json
 {
-  "event": "order.fulfilled",
+  "event": "order.settled",
   "orderId": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "fulfilled",
+  "status": "settled",
   "timestamp": "2024-01-15T10:30:00Z",
   "data": {
     "txHash": "0x1234567890abcdef...",
@@ -222,84 +227,22 @@ Set up webhooks to receive real-time updates:
 | `429` | Too Many Requests - Rate limit exceeded |
 | `500` | Internal Server Error - Server error |
 
-## SDKs and Libraries
 
-Official SDKs are available for popular languages:
-
-### JavaScript/Node.js
-
-```bash
-npm install @paycrest/sdk
-```
-
-```javascript
-import { PaycrestClient } from '@paycrest/sdk';
-
-const client = new PaycrestClient({
-  apiKey: 'YOUR_API_KEY',
-  environment: 'production' // or 'sandbox'
-});
-
-// Create payment order
-const order = await client.sender.createOrder({
-  amount: '100',
-  token: 'USDT',
-  network: 'base',
-  recipient: {
-    institution: 'GTB',
-    accountIdentifier: '1234567890',
-    accountName: 'John Doe',
-    currency: 'NGN'
-  }
-});
-```
-
-### Python
-
-```bash
-pip install paycrest-sdk
-```
-
-```python
-from paycrest import PaycrestClient
-
-client = PaycrestClient(
-    api_key='YOUR_API_KEY',
-    environment='production'  # or 'sandbox'
-)
-
-# Create payment order
-order = client.sender.create_order(
-    amount='100',
-    token='USDT',
-    network='base',
-    recipient={
-        'institution': 'GTB',
-        'accountIdentifier': '1234567890',
-        'accountName': 'John Doe',
-        'currency': 'NGN'
-    }
-)
-```
 
 ## Testing
 
 ### Sandbox Environment
 
-For testing and development, use the sandbox environment:
+For development and testing, use the sandbox environment:
 
 - **Base URL**: `https://sandbox-api.paycrest.io/v1`
 - **Test API Key**: `11f93de0-d304-4498-8b7b-6cecbc5b2dd8`
-- **Test Networks**: Use testnet tokens from public faucets
+- **Low Minimum Orders**: Start with as little as $0.50
 
-### Test Tokens
 
-- **Base Sepolia**: DAI testnet tokens
-- **Ethereum Sepolia**: USDT testnet tokens
-- **Arbitrum Sepolia**: USDT testnet tokens
 
 <Note>
-  Always test your integration in the sandbox environment before going live. The sandbox provides a safe environment to verify your implementation.
+  Paycrest supports very low minimum orders ($0.50) and uses cost-effective EVM L2s, making it perfect for testing with real transactions. Start small and scale up as you gain confidence.
 </Note>
 
 ## Support
@@ -307,6 +250,10 @@ For testing and development, use the sandbox environment:
 Need help with the API?
 
 - **Documentation**: Browse our comprehensive guides
-- **Discord**: Join our community at [discord.gg/paycrest](https://discord.gg/paycrest)
+- **Telegram**: Join our community at [t.me/+Stx-wLOdj49iNDM0](https://t.me/+Stx-wLOdj49iNDM0)
 - **GitHub**: Report issues at [github.com/paycrest](https://github.com/paycrest)
-- **Email**: Contact support at [support@paycrest.io](mailto:support@paycrest.io) 
+- **Email**: Contact support at [support@paycrest.io](mailto:support@paycrest.io)
+
+## Fee Model
+
+All sender fees are paid by providers. Senders experience zero or minimal fees, maximizing their payout.

@@ -1,0 +1,313 @@
+---
+title: 'Provider Setup Guide'
+description: 'Complete step-by-step guide to become a Paycrest provider and run a provision node'
+---
+
+# Provider Setup Guide
+
+This guide walks you through the complete process of becoming a Paycrest provider, from initial signup to running a production provision node. Follow these steps to start earning from stablecoin-to-fiat transactions.
+
+## Provider Onboarding Process
+
+### Step 1: Provider Signup & Early Access Request
+
+#### Create a Provider Account
+1. Visit [https://app.paycrest.io](https://app.paycrest.io)
+2. Sign up as a **Provider**
+3. Complete the registration process
+
+
+
+### Step 2: Preliminary KYB Process
+
+#### Initiate KYB
+- Complete the basic in-app Know-Your-Business (KYB) process
+- This process can run concurrently with PSP account setup
+- KYB approval is required for production access
+
+### Step 3: Payment Service Provider (PSP) Setup
+
+#### Register with Payment Service Providers
+
+Your provision node can support multiple payment service providers to ensure reliable transaction processing. The specific PSPs available to you will be shown in your provider dashboard so you can begin PSP account setup in parallel with your KYB process.
+
+
+
+#### Obtain Live API Credentials
+- After creating PSP accounts, obtain Live API Key and Client ID & Client Secret
+- These credentials are provided through your provider dashboard
+
+### Step 4: Provision Node Setup
+
+Choose your provision node hosting method:
+
+#### Option A: Self-Hosted Deployment
+
+A Paycrest provision node is a backend service hosted on Docker Hub. The deployment process involves pulling the Docker image, configuring environment variables, and starting the server.
+
+**Requirements:**
+- Docker installed on your server
+- Access to Docker Hub
+- Server with internet connectivity
+- Minimum 512MB RAM, 1 vCPU (tested on DigitalOcean $5 droplet)
+
+**Deployment Steps:**
+
+1. **Pull the Docker Image**
+```bash
+docker pull safaria/riverpod:latest
+```
+
+2. **Create Environment Configuration**
+Create a `.env` file with your configuration:
+
+```bash
+# Server Config
+SECRET=41b00819-1747-4a5a-aa8f-b759f22c # use any 32 digit hash of your choice for encryption
+DEBUG=False
+ALLOWED_HOSTS=0.0.0.0
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8000
+CURRENCIES=KES # could be multiple NGN,KES,GHS,UGX,TZS,MWK,BRL,XOF
+ENVIRONMENT=production # local, staging, production
+
+# Aggregator Config
+AGGREGATOR_CLIENT_ID=7a3c8d9e-2f51-4b6a-9e7d-1c8f3a0b5d2e # to be issued by aggregator
+AGGREGATOR_SECRET_KEY=Z9X7mPqL2tHvJfN8yRwEoUbC1kDiY3SaA_gO5lTnWxM= # to be issued by aggregator
+AGGREGATOR_BASE_URL=https://api.paycrest.io/v1/provider
+
+# PSP Config - Only configure for PSPs you are using
+# API keys and configuration for your selected payment service providers
+# These will be provided in your provider dashboard
+PSP_1_API_KEY=
+PSP_1_SECRET_KEY=
+PSP_1_BASE_URL=
+
+PSP_2_API_KEY=
+PSP_2_ACCOUNT_ID=
+PSP_2_BASE_URL=
+
+PSP_3_API_KEY=
+PSP_3_BASE_URL=
+PSP_3_TRANSACTION_PIN=
+
+PSP_4_CLIENT_ASSERTION=
+PSP_4_OAUTH_CLIENT_ID=
+PSP_4_BASE_URL=
+
+PSP_5_API_KEY=
+PSP_5_BASE_URL=
+
+PSP_6_API_KEY=
+PSP_6_PUBLIC_KEY=
+PSP_6_BASE_URL=
+
+PSP_7_CONSUMER_KEY=
+PSP_7_CONSUMER_SECRET=
+PSP_7_BASE_URL=
+```
+
+> **Important Notes:**
+> - One node works for multiple currencies and can support multiple PSPs (for the same currency)
+> - Only configure the variables for the PSPs you are using
+> - If there is no comment on a credential key that has a value, DO NOT change that value
+> - DO NOT change the value of `AGGREGATOR_BASE_URL`
+> - PSP configuration details are provided in your provider dashboard
+
+3. **Start the Service**
+```bash
+docker run -d -p 8000:8000 --env-file .env safaria/riverpod:latest
+```
+
+4. **Verify Deployment**
+Check the health endpoint to confirm your node is running correctly:
+
+```bash
+curl http://your-server-ip:8000/health
+```
+
+Expected response:
+```json
+{
+  "data": {
+    "currencies": ["KES"]
+  },
+  "message": "Node is live",
+  "status": "success"
+}
+```
+
+5. **Configure Host Identifier**
+- Take the base URL of your server (e.g., `http://your-server-ip:8000`)
+- Add it to your provider dashboard settings as the Host Identifier
+- Go live on your dashboard
+
+**Benefits:**
+- Complete control over infrastructure
+- Custom security configurations
+- No dependency on third-party services
+- Potential cost savings at scale
+
+#### Option B: BlockOps (Recommended)
+- **Cost**: $10/month
+- Simplified setup with Paycrest partnership
+- Video setup guide available
+- After setup, obtain the Host Identifier URL from BlockOps
+- Paste the URL into the 'Configure Provision Node' section of your Paycrest dashboard settings
+- Click update to complete configuration
+
+### Step 5: Configure Trade Settings
+
+#### Set Rates & Limits
+
+**Rates: Choose between:**
+- **Floating Rate (Recommended)**: Allows dynamic pricing with a margin
+- **Fixed Rate**: Static pricing, less flexible
+
+**Slippage**: It's advised to enable slippage to handle volatility
+
+**Order Limits:**
+- Set your minimum limit: Set the minimum amount (in USD) you can fulfill
+- Set your maximum limit: Set an amount (in USD) based on the available fiat balance in your PSP account
+
+#### Set Settlement Addresses
+
+**Configure Networks**
+- Add settlement addresses for all supported networks and tokens
+- You can add a settlement address on multiple networks for flexibility
+
+### Step 6: Node Testing & Launch
+
+#### Testing in Private Mode
+- After setting your settlement address(es), test your node in Private mode before going public
+- With private mode, you can route a transaction to your node using Noblocks
+- To go "LIVE" in Private Mode, switch your node to "Private Mode" on your dashboard
+
+**Test with Noblocks:**
+Use the Noblocks testing tool to verify your node in private mode:
+`https://noblocks.xyz?provider=YOUR_PROVIDER_ID`
+(Replace `YOUR_PROVIDER_ID` with your actual provider ID)
+
+#### Go Live on Public Mode
+- Once testing is successful, switch to Public Mode
+- Ensure your PSP account is funded and active for transaction fulfillment
+
+## Onboarding Checklist
+
+Use this checklist to track your progress:
+
+| Task | Status |
+|------|--------|
+| Provider Account Created | ⬜ |
+| KYB Submitted | ⬜ |
+| PSP Accounts Created | ⬜ |
+| API Key + Client ID/Secret Obtained | ⬜ |
+| Node Deployed (Preferably BlockOps) | ⬜ |
+| Trade Settings Configured | ⬜ |
+| Settlement Addresses Added | ⬜ |
+| Node Tested in Private Mode | ⬜ |
+| Switched to Public Mode | ⬜ |
+
+## Technical Requirements
+
+### Infrastructure Requirements
+
+**Minimum Requirements:**
+- **512MB RAM, 1 vCPU** (tested on DigitalOcean $5 droplet)
+- 50GB+ storage
+- Stable internet connection
+- Docker installed (for self-hosted deployment)
+
+> **Note:** The minimum requirements are based on real-world testing. A DigitalOcean $5 droplet (512MB RAM, 1 vCPU, 50GB bandwidth) is sufficient for running a Provision Node in production.
+
+### Docker Installation (For Self-Hosted)
+
+If you choose self-hosted deployment, install Docker on your server:
+
+```bash
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Logout and login again for docker group changes to take effect
+# Or run: newgrp docker
+```
+
+
+
+## Security Best Practices
+
+### Network Security
+- Use firewalls to restrict access
+- Implement rate limiting
+- Enable DDoS protection
+- Use VPN for secure access
+
+### Key Management
+- Store API keys securely
+- Rotate keys regularly
+- Use environment variables
+- Implement key encryption
+
+### Monitoring and Alerting
+- Set up log aggregation
+- Configure performance alerts
+- Monitor transaction volumes
+- Track error rates
+
+## Troubleshooting
+
+### Common Issues
+
+**Node Not Starting**
+```bash
+# Check logs
+docker logs <container_name>
+
+# Verify environment variables
+docker run --rm --env-file .env safaria/riverpod:latest echo "Environment loaded"
+
+# Restart container
+docker restart <container_name>
+```
+
+**API Connection Issues**
+```bash
+# Test API connectivity
+curl -X GET https://api.paycrest.io/v1/health
+```
+
+**Database Connection Errors**
+```bash
+# Check container status
+docker ps
+
+# Verify environment variables
+docker exec <container_name> env | grep DATABASE
+```
+
+### Getting Help
+
+- **Documentation**: [docs.paycrest.io](https://docs.paycrest.io)
+- **Community**: [Telegram](https://t.me/+Stx-wLOdj49iNDM0)
+- **Support**: [support@paycrest.io](mailto:support@paycrest.io)
+- **Blockops Support**: Available through Blockops platform
+
+
+
+## Next Steps
+
+After successfully deploying your Provision Node:
+
+1. **Test Transactions**: Process test transactions to verify functionality
+2. **Monitor Performance**: Track your node's performance and earnings
+3. **Scale Up**: Consider deploying additional nodes for increased capacity
+4. **Optimize**: Fine-tune pricing and configuration based on market conditions
+
+For detailed API documentation and advanced configuration options, see the [API Reference](/api-reference/introduction). 

@@ -24,37 +24,43 @@ components:
           type: string
         token:
           type: string
+          description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         rate:
           type: string
         network:
           type: string
+          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          description: Network identifier for the blockchain
         recipient:
           $ref: '#/components/schemas/PaymentOrderRecipient'
         reference:
           type: string
         returnAddress:
           type: string
-        feePercent:
-          type: string
-        feeAddress:
-          type: string
     PaymentOrderRecipient:
       type: object
       properties:
         institution:
           type: string
+          description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         accountIdentifier:
           type: string
+          description: Bank account number, mobile number, or other account identifier
         accountName:
           type: string
+          description: Name of the account holder
         memo:
           type: string
+          description: Optional memo or reference for the transaction
         providerId:
           type: string
+          description: Optional provider ID for specific routing
         metadata:
           type: object
+          description: Additional metadata for the transaction
         currency:
           type: string
+          description: ISO 4217 currency code (e.g., NGN, KES, UGX). See [Supported Currencies](/resources/supported-currencies) for available options.
     ReceiveAddressResponse:
       type: object
       properties:
@@ -64,8 +70,11 @@ components:
           type: string
         token:
           type: string
+          description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         network:
           type: string
+          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          description: Network identifier for the blockchain
         receiveAddress:
           type: string
         validUntil:
@@ -90,6 +99,7 @@ components:
           type: string
         token:
           type: string
+          description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         senderFee:
           type: string
         transactionFee:
@@ -98,6 +108,8 @@ components:
           type: string
         network:
           type: string
+          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          description: Network identifier for the blockchain
         gatewayId:
           type: string
         recipient:
@@ -107,8 +119,6 @@ components:
         returnAddress:
           type: string
         receiveAddress:
-          type: string
-        feeAddress:
           type: string
         reference:
           type: string
@@ -170,6 +180,7 @@ components:
           type: string
         token:
           type: string
+          description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         gatewayId:
           type: string
         amount:
@@ -182,6 +193,7 @@ components:
           type: string
         institution:
           type: string
+          description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         accountIdentifier:
           type: string
         accountName:
@@ -192,6 +204,8 @@ components:
           type: string
         network:
           type: string
+          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          description: Network identifier for the blockchain
         status:
           type: string
         updatedAt:
@@ -217,6 +231,7 @@ components:
           type: string
         institution:
           type: string
+          description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         accountIdentifier:
           type: string
         accountName:
@@ -266,6 +281,7 @@ components:
       properties:
         code:
           type: string
+          description: ISO 4217 currency code (e.g., NGN, KES, UGX). See [Supported Currencies](/resources/supported-currencies) for available options.
         name:
           type: string
         shortName:
@@ -283,6 +299,7 @@ components:
           type: string
         code:
           type: string
+          description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         type:
           type: string
     SupportedTokenResponse:
@@ -290,6 +307,7 @@ components:
       properties:
         symbol:
           type: string
+          description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         contractAddress:
           type: string
         decimals:
@@ -298,6 +316,8 @@ components:
           type: string
         network:
           type: string
+          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          description: Network identifier for the blockchain
 
     # Order Status Schemas
     LockPaymentOrderStatusResponse:
@@ -309,8 +329,11 @@ components:
           type: string
         token:
           type: string
+          description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         network:
           type: string
+          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          description: Network identifier for the blockchain
         settlePercent:
           type: string
         status:
@@ -372,6 +395,7 @@ components:
       properties:
         institution:
           type: string
+          description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         accountIdentifier:
           type: string
 
@@ -417,6 +441,8 @@ paths:
           name: network
           schema:
             type: string
+            enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+            description: Network identifier for the blockchain
         - in: query
           name: ordering
           schema:
@@ -694,6 +720,8 @@ paths:
           name: network
           schema:
             type: string
+            enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+            description: Network identifier for the blockchain
       responses:
         '200':
           description: List of tokens

@@ -1,0 +1,74 @@
+---
+title: "Gateway Contract Addresses"
+description: "Deployment addresses for Paycrest Gateway contracts across all supported networks"
+---
+
+# Gateway Contract Addresses
+
+Paycrest Gateway contracts are deployed across multiple EVM-compatible networks to enable cross-chain stablecoin-to-fiat transactions. The table below shows all current deployments, including networks that may not yet be fully supported by the aggregator.
+
+<Note>
+  Networks marked as "Coming Soon" are deployed but not yet fully supported by the Paycrest aggregator. These deployments signal upcoming network support.
+</Note>
+
+## Deployment Addresses
+
+| Network | Chain ID | Gateway Address | Status | Notes |
+|---------|----------|-----------------|--------|-------|
+| **Base** | 8453 | `0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F` | ✅ Live | Fully supported |
+| **Polygon** | 137 | `0xfB411Cc6385Af50A562aFCb441864E9d541CDA67` | ✅ Live | Fully supported |
+| **BNB Smart Chain** | 56 | `0x1FA0EE7F9410F6fa49B7AD5Da72Cf01647090028` | ✅ Live | Fully supported |
+| **Arbitrum One** | 42161 | `0xE8bc3B607CfE68F47000E3d200310D49041148Fc` | ✅ Live | Fully supported |
+| **Lisk** | 1135 | `0xff0E00E0110C1FBb5315D276243497b66D3a4d8a` | ✅ Live | Fully supported |
+| **Celo** | 42220 | `0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b` | ✅ Live | Fully supported |
+| **Tron** | 728126428 | `THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU` | ✅ Live | Fully supported |
+| **Asset Chain** | 42420 | `0xff0E00E0110C1FBb5315D276243497b66D3a4d8a` | ✅ Live | Fully supported |
+| **Ethereum** | 1 | `0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B` | 🚧 Coming Soon | Deployed, aggregator support pending |
+| **Optimism** | 10 | `0xD293fCd3dBc025603911853d893A4724CF9f70a0` | 🚧 Coming Soon | Deployed, aggregator support pending |
+| **Scroll** | 534352 | `0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338` | 🚧 Coming Soon | Deployed, aggregator support pending |
+
+## Network Status Legend
+
+- **✅ Live**: Fully supported by Paycrest aggregator
+- **🚧 Coming Soon**: Contract deployed but aggregator support pending
+- **⏳ Planned**: Network support planned for future release
+
+## Contract Verification
+
+All Gateway contracts are verified on their respective network block explorers:
+
+- **Base**: [Basescan](https://basescan.org/address/0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F)
+- **Polygon**: [Polygonscan](https://polygonscan.com/address/0xfB411Cc6385Af50A562aFCb441864E9d541CDA67)
+- **BNB Smart Chain**: [Bscscan](https://bscscan.com/address/0x1FA0EE7F9410F6fa49B7AD5Da72Cf01647090028)
+- **Arbitrum One**: [Arbiscan](https://arbiscan.io/address/0xE8bc3B607CfE68F47000E3d200310D49041148Fc)
+- **Lisk**: [Lisk Explorer](https://explorer.lisk.com/address/0xff0E00E0110C1FBb5315D276243497b66D3a4d8a)
+- **Celo**: [Celo Explorer](https://explorer.celo.org/address/0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b)
+- **Tron**: [Tronscan](https://tronscan.org/#/address/THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU)
+- **Asset Chain**: [Asset Chain Explorer](https://explorer.assetchain.org/address/0xff0E00E0110C1FBb5315D276243497b66D3a4d8a)
+- **Ethereum**: [Etherscan](https://etherscan.io/address/0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B)
+- **Optimism**: [Optimistic Etherscan](https://optimistic.etherscan.io/address/0xD293fCd3dBc025603911853d893A4724CF9f70a0)
+- **Scroll**: [Scrollscan](https://scrollscan.com/address/0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338)
+
+## Integration
+
+To integrate with the Gateway contract, use the appropriate address for your target network:
+
+```javascript
+// Example: Base network
+const GATEWAY_ADDRESS = "0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F";
+
+// Initialize contract
+const gateway = new ethers.Contract(GATEWAY_ADDRESS, GATEWAY_ABI, signer);
+```
+
+For detailed integration guides, see:
+- **[Smart Contract Interaction](/implementation/smart-contract-interaction)** - Direct contract integration
+- **[Sender API Integration](/implementation/sender-api-integration)** - API-based integration
+
+## Network Support Updates
+
+Network support status is updated regularly. Check our [contracts GitHub repository](https://github.com/paycrest/contracts) for the latest deployment information and contract addresses.
+
+<Note>
+  Contract addresses vary by network. Always use the correct address for your target network and verify it on the network's block explorer before use.
+</Note> 

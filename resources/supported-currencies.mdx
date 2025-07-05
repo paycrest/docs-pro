@@ -1,0 +1,112 @@
+---
+title: "Supported Currencies"
+description: "Complete list of supported fiat currencies, countries, and delivery channels"
+---
+
+# Supported Currencies
+
+Paycrest supports a wide range of fiat currencies across multiple countries and regions, with various delivery channels including bank transfers and mobile payments.
+
+## Currency Overview
+
+| Country | Flag | Currency | Code | Channels |
+|---------|-------|----------|------|----------|
+| **Nigeria** | 🇳🇬 | Nigerian Naira | NGN | Bank, Mobile |
+| **Kenya** | 🇰🇪 | Kenyan Shilling | KES | Bank, Mobile |
+| **Uganda** | 🇺🇬 | Ugandan Shilling | UGX | Bank, Mobile |
+| **Tanzania** | 🇹🇿 | Tanzanian Shilling | TZS | Bank, Mobile |
+| **Malawi** | 🇲🇼 | Malawi Kwacha | MWK | Bank, Mobile |
+| **Ghana** | 🇬🇭 | Ghanaian Cedi | GHS | Bank, Mobile |
+| **Brazil** | 🇧🇷 | Brazilian Real | BRL | Mobile (PIX) |
+| **Benin** | 🇧🇯 | West African CFA | XOF | Mobile |
+| **Côte d'Ivoire** | 🇨🇮 | West African CFA | XOF | Mobile |
+| **India** | 🇮🇳 | Indian Rupee | INR | Bank, Mobile (UPI) |
+
+## Currency Support Matrix
+
+| Currency | Bank | Mobile |
+|----------|------|--------|
+| **NGN** | ✅ | ✅ |
+| **KES** | ✅ | ✅ |
+| **UGX** | ✅ | ✅ |
+| **TZS** | ✅ | ✅ |
+| **MWK** | ✅ | ✅ |
+| **GHS** | ✅ | ✅ |
+| **BRL** | ❌ | ✅ (PIX) |
+| **XOF** | ❌ | ✅ |
+| **INR** | ✅ | ✅ (UPI) |
+
+## Integration Examples
+
+### Bank Transfer (Nigeria)
+```javascript
+const order = {
+  amount: "100",
+  token: "USDT",
+  network: "base",
+  recipient: {
+    institution: "GTBINGLA", // GTBank
+    accountIdentifier: "1234567890",
+    accountName: "John Doe",
+    currency: "NGN",
+    memo: "Salary payment"
+  }
+};
+```
+
+### Mobile Payment (Kenya)
+```javascript
+const order = {
+  amount: "50",
+  token: "USDC",
+  network: "polygon",
+  recipient: {
+    institution: "SAFAKEPC", // M-Pesa
+    accountIdentifier: "254700000000",
+    accountName: "Jane Smith",
+    currency: "KES",
+    memo: "Mobile payment"
+  }
+};
+```
+
+### PIX (Brazil)
+```javascript
+const order = {
+  amount: "200",
+  token: "USDT",
+  network: "arbitrum",
+  recipient: {
+    institution: "PIXKBRPC", // PIX Key
+    accountIdentifier: "johndoe@email.com",
+    accountName: "João Silva",
+    currency: "BRL",
+    memo: "PIX payment"
+  }
+};
+```
+
+## Rate Information
+
+Exchange rates are dynamic and depend on:
+- **Market conditions**: Real-time forex rates
+- **Provider competition**: Multiple providers competing
+- **Transaction volume**: Higher volumes may get better rates
+- **Network fees**: Different networks have different gas costs
+
+<Note>
+  All supported currencies are actively monitored for compliance and regulatory requirements. Delivery times and fees may vary by provider and region.
+</Note>
+
+## API Endpoints
+
+For the most up-to-date information about supported currencies and institutions, use the following API endpoints:
+
+- **[GET /currencies](/api-reference/general/list-supported-fiat-currencies)** - Get all supported currencies with current rates
+- **[GET /institutions/KES](/api-reference/general/list-supported-institutions-for-a-currency)** - Get supported banks and mobile payment providers for a specific currency
+
+These endpoints provide real-time data including current exchange rates, available delivery channels, and institution codes for integration.
+
+<Note>
+  All currency codes follow the ISO 4217 standard, and institution codes use SWIFT codes (first 7 characters) for international banks or custom codes ending with "PC" for local institutions. See **[Code Standards](/resources/code-standards)** for detailed information.
+</Note> 

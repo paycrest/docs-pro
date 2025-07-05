@@ -1,11 +1,11 @@
 ---
 title: "Protocol Overview"
-description: "Deep dive into the Paycrest Protocol architecture, participants, and core components"
+description: "Deep dive into the Paycrest protocol architecture, participants, and core components"
 ---
 
 # Protocol Overview
 
-The Paycrest Protocol is a decentralized liquidity protocol designed to bridge the gap between digital assets and real-world financial systems. This overview covers the core architecture, participants, and key components.
+The Paycrest protocol is a decentralized liquidity protocol designed to bridge the gap between digital assets and real-world financial systems. This overview covers the core architecture, participants, and key components.
 
 ## Protocol Vision
 
@@ -20,7 +20,7 @@ Our solution enables **near-instant fiat/stablecoin conversion** via a decentral
 
 ## Core Architecture
 
-The Paycrest Protocol consists of several key components working together:
+The Paycrest protocol consists of several key components working together:
 
 ### 1. Gateway Smart Contract
 
@@ -40,7 +40,7 @@ The unified protocol client that can operate in three modes:
     - Listens to onchain payment order events
     - Indexes registered Providers
     - Performs matching logic
-    - Validates KYC data off-chain
+    - Validates KYC data offchain
     - Issues onchain attestations
   </Card>
   <Card title="Provision Mode">
@@ -72,7 +72,7 @@ Interfaces that allow businesses and apps to:
 A registry of attestations for both Senders and Providers:
 
 - **Onchain attestations** for identity verification
-- **Off-chain verifiable credentials** support
+- **Offchain verifiable credentials** support
 - **Encrypted KYC data** stored on decentralized storage
 - **Compliance integration** with regulatory requirements
 
@@ -114,7 +114,7 @@ A KYC-verified entity that coordinates the entire payment process:
 - **Listens to payment order events** from the Gateway contract
 - **Matches orders** with suitable Providers
 - **Coordinates fulfillment** and settlement
-- **Performs off-chain KYC verification** for both Senders and Providers
+- **Performs offchain KYC verification** for both Senders and Providers
 - **Splits large orders** across multiple Providers
 - **Issues onchain attestations** for compliance
 - **Enforces penalties** for failed delivery
@@ -132,15 +132,34 @@ A KYC-verified entity that coordinates the entire payment process:
     One or more Providers are assigned to fulfill the order, with the order potentially split across multiple Providers.
   </Step>
   <Step title="Fulfillment">
-    Providers execute the payment through their PSP integrations, delivering fiat to the recipient.
+    Providers execute the payment:
+    <ul>
+      <li><b>Offramp:</b> Provider delivers fiat to the recipient via PSP integration.</li>
+      <li><b>Onramp:</b> Provider receives fiat from the sender via local payment rails.</li>
+    </ul>
   </Step>
   <Step title="Validation">
-    Aggregator validates the fulfillment and issues attestations onchain.
+    <ul>
+      <li><b>Offramp:</b> Provision node validates fulfillment by checking the status of the fiat transfer via PSP APIs.</li>
+      <li><b>Onramp:</b> Aggregator validates fulfillment by confirming the onchain stablecoin transfer to the recipient.</li>
+    </ul>
   </Step>
   <Step title="Settlement">
-    Smart contract releases escrowed stablecoins to Providers and settles all fees.
+    <ul>
+      <li><b>Offramp:</b> Smart contract releases escrowed stablecoins to the provider after successful validation.</li>
+      <li><b>Onramp:</b> Fulfillment, validation, and settlement occur in one step: after the provision node confirms fiat receipt, the stablecoins are released onchain to the recipient.</li>
+    </ul>
+  </Step>
+  <Step title="Refund">
+    If the order cannot be fulfilled, funds are automatically refunded to the sender. No manual dispute process is required.
   </Step>
 </Steps>
+
+<Callout type="info">
+<b>Offramp:</b> Fulfillment = Provider delivers fiat to recipient. Validation = Provision node checks fiat transfer status via PSP API. Settlement = Escrowed stablecoins released to provider.
+
+<b>Onramp:</b> Fulfillment = Provider receives fiat from sender. Validation = Aggregator confirms onchain stablecoin transfer to recipient. Settlement = All three steps happen atomically after fiat receipt is confirmed.
+</Callout>
 
 ## Multi-Chain Support
 
@@ -148,9 +167,13 @@ Paycrest is designed for multi-chain interoperability:
 
 ### Current Support
 
-- **Ethereum L2s**: Base, Arbitrum, Optimism
-- **Tron Network**: For USDT transactions
-- **Ethereum Mainnet**: For high-value transactions
+- **Base**: Primary network for USDT/USDC transactions
+- **Polygon**: Cost-effective transactions
+- **BNB Smart Chain**: Binance ecosystem support
+- **Arbitrum One**: High-performance L2 network
+- **Lisk**: Alternative blockchain network
+- **Celo**: Mobile-first blockchain (CUSD, CNGN)
+- **Tron**: USDT transactions
 
 ### Future Expansion
 
@@ -176,16 +199,16 @@ Paycrest is designed for multi-chain interoperability:
 
 ### Privacy Protection
 
-- **Encrypted recipient data** stored off-chain
+- **Encrypted recipient data** stored offchain
 - **Zero-knowledge proofs** for compliance verification
 - **Selective disclosure** of sensitive information
 - **GDPR compliance** for user data protection
 
 ## Fee Structure
 
-The Paycrest Protocol implements a **zero-fee experience for senders**:
+The Paycrest protocol implements a **zero-fee experience for senders**:
 
-- **Sender fees**: 0% (borne by the protocol)
+- **Sender fees**: 0% (all sender fees are paid by providers)
 - **Provider fees**: Competitive rates based on market conditions
 - **Protocol fees**: Minimal fees for network maintenance
 - **Network fees**: Gas costs for blockchain transactions
@@ -195,6 +218,14 @@ Providers earn fees by:
 - **Volume-based incentives** for high-frequency providers
 - **Quality bonuses** for reliable fulfillment
 - **Geographic premiums** for underserved markets
+
+### Delivery Methods
+
+- **Bank Transfer**: Direct deposit to local bank account
+- **Mobile**: Transfer to mobile wallet (M-Pesa, etc.) or mobile payment systems (UPI, PIX)
+- **Crypto Wallet**: Receive stablecoins in specified wallet
+
+<Callout type="warning">Cash pickup is not supported. All off-ramps are to fiat accounts or wallets.</Callout>
 
 ## Governance
 
@@ -239,6 +270,16 @@ As the protocol matures, governance will transition to:
 - **Redundant infrastructure** for reliability
 - **Geographic distribution** for global access
 
+### Dispute Resolution
+
+If an order is not fulfilled, it is automatically refunded. The aggregator does not handle disputes directly. If an order is stuck, communication between senders and providers may occur via a decentralized messaging protocol (e.g., XMTP).
+
+### Integration Options
+
+Senders can create orders via:
+- The Sender API (recommended for most users)
+- Direct contract interaction (for advanced/offramp use cases)
+
 <Note>
-  The Paycrest Protocol is designed to be both Web3-native and accessible to traditional financial applications. The modular architecture allows for different deployment models while maintaining the core benefits of decentralization.
+  The Paycrest protocol is designed to be both Web3-native and accessible to traditional financial applications. The modular architecture allows for different deployment models while maintaining the core benefits of decentralization.
 </Note> 

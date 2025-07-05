@@ -1,9 +1,9 @@
 ---
 title: "Introduction"
-description: "Welcome to the Paycrest Protocol - A decentralized liquidity protocol for fast, secure, and low-cost fiat-to-stablecoin exchange"
+description: "Welcome to Paycrest - A decentralized liquidity protocol for fast, secure, and low-cost fiat-to-stablecoin exchange"
 ---
 
-# Welcome to Paycrest Protocol
+# Welcome to Paycrest
 
 Paycrest is a **decentralized liquidity protocol** that enables **fast**, **secure**, and **low-cost fiat-to-stablecoin and stablecoin-to-fiat exchange** using stablecoins and KYC-linked Providers.
 
@@ -60,43 +60,73 @@ Paycrest exists to bridge the gap between digital assets and real-world financia
 
 ## Get Started
 
-Ready to integrate with Paycrest? Choose your path:
+Ready to integrate with the Paycrest protocol? Choose your path:
 
 <CardGroup cols={2}>
   <Card
     title="For Senders"
     href="/quickstart"
-    icon="zap"
+    icon="paper-plane"
   >
     Learn how to create payment orders and integrate with the Paycrest API
   </Card>
   <Card
     title="For Providers"
-    href="/implementation/provider-setup"
+    href="/guides/provider-setup-guide"
     icon="building"
   >
     Set up a provider node to supply liquidity and earn fees
   </Card>
 </CardGroup>
 
-## Supported Networks
+## Supported Stablecoins
 
-Paycrest currently supports multiple blockchain networks:
+Paycrest currently supports multiple stablecoins across various blockchain networks:
 
-- **Ethereum L2s**: Base, Arbitrum, Optimism
-- **Tron Network**: For USDT transactions
-- **More coming soon**: Modular chains and app-specific rollups
+- **USDT**: Multi-chain support (Arbitrum One, Celo, Lisk, BNB Smart Chain, Polygon, Tron)
+- **USDC**: Multi-chain support (Base, Arbitrum One, Celo, BNB Smart Chain, Polygon)
+- **CUSD**: Celo Dollar (Celo network only)
+- **CNGN**: Stablecoin pegged to Nigerian Naira (Base, BNB Smart Chain, Polygon)
+
+## Use Cases
+
+Paycrest serves a wide range of industries and use cases:
+
+### Crypto Businesses
+- **DeFi Payouts**: Automate yield and reward distributions to bank accounts
+- **NFT Marketplace Payouts**: Pay creators in their local currency
+- **Crypto Exchange Offramp**: Enable seamless crypto-to-fiat conversion
+
+### Traditional Businesses
+- **Cross-Border Payroll**: Pay international employees using stablecoins
+- **E-commerce Payment Processing**: Accept crypto payments, settle in fiat
+- **Freelancer Payments**: Streamline global contractor payments
+
+### Financial Services
+- **Remittance Services**: Faster, cheaper international transfers
+- **Microfinance**: Efficient loan disbursement and collection
+
+### Gaming & Entertainment
+- **Gaming Platform Payouts**: Pay winnings to players globally
+- **Content Creator Payments**: Pay influencers in local currencies
+
+### Enterprise Solutions
+- **B2B Payment Processing**: International supplier payments
+- **Treasury Management**: Manage global cash flows efficiently
+
+[Explore all use cases →](/concepts/use-cases)
 
 ## Supported Currencies
 
 ### Fiat Currencies
-- **African Currencies**: NGN, GHS, KES, UGX, TZS, XOF, MWK
+- **African Currencies**: NGN, KES, UGX, TZS, MWK, GHS, BRL, XOF (Benin and Cote d'Ivoire)
 - **Global Currencies**: USD, EUR, GBP, and more
 
 ### Stablecoins
 - **USDT**: Multi-chain support
-- **USDC**: Ethereum and L2 networks
-- **DAI**: Ethereum and L2 networks
+- **USDC**: Multi-chain support
+- **CUSD**: Celo Dollar
+- **CNGN**: Celo Naira
 
 ## Security & Compliance
 
@@ -107,4 +137,33 @@ Paycrest currently supports multiple blockchain networks:
 
 <Note>
   Paycrest is designed for both Web3-native users and those who may never need to know they're using crypto. The protocol abstracts away the complexity of blockchain technology while maintaining the benefits of decentralization.
+</Note>
+
+---
+
+## Roadmap
+
+Paycrest is evolving from a federated protocol to a fully decentralized, permissionless network. Here's what's live and what's coming next:
+
+### 1. **Current: Offramp Protocol**
+- Paycrest operates the only aggregator (federated model).
+- **Providers pay protocol fees to the aggregator that assigned the order.**
+- Senders and providers must sign up and obtain API keys.
+
+### 2. **Q3 2025: Onramp Launch**
+- Support for onramp (fiat-to-stablecoin) flows.
+
+### 3. **Onchain KYC (2025+)**
+- Shareable, reusable KYC credentials across all Paycrest-integrated apps.
+- Based on onchain identity standards.
+
+### 4. **Full Decentralization & P2P Networking**
+- Multiple aggregators, permissionless participation.
+- Unified Paycrest node: aggregator, provision, and hybrid modes.
+- Identities and communication via public key cryptography and P2P (e.g., libp2p).
+
+---
+
+<Note>
+  Currently, Paycrest operates a single aggregator. In the future, the protocol will support multiple aggregators and full decentralization. See the Roadmap above for details.
 </Note> 

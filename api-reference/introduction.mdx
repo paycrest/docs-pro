@@ -144,17 +144,8 @@ Error responses include detailed information:
 
 API requests are rate-limited to ensure fair usage:
 
-- **Senders**: 100 requests per minute
-- **Providers**: 200 requests per minute
-- **General endpoints**: 1000 requests per minute
-
-Rate limit headers are included in responses:
-
-```bash
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1640995200
-```
+- **Unauthenticated requests**: 20 requests per second
+- **Authenticated requests**: 500 requests per second
 
 ## Pagination
 
@@ -226,16 +217,10 @@ Set up webhooks to receive real-time updates:
 
 ## Testing
 
-### Sandbox Environment
-
-For development and testing, use the sandbox environment:
-
-- **Base URL**: `https://sandbox-api.paycrest.io/v1`
-- **Test API Key**: `11f93de0-d304-4498-8b7b-6cecbc5b2dd8`
-- **Low Minimum Orders**: Start with as little as $0.50
+Paycrest supports very low minimum orders (as little as $0.50) and uses cost-effective EVM L2s, making it perfect for testing with real transactions. Start small and scale up as you gain confidence.
 
 <Note>
-  Paycrest supports very low minimum orders ($0.50) and uses cost-effective EVM L2s, making it perfect for testing with real transactions. Start small and scale up as you gain confidence.
+  There is no sandbox environment at the moment. All testing should be done on production using small amounts.
 </Note>
 
 ## Support

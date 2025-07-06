@@ -3,13 +3,11 @@ title: "Smart Contract Interaction"
 description: "Integrate with Paycrest using the Gateway smart contract for onchain order management."
 ---
 
-<Callout type="info">
-  Paycrest smart contract integration currently supports <strong>stablecoin-to-fiat (offramp)</strong> transactions only. <strong>Fiat-to-stablecoin (onramp)</strong> is coming in Q3 2025.
-</Callout>
-
-# Smart Contract Interaction
-
 Interact directly with the Paycrest Gateway smart contract for onchain <strong>stablecoin-to-fiat (offramp)</strong> order creation, settlement, and refunds. This approach gives you full control over the blockchain transactions and is ideal for dapps, wallets, or any EVM-compatible application.
+
+<Note>
+  This guide uses **Viem** for smart contract interactions, which is the recommended Ethereum library for modern applications. Viem provides better TypeScript support, improved performance, and a more intuitive API compared to ethers.js.
+</Note>
 
 ## Overview
 
@@ -18,31 +16,53 @@ The Gateway contract is a multi-chain EVM-based smart contract that facilitates 
 ## Prerequisites
 
 - **Ethereum Provider**: MetaMask, WalletConnect, or any Web3 provider
-- **Ethers.js**: For smart contract interactions
+- **Viem**: For smart contract interactions
 - **USDT/USDC Balance**: Sufficient token balance for orders
 - **Gas Fees**: ETH for transaction fees
 
 ## Connect Wallet
 
 ```javascript
-import { ethers } from "ethers";
+import { createPublicClient, createWalletClient, http, getAddress } from "viem";
+import { base } from "viem/chains";
 
 // Connect to user's wallet
-const provider = new ethers.BrowserProvider(window.ethereum);
-const signer = await provider.getSigner();
-const userAddress = await signer.getAddress();
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http()
+});
+
+const walletClient = await createWalletClient({
+  chain: base,
+  transport: window.ethereum
+});
+
+const [userAddress] = await walletClient.getAddresses();
 ```
 
 ## Initialize Contracts
 
 ```javascript
+import { getContract } from "viem";
+
 // Gateway contract configuration
 const GATEWAY_ADDRESS = "0xE8bc3B607CfE68F47000E3d200310D49041148Fc";
 const USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7";
 
 // Contract instances
-const gateway = new ethers.Contract(GATEWAY_ADDRESS, GATEWAY_ABI, signer);
-const usdt = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
+const gateway = getContract({
+  address: GATEWAY_ADDRESS,
+  abi: GATEWAY_ABI,
+  publicClient,
+  walletClient
+});
+
+const usdt = getContract({
+  address: USDT_ADDRESS,
+  abi: USDT_ABI,
+  publicClient,
+  walletClient
+});
 ```
 
 ## Create an Order
@@ -54,16 +74,20 @@ async function createOffRampOrder(amount, recipient, refundAddress) {
     const accountName = await verifyAccount(recipient);
     const messageHash = await encryptRecipientData({ ...recipient, accountName });
     await approveUSDT(amount);
-    const tx = await gateway.createOrder(
-      USDT_ADDRESS,
-      ethers.parseUnits(amount, 6),
-      rate,
-      ethers.ZeroAddress,
-      0,
-      refundAddress,
-      messageHash
-    );
-    const receipt = await tx.wait();
+    const { request } = await gateway.simulate.createOrder({
+      args: [
+        USDT_ADDRESS,
+        parseUnits(amount, 6),
+        rate,
+        zeroAddress,
+        0n,
+        refundAddress,
+        messageHash
+      ]
+    });
+    
+    const hash = await walletClient.writeContract(request);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
     const orderId = extractOrderId(receipt);
     return { orderId, transactionHash: receipt.hash };
   } catch (error) {
@@ -116,11 +140,14 @@ async function encryptRecipientData(recipient) {
 
 ```javascript
 async function approveUSDT(amount) {
-  const usdtAmount = ethers.parseUnits(amount, 6);
-  const allowance = await usdt.allowance(userAddress, GATEWAY_ADDRESS);
-  if (allowance.lt(usdtAmount)) {
-    const tx = await usdt.approve(GATEWAY_ADDRESS, usdtAmount);
-    await tx.wait();
+  const usdtAmount = parseUnits(amount, 6);
+  const allowance = await usdt.read.allowance([userAddress, GATEWAY_ADDRESS]);
+  if (allowance < usdtAmount) {
+    const { request } = await usdt.simulate.approve({
+      args: [GATEWAY_ADDRESS, usdtAmount]
+    });
+    const hash = await walletClient.writeContract(request);
+    await publicClient.waitForTransactionReceipt({ hash });
   }
 }
 ```
@@ -129,11 +156,11 @@ async function approveUSDT(amount) {
 
 ```javascript
 async function getOrderInfo(orderId) {
-  const orderInfo = await gateway.getOrderInfo(orderId);
+  const orderInfo = await gateway.read.getOrderInfo([orderId]);
   return {
     sender: orderInfo.sender,
     token: orderInfo.token,
-    amount: ethers.formatUnits(orderInfo.amount, 6),
+    amount: formatUnits(orderInfo.amount, 6),
     isFulfilled: orderInfo.isFulfilled,
     isRefunded: orderInfo.isRefunded,
     refundAddress: orderInfo.refundAddress
@@ -144,25 +171,51 @@ async function getOrderInfo(orderId) {
 ## Event Listening
 
 ```javascript
-gateway.on("OrderCreated", (sender, token, amount, protocolFee, orderId, rate, messageHash) => {
-  console.log("Order Created:", {
-    sender,
-    token,
-    amount: ethers.formatUnits(amount, 6),
-    orderId,
-    rate
-  });
+// Listen for events using viem's watchContractEvent
+const unwatchOrderCreated = publicClient.watchContractEvent({
+  address: GATEWAY_ADDRESS,
+  abi: GATEWAY_ABI,
+  eventName: 'OrderCreated',
+  onLogs: (logs) => {
+    logs.forEach((log) => {
+      console.log("Order Created:", {
+        sender: log.args.sender,
+        token: log.args.token,
+        amount: formatUnits(log.args.amount, 6),
+        orderId: log.args.orderId,
+        rate: log.args.rate
+      });
+    });
+  }
 });
 
-gateway.on("OrderSettled", (splitOrderId, orderId, liquidityProvider, settlePercent) => {
-  console.log("Order Settled:", { orderId, liquidityProvider, settlePercent });
+const unwatchOrderSettled = publicClient.watchContractEvent({
+  address: GATEWAY_ADDRESS,
+  abi: GATEWAY_ABI,
+  eventName: 'OrderSettled',
+  onLogs: (logs) => {
+    logs.forEach((log) => {
+      console.log("Order Settled:", { 
+        orderId: log.args.orderId, 
+        liquidityProvider: log.args.liquidityProvider, 
+        settlePercent: log.args.settlePercent 
+      });
+    });
+  }
 });
 
-gateway.on("OrderRefunded", (fee, orderId) => {
-  console.log("Order Refunded:", { 
-    fee: ethers.formatUnits(fee, 6), 
-    orderId 
-  });
+const unwatchOrderRefunded = publicClient.watchContractEvent({
+  address: GATEWAY_ADDRESS,
+  abi: GATEWAY_ABI,
+  eventName: 'OrderRefunded',
+  onLogs: (logs) => {
+    logs.forEach((log) => {
+      console.log("Order Refunded:", { 
+        fee: formatUnits(log.args.fee, 6), 
+        orderId: log.args.orderId 
+      });
+    });
+  }
 });
 ```
 
@@ -196,9 +249,12 @@ async function retryTransaction(txFunction, maxRetries = 3) {
 ## Complete Example
 
 ```javascript
+import { parseUnits, formatUnits, zeroAddress } from "viem";
+
 class PaycrestGateway {
-  constructor(provider, gatewayAddress, usdtAddress) {
-    this.provider = provider;
+  constructor(publicClient, walletClient, gatewayAddress, usdtAddress) {
+    this.provider = publicClient;
+    this.walletClient = walletClient;
     this.gatewayAddress = gatewayAddress;
     this.usdtAddress = usdtAddress;
     this.gateway = null;
@@ -206,16 +262,40 @@ class PaycrestGateway {
   }
 
   async initialize() {
-    const signer = await this.provider.getSigner();
-    this.gateway = new ethers.Contract(this.gatewayAddress, GATEWAY_ABI, signer);
-    this.usdt = new ethers.Contract(this.usdtAddress, USDT_ABI, signer);
+    this.gateway = getContract({
+      address: this.gatewayAddress,
+      abi: GATEWAY_ABI,
+      publicClient: this.provider,
+      walletClient: this.walletClient
+    });
+    this.usdt = getContract({
+      address: this.usdtAddress,
+      abi: USDT_ABI,
+      publicClient: this.provider,
+      walletClient: this.walletClient
+    });
     this.setupEventListeners();
   }
 
   setupEventListeners() {
-    this.gateway.on("OrderCreated", this.handleOrderCreated.bind(this));
-    this.gateway.on("OrderSettled", this.handleOrderSettled.bind(this));
-    this.gateway.on("OrderRefunded", this.handleOrderRefunded.bind(this));
+    this.provider.watchContractEvent({
+      address: this.gatewayAddress,
+      abi: GATEWAY_ABI,
+      eventName: 'OrderCreated',
+      onLogs: this.handleOrderCreated.bind(this)
+    });
+    this.provider.watchContractEvent({
+      address: this.gatewayAddress,
+      abi: GATEWAY_ABI,
+      eventName: 'OrderSettled',
+      onLogs: this.handleOrderSettled.bind(this)
+    });
+    this.provider.watchContractEvent({
+      address: this.gatewayAddress,
+      abi: GATEWAY_ABI,
+      eventName: 'OrderRefunded',
+      onLogs: this.handleOrderRefunded.bind(this)
+    });
   }
 
   async createOrder(amount, recipient, refundAddress) {
@@ -224,16 +304,19 @@ class PaycrestGateway {
       const accountName = await this.verifyAccount(recipient);
       const messageHash = await this.encryptRecipientData({ ...recipient, accountName });
       await this.approveUSDT(amount);
-      const tx = await this.gateway.createOrder(
-        this.usdtAddress,
-        ethers.parseUnits(amount, 6),
-        rate,
-        ethers.ZeroAddress,
-        0,
-        refundAddress,
-        messageHash
-      );
-      const receipt = await tx.wait();
+      const { request } = await this.gateway.simulate.createOrder({
+        args: [
+          this.usdtAddress,
+          parseUnits(amount, 6),
+          rate,
+          zeroAddress,
+          0n,
+          refundAddress,
+          messageHash
+        ]
+      });
+      const hash = await this.walletClient.writeContract(request);
+      const receipt = await this.provider.waitForTransactionReceipt({ hash });
       return { orderId: this.extractOrderId(receipt), hash: receipt.hash };
     } catch (error) {
       handleContractError(error);
@@ -243,9 +326,9 @@ class PaycrestGateway {
 }
 
 // Usage
-const provider = new ethers.BrowserProvider(window.ethereum);
 const paycrest = new PaycrestGateway(
-  provider,
+  publicClient,
+  walletClient,
   "0xE8bc3B607CfE68F47000E3d200310D49041148Fc",
   "0xdac17f958d2ee523a2206206994597c13d831ec7"
 );

@@ -54,11 +54,18 @@ All Gateway contracts are verified on their respective network block explorers:
 To integrate with the Gateway contract, use the appropriate address for your target network:
 
 ```javascript
+import { getContract } from "viem";
+
 // Example: Base network
 const GATEWAY_ADDRESS = "0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F";
 
 // Initialize contract
-const gateway = new ethers.Contract(GATEWAY_ADDRESS, GATEWAY_ABI, signer);
+const gateway = getContract({
+  address: GATEWAY_ADDRESS,
+  abi: GATEWAY_ABI,
+  publicClient,
+  walletClient
+});
 ```
 
 For detailed integration guides, see:

@@ -5,14 +5,10 @@ description: "Understanding the technical architecture and components of the Pay
 
 ![Paycrest Protocol Architecture](https://camo.githubusercontent.com/14713b95da20b26a882bc565d87c7c956af8ed560cf8a4c1c53bde0b88f7f3cb/68747470733a2f2f6c68372d72742e676f6f676c6575736572636f6e74656e742e636f6d2f646f63737a2f41445f346e5864397644686272776a33696b4a396768735650633471615a375f526d677a4e6e33436a6257326a76415765705959426d496174384d7469646964384f43427a75503753722d5f7a616236676a6a704d3674534a6d33703030616b66523978686b6b7a636b446f5a4f684f396a6971676e4f30456b5a52794834516f786747415852656c43534e78513f6b65793d7866512d43645268746a4764415837674c3431744b38742d)
 
-Alt text: Diagram showing the flow from Payment Intent, through Aggregator nodes, to Provision nodes, and finally to end users. Aggregator nodes coordinate between the payment intent and a network of provision nodes, which then distribute funds to recipients.
-
 > **Note:** If you cannot view the image, here is a summary:
 > The diagram illustrates a payment flow: a Payment Intent is processed by a set of Aggregator nodes (which coordinate and route the transaction), which then interact with a network of Provision nodes (liquidity providers or processors). These nodes ultimately deliver funds to end users/recipients.
 
 ---
-
-# Protocol Architecture
 
 The Paycrest protocol is built on a modular, decentralized architecture that enables seamless stablecoin-to-fiat and fiat-to-stablecoin transactions. This section explains the core technical components and how they work together.
 
@@ -35,14 +31,8 @@ The **Gateway contract** is the central entry point for all payment orders in th
   <Step title="Order Creation">
     Sender creates order via API or direct contract interaction
   </Step>
-  <Step title="Order Validation">
-    Contract validates parameters and sender authorization
-  </Step>
-  <Step title="Event Emission">
-    Order event emitted for aggregator monitoring
-  </Step>
-  <Step title="Provider Assignment">
-    Aggregator assigns order to suitable provider
+  <Step title="Liquidity Aggregation">
+    Aggregator assigns order to suitable provider and coordinates liquidity
   </Step>
   <Step title="Fulfillment">
     Provider executes payment to recipient
@@ -302,26 +292,6 @@ The protocol is designed for horizontal scaling across multiple dimensions.
     - Caching headers
   </Card>
 </CardGroup>
-
-### Microservices Architecture
-
-The protocol uses a microservices architecture for modularity and scalability.
-
-#### Service Components
-
-- **Order Service**: Handle order creation and management
-- **Provider Service**: Manage provider registry and rates
-- **Settlement Service**: Handle settlement coordination
-- **Compliance Service**: Manage KYC and regulatory compliance
-- **Notification Service**: Handle webhooks and notifications
-- **Analytics Service**: Process transaction analytics
-
-#### Service Communication
-
-- **REST APIs**: Synchronous service communication
-- **Message Queues**: Asynchronous event processing
-- **WebSockets**: Real-time status updates
-- **Event Streaming**: Order lifecycle events
 
 ## Integration Architecture
 

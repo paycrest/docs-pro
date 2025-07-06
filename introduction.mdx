@@ -1,11 +1,11 @@
 ---
 title: "Introduction"
-description: "Welcome to Paycrest - A decentralized liquidity protocol for instant, secure, and zero-fee fiat-stablecoin exchange"
+description: "Welcome to Paycrest - A decentralized liquidity protocol for instant, secure, and zero-fee stablecoin-fiat exchange"
 ---
 
 # Welcome to Paycrest
 
-Paycrest is a **decentralized liquidity protocol** that democratizes global payments by enabling **instant**, **secure**, and **zero-fee** fiat-to-stablecoin and stablecoin-to-fiat exchange through a network of verified providers.
+Paycrest is a **decentralized liquidity protocol** that democratizes global payments by enabling **instant**, secure, and **zero-fee** stablecoin-to-fiat and fiat-to-stablecoin exchange through a network of verified providers.
 
 ## Our Mission
 
@@ -13,10 +13,20 @@ Paycrest is a **decentralized liquidity protocol** that democratizes global paym
 
 We believe that financial infrastructure should be accessible to everyone, everywhere. Paycrest is building the foundation for a more inclusive, transparent, and efficient global payment ecosystem where:
 
-- **Anyone can participate** as a sender, provider, or developer
-- **No central authority controls** the flow of funds
-- **Transparency and security** are built into every transaction
-- **Local solutions** work seamlessly with global networks
+<CardGroup cols={2}>
+  <Card title="Universal Access" icon="users">
+    **Anyone can participate** as a sender, provider, or developer
+  </Card>
+  <Card title="Decentralized Control" icon="building">
+    **No central authority controls** the flow of funds
+  </Card>
+  <Card title="Built-in Security" icon="shield-check">
+    **Transparency and security** are built into every transaction
+  </Card>
+  <Card title="Global Integration" icon="globe">
+    **Local solutions** work seamlessly with global networks
+  </Card>
+</CardGroup>
 
 This mission drives every aspect of our protocol design, from the decentralized architecture to the developer-friendly APIs.
 
@@ -82,6 +92,22 @@ Paycrest addresses these challenges by introducing a decentralized liquidity pro
   </Step>
 </Steps>
 
+<Note>
+  **Performance**: Most orders complete in 30-60 seconds, with automatic refunds if not completed within 5 minutes.
+</Note>
+
+## What is Paycrest?
+
+Just as **SWIFT** operates as a financial messaging protocol without being a financial institution, **Paycrest** functions as a decentralized payment messaging protocol without being a payment processor. The Paycrest protocol doesn't hold funds, process payments, or act as a financial intermediary.
+
+Instead, the protocol provides the **infrastructure and messaging layer** that enables:
+- **Instant order routing** between senders and providers
+- **Secure message transmission** with encrypted recipient data
+- **Standardized payment instructions** across different currencies and networks
+- **Compliance integration** with regulatory requirements
+
+The key difference? Paycrest is **faster, cheaper, and onchain** - leveraging blockchain technology to eliminate the need for traditional banking intermediaries while maintaining the same reliability and security standards.
+
 ## Key Participants
 
 <CardGroup cols={2}>
@@ -138,14 +164,12 @@ Ready to integrate with the Paycrest protocol? Choose your path:
   </Card>
   <Card
     title="For Providers"
-    href="/guides/provider-setup-guide"
+    href="/implementation-guides/provider-setup-guide"
     icon="building"
   >
     Set up a provider node to supply liquidity and earn fees
   </Card>
 </CardGroup>
-
-
 
 ## Use Cases
 
@@ -234,7 +258,7 @@ Paycrest supports a growing list of currencies across multiple regions, with new
     Protocol changes require multi-signature approval
   </Card>
   
-  <Card title="Compliance Integration" icon="check-circle">
+  <Card title="Compliance Integration" icon="shield-check">
     Built-in support for regulatory requirements
   </Card>
 </CardGroup>

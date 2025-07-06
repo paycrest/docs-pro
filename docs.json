@@ -50,17 +50,11 @@
         ]
       },
       {
-        "group": "Implementation",
+        "group": "Implementation Guides",
         "pages": [
-          "implementation/sender-api-integration",
-          "implementation/smart-contract-interaction"
-        ]
-      },
-      {
-        "group": "Guides",
-        "pages": [
-          "guides/provider-setup-guide",
-          "guides/troubleshooting"
+          "implementation-guides/sender-api-integration",
+          "implementation-guides/smart-contract-interaction",
+          "implementation-guides/provider-setup-guide"
         ]
       },
       {
@@ -78,7 +72,8 @@
           "resources/supported-stablecoins",
           "resources/supported-currencies",
           "resources/code-standards",
-          "resources/gateway-contract-addresses"
+          "resources/gateway-contract-addresses",
+          "resources/troubleshooting"
         ]
       }
     ]

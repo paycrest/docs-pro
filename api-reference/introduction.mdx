@@ -17,9 +17,6 @@ The Paycrest Aggregator API provides a comprehensive interface for interacting w
 ```bash
 # Production
 https://api.paycrest.io/v1
-
-# Sandbox
-https://sandbox-api.paycrest.io/v1
 ```
 
 ## Authentication
@@ -27,7 +24,7 @@ https://sandbox-api.paycrest.io/v1
 All API requests require authentication using an API key. Include your API key in the request header:
 
 ```bash
-X-API-Key: YOUR_API_KEY
+API-Key: YOUR_API_KEY
 ```
 
 ### Getting Your API Key
@@ -86,7 +83,7 @@ All requests should include the following headers:
 
 ```bash
 Content-Type: application/json
-X-API-Key: YOUR_API_KEY
+API-Key: YOUR_API_KEY
 ```
 
 ### Example Request
@@ -94,12 +91,12 @@ X-API-Key: YOUR_API_KEY
 ```bash
 curl -X POST "https://api.paycrest.io/v1/sender/orders" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "API-Key: YOUR_API_KEY" \
   -d '{
-    "amount": "100",
+    "amount": 100,
     "token": "USDT",
     "network": "base",
-    "rate": "1.0",
+    "rate": 1.0,
     "recipient": {
       "institution": "GTB",
       "accountIdentifier": "1234567890",
@@ -227,8 +224,6 @@ Set up webhooks to receive real-time updates:
 | `429` | Too Many Requests - Rate limit exceeded |
 | `500` | Internal Server Error - Server error |
 
-
-
 ## Testing
 
 ### Sandbox Environment
@@ -238,8 +233,6 @@ For development and testing, use the sandbox environment:
 - **Base URL**: `https://sandbox-api.paycrest.io/v1`
 - **Test API Key**: `11f93de0-d304-4498-8b7b-6cecbc5b2dd8`
 - **Low Minimum Orders**: Start with as little as $0.50
-
-
 
 <Note>
   Paycrest supports very low minimum orders ($0.50) and uses cost-effective EVM L2s, making it perfect for testing with real transactions. Start small and scale up as you gain confidence.

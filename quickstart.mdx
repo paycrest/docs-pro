@@ -16,41 +16,69 @@ Before you begin, make sure you have:
 - **API credentials** (API key and secret)
 - Basic knowledge of **REST APIs**
 
-## Step 1: Get Your API Credentials
+<AccordionGroup>
+  <Accordion icon="key" title="Get API Credentials">
+    Follow these steps to obtain your API credentials:
+    
+    1. **Register an account** at [app.paycrest.io](https://app.paycrest.io)
+    2. **Complete KYC verification** (required for compliance)
+    3. **Generate API credentials** in your dashboard
+    4. **Save your API key** securely
+    
+    <Note>
+      Your API key should be kept secure and never shared publicly. It's used to authenticate all API requests.
+    </Note>
+  </Accordion>
+  
+  <Accordion icon="shield" title="KYC Requirements">
+    All participants must complete KYC verification before using the Paycrest protocol. This includes:
+    
+    - **Identity verification** (government-issued ID)
+    - **Address verification** (utility bill or bank statement)
+    - **Business verification** (for corporate accounts)
+    - **Compliance checks** (sanctions screening)
+    
+    The verification process typically takes 1-3 business days.
+  </Accordion>
+</AccordionGroup>
 
-First, you'll need to obtain your API credentials from the Paycrest dashboard:
-
-1. **Register an account** at [app.paycrest.io](https://app.paycrest.io)
-2. **Complete KYC verification** (required for compliance)
-3. **Generate API credentials** in your dashboard
-4. **Save your API key** securely
-
-<Note>
-  Your API key should be kept secure and never shared publicly. It's used to authenticate all API requests.
-</Note>
-
-## Step 2: Create Your First Payment Order
+## Create Your First Payment Order
 
 Let's create a simple payment order to send USDT to a Nigerian bank account.
+
+<Steps>
+  <Step title="Prepare Your Request">
+    Set up your API key and prepare the payment order data with recipient details.
+  </Step>
+  <Step title="Send the Request">
+    Make a POST request to the orders endpoint with your payment details.
+  </Step>
+  <Step title="Handle the Response">
+    Process the response to get your order ID and payment instructions.
+  </Step>
+  <Step title="Monitor Status">
+    Track your order status and handle webhooks for real-time updates.
+  </Step>
+</Steps>
 
 ### Request
 
 ```bash
 curl -X POST "https://api.paycrest.io/v1/sender/orders" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "amount": "100",
     "token": "USDT",
     "network": "base",
     "rate": "1.0",
-          "recipient": {
-        "institution": "GTB",
-        "accountIdentifier": "1234567890",
-        "accountName": "John Doe",
-        "currency": "NGN",
-        "memo": "Salary payment for January 2024"
-      },
+    "recipient": {
+      "institution": "GTB",
+      "accountIdentifier": "1234567890",
+      "accountName": "John Doe",
+      "currency": "NGN",
+      "memo": "Salary payment for January 2024"
+    },
     "reference": "payment-123",
     "returnAddress": "0x1234567890123456789012345678901234567890"
   }'
@@ -76,36 +104,48 @@ curl -X POST "https://api.paycrest.io/v1/sender/orders" \
 }
 ```
 
-## Step 3: Check Order Status
+## Check Order Status
 
 Monitor your payment order status:
 
 ```bash
 curl -X GET "https://api.paycrest.io/v1/sender/orders/550e8400-e29b-41d4-a716-446655440000" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "API-Key: YOUR_API_KEY"
 ```
 
-### Order Statuses
+<CardGroup cols={2}>
+  <Card title="Order Statuses" icon="list">
+    <ul>
+      <li><strong>pending</strong>: Order created, waiting for provider assignment</li>
+      <li><strong>processing</strong>: Provider assigned, fulfillment in progress</li>
+      <li><strong>fulfilled</strong>: Payment completed by provider</li>
+      <li><strong>validated</strong>: Payment validated and confirmed</li>
+      <li><strong>settled</strong>: Order fully completed on blockchain</li>
+      <li><strong>cancelled</strong>: Order cancelled (with reason)</li>
+      <li><strong>refunded</strong>: Funds refunded to sender</li>
+    </ul>
+  </Card>
+  
+  <Card title="Response Time" icon="clock">
+    <ul>
+      <li><strong>Order Creation</strong>: ~2-5 seconds</li>
+      <li><strong>Provider Assignment</strong>: ~10-30 seconds</li>
+      <li><strong>Fulfillment</strong>: ~30-60 seconds (recipient receives fiat)</li>
+      <li><strong>Auto-Refund</strong>: If not completed within 5 minutes</li>
+    </ul>
+  </Card>
+</CardGroup>
 
-- **`pending`**: Order created, waiting for provider assignment
-- **`processing`**: Provider assigned, fulfillment in progress
-- **`fulfilled`**: Payment completed, waiting for settlement
-- **`settled`**: Order fully completed
-- **`cancelled`**: Order cancelled (with reason)
+## Handle Webhooks (Optional)
 
-## Step 4: Handle Webhooks (Optional)
+Set up webhooks to receive real-time updates through your Sender dashboard:
 
-Set up webhooks to receive real-time updates:
+1. **Log into your Sender dashboard** at [app.paycrest.io](https://app.paycrest.io)
+2. **Navigate to Settings** → **Webhooks**
+3. **Enter your webhook URL** (e.g., `https://your-domain.com/webhooks/paycrest`)
+4. **Save the configuration**
 
-```bash
-curl -X POST "https://api.paycrest.io/v1/sender/webhooks" \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://your-domain.com/webhooks/paycrest",
-    "events": ["order.created", "order.fulfilled", "order.settled"]
-  }'
-```
+Your webhook endpoint will receive notifications for all order status changes automatically.
 
 ### Webhook Payload Example
 
@@ -123,7 +163,7 @@ curl -X POST "https://api.paycrest.io/v1/sender/webhooks" \
 }
 ```
 
-## Step 5: Get Supported Currencies
+## Get Supported Currencies
 
 Check available currencies and institutions:
 
@@ -137,143 +177,221 @@ curl -X GET "https://api.paycrest.io/v1/institutions/NGN"
 
 ## Code Examples
 
-### JavaScript/Node.js
+<AccordionGroup>
+  <Accordion icon="js" title="JavaScript/Node.js">
+    ```javascript
+    const axios = require('axios');
 
-```javascript
-const axios = require('axios');
+    const API_KEY = 'YOUR_API_KEY';
+    const BASE_URL = 'https://api.paycrest.io/v1';
 
-const API_KEY = 'YOUR_API_KEY';
-const BASE_URL = 'https://api.paycrest.io/v1';
-
-// Create payment order
-async function createPaymentOrder() {
-  try {
-    const response = await axios.post(`${BASE_URL}/sender/orders`, {
-      amount: '100',
-      token: 'USDT',
-      network: 'base',
-      rate: '1.0',
-              recipient: {
-          institution: 'GTB',
-          accountIdentifier: '1234567890',
-          accountName: 'John Doe',
-          currency: 'NGN',
-          memo: 'Salary payment for January 2024'
-        },
-      reference: 'payment-123',
-      returnAddress: '0x1234567890123456789012345678901234567890'
-    }, {
-      headers: {
-        'X-API-Key': API_KEY,
-        'Content-Type': 'application/json'
+    // Create payment order
+    async function createPaymentOrder() {
+      try {
+        const response = await axios.post(`${BASE_URL}/sender/orders`, {
+          amount: '100',
+          token: 'USDT',
+          network: 'base',
+          rate: '1.0',
+          recipient: {
+            institution: 'GTB',
+            accountIdentifier: '1234567890',
+            accountName: 'John Doe',
+            currency: 'NGN',
+            memo: 'Salary payment for January 2024'
+          },
+          reference: 'payment-123',
+          returnAddress: '0x1234567890123456789012345678901234567890'
+        }, {
+          headers: {
+            'API-Key': API_KEY,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Order created:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error creating order:', error.response?.data || error.message);
       }
-    });
-    
-    console.log('Order created:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating order:', error.response?.data || error.message);
-  }
-}
-
-// Get order status
-async function getOrderStatus(orderId) {
-  try {
-    const response = await axios.get(`${BASE_URL}/sender/orders/${orderId}`, {
-      headers: {
-        'X-API-Key': API_KEY
-      }
-    });
-    
-    console.log('Order status:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting order status:', error.response?.data || error.message);
-  }
-}
-```
-
-### Python
-
-```python
-import requests
-
-API_KEY = 'YOUR_API_KEY'
-BASE_URL = 'https://api.paycrest.io/v1'
-
-headers = {
-    'X-API-Key': API_KEY,
-    'Content-Type': 'application/json'
-}
-
-# Create payment order
-def create_payment_order():
-    payload = {
-        'amount': '100',
-        'token': 'USDT',
-        'network': 'base',
-        'rate': '1.0',
-                'recipient': {
-          'institution': 'GTB',
-          'accountIdentifier': '1234567890',
-          'accountName': 'John Doe',
-          'currency': 'NGN',
-          'memo': 'Salary payment for January 2024'
-        },
-        'reference': 'payment-123',
-        'returnAddress': '0x1234567890123456789012345678901234567890'
     }
-    
-    response = requests.post(f'{BASE_URL}/sender/orders', json=payload, headers=headers)
-    return response.json()
 
-# Get order status
-def get_order_status(order_id):
-    response = requests.get(f'{BASE_URL}/sender/orders/{order_id}', headers=headers)
-    return response.json()
-```
+    // Get order status
+    async function getOrderStatus(orderId) {
+      try {
+        const response = await axios.get(`${BASE_URL}/sender/orders/${orderId}`, {
+          headers: {
+            'API-Key': API_KEY
+          }
+        });
+        
+        console.log('Order status:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error getting order status:', error.response?.data || error.message);
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="python" title="Python">
+    ```python
+    import requests
 
-## Testing
+    API_KEY = 'YOUR_API_KEY'
+    BASE_URL = 'https://api.paycrest.io/v1'
 
-### Sandbox Environment
+    # Create payment order
+    def create_payment_order():
+        try:
+            response = requests.post(
+                f'{BASE_URL}/sender/orders',
+                json={
+                    'amount': '100',
+                    'token': 'USDT',
+                    'network': 'base',
+                    'rate': '1.0',
+                    'recipient': {
+                        'institution': 'GTB',
+                        'accountIdentifier': '1234567890',
+                        'accountName': 'John Doe',
+                        'currency': 'NGN',
+                        'memo': 'Salary payment for January 2024'
+                    },
+                    'reference': 'payment-123',
+                    'returnAddress': '0x1234567890123456789012345678901234567890'
+                },
+                headers={
+                    'API-Key': API_KEY,
+                    'Content-Type': 'application/json'
+                }
+            )
+            
+            print('Order created:', response.json())
+            return response.json()
+        except Exception as e:
+            print('Error creating order:', str(e))
 
-For development and testing, use the sandbox environment:
+    # Get order status
+    def get_order_status(order_id):
+        try:
+            response = requests.get(
+                f'{BASE_URL}/sender/orders/{order_id}',
+                headers={'API-Key': API_KEY}
+            )
+            
+            print('Order status:', response.json())
+            return response.json()
+        except Exception as e:
+            print('Error getting order status:', str(e))
+    ```
+  </Accordion>
+  
+  <Accordion icon="golang" title="Go">
+    ```go
+    package main
 
-- **Base URL**: `https://sandbox-api.paycrest.io/v1`
-- **Test API Key**: `11f93de0-d304-4498-8b7b-6cecbc5b2dd8`
-- **Low Minimum Orders**: Start with as little as $0.50
+    import (
+        "bytes"
+        "encoding/json"
+        "fmt"
+        "io"
+        "net/http"
+    )
 
+    const (
+        API_KEY  = "YOUR_API_KEY"
+        BASE_URL = "https://api.paycrest.io/v1"
+    )
 
+    // Create payment order
+    func createPaymentOrder() error {
+        payload := map[string]interface{}{
+            "amount": "100",
+            "token":  "USDT",
+            "network": "base",
+            "rate":   "1.0",
+            "recipient": map[string]interface{}{
+                "institution":       "GTB",
+                "accountIdentifier": "1234567890",
+                "accountName":       "John Doe",
+                "currency":          "NGN",
+                "memo":             "Salary payment for January 2024",
+            },
+            "reference":     "payment-123",
+            "returnAddress": "0x1234567890123456789012345678901234567890",
+        }
+
+        jsonData, _ := json.Marshal(payload)
+        req, _ := http.NewRequest("POST", BASE_URL+"/sender/orders", bytes.NewBuffer(jsonData))
+        req.Header.Set("API-Key", API_KEY)
+        req.Header.Set("Content-Type", "application/json")
+
+        client := &http.Client{}
+        resp, err := client.Do(req)
+        if err != nil {
+            return err
+        }
+        defer resp.Body.Close()
+
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println("Order created:", string(body))
+        return nil
+    }
+
+    // Get order status
+    func getOrderStatus(orderID string) error {
+        req, _ := http.NewRequest("GET", BASE_URL+"/sender/orders/"+orderID, nil)
+        req.Header.Set("API-Key", API_KEY)
+
+        client := &http.Client{}
+        resp, err := client.Do(req)
+        if err != nil {
+            return err
+        }
+        defer resp.Body.Close()
+
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println("Order status:", string(body))
+        return nil
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
 
 ## Next Steps
 
-Now that you've created your first payment order, explore:
-
 <CardGroup cols={2}>
   <Card
-    title="API Reference"
-    href="/api-reference/introduction"
+    title="Explore the API"
+    href="/api-reference"
     icon="code"
   >
-    Complete API documentation with all endpoints and schemas
+    Dive deeper into the Paycrest API with interactive examples and detailed documentation
   </Card>
   <Card
-    title="Implementation Guides"
-    href="/implementation/sender-integration"
-    icon="book"
+    title="Learn About Architecture"
+    href="/concepts/architecture"
+    icon="building"
   >
-    Detailed guides for different integration scenarios
+    Understand how the Paycrest protocol works under the hood
+  </Card>
+  <Card
+    title="Check Supported Assets"
+    href="/resources/supported-stablecoins"
+    icon="coins"
+  >
+    See all supported stablecoins, networks, and fiat currencies
+  </Card>
+  <Card
+    title="Get Support"
+    href="mailto:support@paycrest.io"
+    icon="message"
+  >
+    Need help? Contact our support team for assistance
   </Card>
 </CardGroup>
 
-## Support
-
-Need help? Get support through:
-
-- **Documentation**: Browse our comprehensive guides
-- **Telegram**: Join our community at [t.me/+Stx-wLOdj49iNDM0](https://t.me/+Stx-wLOdj49iNDM0)
-- **GitHub**: Report issues and contribute at [github.com/paycrest](https://github.com/paycrest)
-
 <Note>
-  Paycrest supports very low minimum orders ($0.50) and uses cost-effective EVM L2s, making it perfect for testing with real transactions. Start small and scale up as you gain confidence.
+  This quickstart guide covers the basics. For production integration, make sure to implement proper error handling, webhook verification, and security best practices.
 </Note> 

@@ -2,6 +2,12 @@
 
 This directory contains the complete documentation for the Paycrest Protocol, built with Mintlify.
 
+## Mission
+
+> **"To accelerate the creation of democratized payment systems of the future"**
+
+Paycrest is building the infrastructure for a more inclusive, transparent, and efficient global payment ecosystem. Our documentation reflects this mission by providing comprehensive, accessible resources for developers, providers, and users of the protocol.
+
 ## Structure
 
 ```

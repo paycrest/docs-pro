@@ -13,7 +13,7 @@ components:
     ApiKeyAuth:
       type: apiKey
       in: header
-      name: X-API-Key
+      name: API-Key
   schemas:
 
     # Sender Schemas
@@ -21,12 +21,12 @@ components:
       type: object
       properties:
         amount:
-          type: string
+          type: number
         token:
           type: string
           description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         rate:
-          type: string
+          type: number
         network:
           type: string
           enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
@@ -81,9 +81,9 @@ components:
           type: string
           format: date-time
         senderFee:
-          type: string
+          type: number
         transactionFee:
-          type: string
+          type: number
         reference:
           type: string
     PaymentOrderResponse:
@@ -92,20 +92,20 @@ components:
         id:
           type: string
         amount:
-          type: string
+          type: number
         amountPaid:
-          type: string
+          type: number
         amountReturned:
-          type: string
+          type: number
         token:
           type: string
           description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         senderFee:
-          type: string
+          type: number
         transactionFee:
-          type: string
+          type: number
         rate:
-          type: string
+          type: number
         network:
           type: string
           enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
@@ -184,9 +184,9 @@ components:
         gatewayId:
           type: string
         amount:
-          type: string
+          type: number
         rate:
-          type: string
+          type: number
         blockNumber:
           type: integer
         txHash:
@@ -228,7 +228,7 @@ components:
         id:
           type: string
         amount:
-          type: string
+          type: number
         institution:
           type: string
           description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
@@ -260,20 +260,20 @@ components:
       type: object
       properties:
         marketRate:
-          type: string
+          type: number
         minimumRate:
-          type: string
+          type: number
         maximumRate:
-          type: string
+          type: number
     ProviderStatsResponse:
       type: object
       properties:
         totalOrders:
           type: integer
         totalFiatVolume:
-          type: string
+          type: number
         totalCryptoVolume:
-          type: string
+          type: number
 
     # General Schemas
     SupportedCurrencies:
@@ -291,7 +291,7 @@ components:
         symbol:
           type: string
         marketRate:
-          type: string
+          type: number
     SupportedInstitutions:
       type: object
       properties:
@@ -326,7 +326,7 @@ components:
         orderId:
           type: string
         amount:
-          type: string
+          type: number
         token:
           type: string
           description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
@@ -335,7 +335,7 @@ components:
           enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
           description: Network identifier for the blockchain
         settlePercent:
-          type: string
+          type: number
         status:
           type: string
         txHash:
@@ -357,11 +357,11 @@ components:
         splitOrderId:
           type: string
         amount:
-          type: string
+          type: number
         rate:
-          type: string
+          type: number
         orderPercent:
-          type: string
+          type: number
     LockPaymentOrderTxReceipt:
       type: object
       properties:
@@ -422,38 +422,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReceiveAddressResponse'
-    get:
-      tags:
-        - Sender
-      summary: List payment orders
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: query
-          name: status
-          schema:
-            type: string
-        - in: query
-          name: token
-          schema:
-            type: string
-        - in: query
-          name: network
-          schema:
-            type: string
-            enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
-            description: Network identifier for the blockchain
-        - in: query
-          name: ordering
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of payment orders
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SenderPaymentOrderList'
   /sender/orders/{id}:
     get:
       tags:
@@ -511,6 +479,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LockPaymentOrderStatusResponse'
+  /sender/orders:
+    get:
+      tags:
+        - Sender
+      summary: List payment orders
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: token
+          schema:
+            type: string
+        - in: query
+          name: network
+          schema:
+            type: string
+            enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+            description: Network identifier for the blockchain
+        - in: query
+          name: ordering
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of payment orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SenderPaymentOrderList'
 
   # Provider Endpoints
   /provider/orders:

@@ -1,0 +1,286 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions for Paycrest integration"
+---
+
+# Troubleshooting Guide
+
+This guide helps you resolve common issues when integrating with the Paycrest API.
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion icon="key" title="Authentication Issues">
+    <h4>Invalid API Key</h4>
+    <p>If you're getting 401 Unauthorized errors:</p>
+    <ul>
+      <li>Verify your API key is correct and not expired</li>
+      <li>Ensure you're using the correct header: <code>API-Key</code> (not <code>X-API-Key</code>)</li>
+      <li>Check that your account has been KYC verified</li>
+      <li>Confirm your API key has the necessary permissions</li>
+    </ul>
+    
+    <h4>Example Request</h4>
+    ```bash
+    curl -X GET "https://api.paycrest.io/v1/sender/orders" \
+      -H "API-Key: YOUR_API_KEY"
+    ```
+  </Accordion>
+  
+  <Accordion icon="danger" title="Order Creation Errors">
+    <h4>400 Bad Request</h4>
+    <p>Common causes and solutions:</p>
+    <ul>
+      <li><strong>Invalid amount</strong>: Amount must be a positive number</li>
+      <li><strong>Unsupported token</strong>: Check supported tokens in the resources section</li>
+      <li><strong>Invalid network</strong>: Ensure the network supports your chosen token</li>
+      <li><strong>Missing recipient details</strong>: All recipient fields are required</li>
+      <li><strong>Invalid institution</strong>: Check supported institutions for the currency</li>
+    </ul>
+    
+    <h4>Example Error Response</h4>
+    ```json
+    {
+      "status": "error",
+      "message": "Invalid recipient details",
+      "errors": {
+        "recipient.accountIdentifier": "Account number is required",
+        "recipient.institution": "Institution not supported for NGN"
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="clock" title="Order Status Issues">
+    <h4>Order Stuck in Pending</h4>
+    <p>If your order has been in <b>pending</b> status for more than 10 minutes:</p>
+    <ul>
+      <li>Check if there are any network issues or maintenance</li>
+      <li>Verify the recipient details are correct</li>
+      <li>Contact support with your order ID</li>
+    </ul>
+    
+    <h4>Order Refunded</h4>
+    <p>Common reasons for a refund:</p>
+    <ul>
+      <li>Insufficient provider liquidity</li>
+      <li>Recipient account issues</li>
+      <li>Compliance or regulatory restrictions</li>
+      <li>Network congestion or technical issues</li>
+    </ul>
+  </Accordion>
+  
+  <Accordion icon="webhook" title="Webhook Issues">
+    <h4>Webhooks Not Receiving</h4>
+    <p>Troubleshooting steps:</p>
+    <ul>
+      <li>Verify your webhook URL is publicly accessible</li>
+      <li>Check that your server returns 200 OK responses</li>
+      <li>Ensure your webhook endpoint can handle POST requests</li>
+      <li>Verify webhook signature for security</li>
+    </ul>
+    
+    <h4>Webhook Signature Verification</h4>
+    ```javascript
+    const crypto = require('crypto');
+    
+    function verifyWebhookSignature(payload, signature, secret) {
+      const expectedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(JSON.stringify(payload))
+        .digest('hex');
+      
+      return crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expectedSignature)
+      );
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Network Issues">
+    <h4>Blockchain Network Problems</h4>
+    <p>If you're experiencing issues with specific networks:</p>
+    <ul>
+      <li><strong>High gas fees</strong>: Consider using L2 networks like Base, Arbitrum, Polygon, Celo, or Lisk</li>
+      <li><strong>Slow confirmations</strong>: Some networks may have congestion</li>
+      <li><strong>Network maintenance</strong>: Check our Telegram community for updates</li>
+    </ul>
+    
+    <h4>Supported Networks</h4>
+    <CardGroup cols={2}>
+      <Card title="Ethereum L2s" icon="link">
+        <ul>
+          <li>Base</li>
+          <li>Arbitrum One</li>
+          <li>Polygon</li>
+          <li>Celo</li>
+          <li>Lisk</li>
+        </ul>
+      </Card>
+      <Card title="Other Networks" icon="network">
+        <ul>
+          <li>BNB Smart Chain</li>
+          <li>Tron</li>
+        </ul>
+      </Card>
+    </CardGroup>
+  </Accordion>
+</AccordionGroup>
+
+## Error Codes Reference
+
+<CardGroup cols={2}>
+  <Card title="4xx Client Errors" icon="alert-triangle">
+    <ul>
+      <li><strong>400</strong>: Bad Request - Invalid parameters</li>
+      <li><strong>401</strong>: Unauthorized - Invalid API key</li>
+      <li><strong>403</strong>: Forbidden - Insufficient permissions</li>
+      <li><strong>404</strong>: Not Found - Resource doesn't exist</li>
+      <li><strong>429</strong>: Too Many Requests - Rate limit exceeded</li>
+    </ul>
+  </Card>
+  
+  <Card title="5xx Server Errors" icon="server">
+    <ul>
+      <li><strong>500</strong>: Internal Server Error</li>
+      <li><strong>502</strong>: Bad Gateway</li>
+      <li><strong>503</strong>: Service Unavailable</li>
+      <li><strong>504</strong>: Gateway Timeout</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Rate Limits
+
+<Note>
+  Paycrest implements rate limiting to ensure fair usage. Limits vary by endpoint and account tier.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Unauthenticated" icon="lock">
+    <ul>
+      <li><strong>20 requests/second</strong></li>
+      <li>Applies to requests without a valid API key</li>
+    </ul>
+  </Card>
+  <Card title="Authenticated" icon="user">
+    <ul>
+      <li><strong>500 requests/second</strong></li>
+      <li>Applies to requests with a valid API key</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Testing & Debugging
+
+<Steps>
+  <Step title="Enable Debug Logging">
+    Add debug headers to see detailed request/response information:
+    ```bash
+    curl -X POST "https://api.paycrest.io/v1/sender/orders" \
+      -H "API-Key: YOUR_API_KEY" \
+      -H "X-Debug: true" \
+      -H "Content-Type: application/json" \
+      -d '{"amount": "10", ...}'
+    ```
+  </Step>
+  
+  <Step title="Check API Status">
+    Monitor API status and performance:
+    <ul>
+      <li>Monitor response times and error rates</li>
+      <li>Set up alerts for critical endpoints</li>
+      <li>Join our Telegram community for real-time updates</li>
+    </ul>
+  </Step>
+  
+  <Step title="Contact Support">
+    If you're still experiencing issues:
+    <ul>
+      <li>Email: <a href="mailto:support@paycrest.io">support@paycrest.io</a></li>
+      <li>Telegram: <a href="https://t.me/+Stx-wLOdj49iNDM0">Community Chat</a></li>
+      <li>Include order IDs and error details</li>
+    </ul>
+  </Step>
+</Steps>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Error Handling" icon="shield">
+    <ul>
+      <li>Always check response status codes</li>
+      <li>Implement exponential backoff for retries</li>
+      <li>Log errors with context for debugging</li>
+      <li>Handle network timeouts gracefully</li>
+    </ul>
+  </Card>
+  
+  <Card title="Security" icon="lock">
+    <ul>
+      <li>Store API keys securely (use environment variables)</li>
+      <li>Verify webhook signatures</li>
+      <li>Use HTTPS for all API calls</li>
+      <li>Rotate API keys regularly</li>
+    </ul>
+  </Card>
+  
+  <Card title="Performance" icon="zap">
+    <ul>
+      <li>Cache supported currencies and institutions</li>
+      <li>Use webhooks instead of polling</li>
+      <li>Implement connection pooling</li>
+      <li>Monitor rate limits</li>
+    </ul>
+  </Card>
+  
+  <Card title="Monitoring" icon="activity">
+    <ul>
+      <li>Track order success/failure rates</li>
+      <li>Monitor response times</li>
+      <li>Set up alerts for critical failures</li>
+      <li>Log important events for audit trails</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+<CardGroup cols={2}>
+  <Card
+    title="Documentation"
+    href="/api-reference"
+    icon="book"
+  >
+    Browse our comprehensive API documentation with interactive examples
+  </Card>
+  
+  <Card
+    title="Community"
+    href="https://t.me/+Stx-wLOdj49iNDM0"
+    icon="users"
+  >
+    Join our Telegram community for peer support and discussions
+  </Card>
+  
+  <Card
+    title="Support Team"
+    href="mailto:support@paycrest.io"
+    icon="message"
+  >
+    Contact our technical support team for personalized assistance
+  </Card>
+  
+  <Card
+    title="GitHub Issues"
+    href="https://github.com/paycrest/aggregator/issues"
+    icon="github"
+  >
+    Report bugs and request features through our GitHub repository
+  </Card>
+</CardGroup>
+
+<Note>
+  This troubleshooting guide covers the most common issues. For specific problems not covered here, please contact our support team with detailed information about your use case and any error messages you're seeing.
+</Note> 

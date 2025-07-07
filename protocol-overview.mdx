@@ -131,7 +131,7 @@ A KYC-verified participant that supplies fiat liquidity in exchange for stableco
 
 ### Aggregator
 
-A KYC-verified entity that coordinates the entire payment process:
+A KYC-verified entity that coordinates the entire order routing process:
 
 - **Listens to payment order events** from the Gateway contract
 - **Matches orders** with suitable Providers
@@ -230,9 +230,9 @@ Support for additional networks is planned as the protocol evolves.
 
 The Paycrest protocol implements a **zero-fee experience for senders**:
 
-- **Sender fees**: 0% (all sender fees are paid by providers)
+- **Sender fees**: Optional fees that sender businesses can charge to their users
 - **Provider fees**: Competitive rates based on market conditions
-- **Protocol fees**: Minimal fees for network maintenance
+- **Protocol fees**: Fees paid to aggregators for order routing and coordination
 - **Network fees**: Gas costs for blockchain transactions
 
 Providers earn fees by:
@@ -240,6 +240,10 @@ Providers earn fees by:
 - **Volume-based incentives** for high-frequency providers
 - **Quality bonuses** for reliable fulfillment
 - **Geographic premiums** for underserved markets
+
+<Note>
+  **Fee Structure Clarification:** In the current beta phase, Paycrest operates the only aggregator, so aggregator fees are paid to Paycrest. As the protocol scales, multiple aggregators will compete for order routing, similar to how Ethereum validators earn fees for adding transactions to blocks. This creates a decentralized marketplace where aggregators earn fees for providing order routing services.
+</Note>
 
 ### Delivery Methods
 

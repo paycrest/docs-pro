@@ -153,9 +153,9 @@ curl -X GET "https://api.paycrest.io/v1/sender/orders/550e8400-e29b-41d4-a716-44
   
   <Card title="Response Time" icon="clock">
     <ul>
-      <li><strong>Order Creation</strong>: ~2-5 seconds</li>
-      <li><strong>Provider Assignment</strong>: ~10-30 seconds</li>
-      <li><strong>Fulfillment</strong>: ~30-60 seconds (recipient receives fiat)</li>
+      <li><strong>Order Processing</strong>: < 30 seconds (creation → validation)</li>
+      <li><strong>Settlement</strong>: +15 seconds (onchain settlement)</li>
+      <li><strong>Total Time</strong>: ~1-2 minutes</li>
       <li><strong>Auto-Refund</strong>: If not completed within 5 minutes</li>
     </ul>
   </Card>

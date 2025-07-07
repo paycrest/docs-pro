@@ -1,13 +1,13 @@
 ---
 title: "Transaction Lifecycle"
-description: "Understanding how transactions flow through the Paycrest protocol from creation to settlement"
+description: "Understanding how payment messages flow through the Paycrest protocol from order creation to settlement"
 ---
 
-Understanding the complete lifecycle of a transaction in the Paycrest protocol is crucial for building reliable integrations. This section explains each stage of the transaction process and what happens at each step.
+Understanding the complete lifecycle of a payment order in the Paycrest protocol is crucial for building reliable integrations. This section explains each stage of the order processing flow and what happens at each step.
 
 ## Overview
 
-A transaction in the Paycrest protocol follows a well-defined lifecycle from order creation to final settlement. Each stage has specific requirements, validations, and outcomes that ensure reliable and compliant payment processing.
+A payment order in the Paycrest protocol follows a well-defined lifecycle from order creation to final settlement. Each stage has specific requirements, validations, and outcomes that ensure reliable and compliant order routing and fulfillment.
 
 ## Transaction Stages
 
@@ -54,7 +54,7 @@ The transaction lifecycle begins when a sender creates a payment order.
 - **`initiated`**: Order initiated via API (before Gateway creation)
 - **`pending`**: Order awaiting provider assignment
 - **`processing`**: Order being processed by provider
-- **`cancelled`**: Order cancelled by sender or system
+- **`cancelled`**: Order cancelled by provider
 - **`fulfilled`**: Order fulfilled by provider
 - **`validated`**: Order validated and ready for settlement
 - **`settled`**: Order fully completed on blockchain
@@ -99,19 +99,19 @@ Once an order is created, aggregators work to assign it to suitable providers.
 - **`rejected`**: No suitable provider available
 - **`retrying`**: Retrying assignment with different criteria
 
-### 3. Payment Execution
+### 3. Order Fulfillment
 
-Once assigned, the provider executes the payment to the recipient.
+Once assigned, the provider fulfills the payment to the recipient.
 
-#### Execution Process
+#### Fulfillment Process
 
 **Provider Actions:**
-- **Payment Initiation**: Initiate payment through PSP
-- **Delivery Confirmation**: Confirm payment delivery
+- **Payment Initiation**: Initiate payout or collection through PSP
+- **Delivery Confirmation**: Confirm payment delivery or receipt
 - **Settlement Reporting**: Report successful settlement
 - **Compliance Reporting**: Report for regulatory compliance
 
-#### Execution Methods
+#### Fulfillment Methods
 
 <CardGroup cols={2}>
   <Card title="Bank Transfer">
@@ -140,22 +140,23 @@ Once assigned, the provider executes the payment to the recipient.
   </Card>
 </CardGroup>
 
-#### Execution States
+#### Fulfillment Statuses
 
-- **`processing`**: Payment being executed by provider
-- **`fulfilled`**: Payment successfully delivered to recipient
-- **`failed`**: Payment execution failed
-- **`pending_confirmation`**: Awaiting delivery confirmation
+- **`pending`**: Payment being executed by provider
+- **`success`**: Payment successfully delivered to recipient
+- **`failed`**: Order fulfillment failed
 
 ### 4. Settlement
 
-After successful payment execution, the transaction moves to settlement phase.
+After successful payment order fulfillment, the transaction moves to settlement phase.
 
 #### Settlement Process
 
 **Onchain Settlement:**
-- **Token Transfer**: Stablecoins transferred to provider
-- **Fee Distribution**: Protocol fees distributed
+- **Stablecoin Transfer**: Stablecoins transferred to provider (offramp) or recipient (onramp)
+- **Fee Distribution:**
+  - Provider fees
+  - Protocol fees
 - **Settlement Confirmation**: Blockchain confirmation
 - **Order Completion**: Order marked as settled
 
@@ -171,8 +172,6 @@ After successful payment execution, the transaction moves to settlement phase.
   <Card title="Fee Distribution">
     - Provider fees
     - Protocol fees
-    - Aggregator fees
-    - Network fees
   </Card>
   <Card title="Compliance Settlement">
     - Regulatory reporting
@@ -189,10 +188,8 @@ After successful payment execution, the transaction moves to settlement phase.
 </CardGroup>
 
 #### Settlement States
-
-- **`settling`**: Settlement in progress
+- **`validated`**: Order validated and ready for settlement
 - **`settled`**: Settlement completed successfully
-- **`settlement_failed`**: Settlement failed
 - **`refunded`**: Order refunded to sender
 
 ## Transaction Status Flow
@@ -222,20 +219,14 @@ After successful payment execution, the transaction moves to settlement phase.
 
 ### Alternative Flows
 
-#### Failed Transaction Flow
+#### Expired Transaction Flow
 
 <Steps>
   <Step title="initiated">
     Order initiated via API
   </Step>
-  <Step title="pending">
-    Awaiting provider assignment
-  </Step>
-  <Step title="cancelled">
-    Order cancelled by sender or system
-  </Step>
   <Step title="expired">
-    Order expired without fulfillment
+    Order expired - receive address did not receive stablecoin within time limit
   </Step>
 </Steps>
 
@@ -251,8 +242,8 @@ After successful payment execution, the transaction moves to settlement phase.
   <Step title="processing">
     Order being processed by provider
   </Step>
-  <Step title="fulfilled">
-    Order fulfilled by provider
+  <Step title="cancelled">
+    Order cancelled by provider
   </Step>
   <Step title="refunded">
     Funds refunded to sender
@@ -264,11 +255,10 @@ After successful payment execution, the transaction moves to settlement phase.
 ### Processing Timeframes
 
 **Standard Processing Times:**
-- **Order Creation**: < 30 seconds
-- **Provider Assignment**: 1-5 minutes
-- **Payment Execution**: 5-30 minutes
-- **Settlement**: 1-10 minutes
-- **Total Transaction Time**: 10-45 minutes
+- **Order Processing**: < 30 seconds (creation → validation)
+- **Settlement**: +15 seconds (onchain settlement)
+- **Total Transaction Time**: ~1-2 minutes
+- **Auto-Refund**: If not completed within 5 minutes
 
 **Factors Affecting Speed:**
 - **Geographic Location**: Distance between sender and recipient
@@ -276,14 +266,15 @@ After successful payment execution, the transaction moves to settlement phase.
 - **Provider Capacity**: Provider liquidity and processing speed
 - **Network Congestion**: Blockchain network conditions
 - **Compliance Checks**: Additional verification requirements
+- **Provider Reassignment**: Failed validation may trigger reassignment (extends processing time)
 
 ### Service Level Agreements
 
-**Availability:**
+**Availability (Beta):**
 - **API Uptime**: 99.9% availability
-- **Order Processing**: 99.5% success rate
-- **Settlement**: 99.8% success rate
-- **Support Response**: < 4 hours
+- **Order Processing**: ~80% success rate (beta phase)
+- **Settlement**: ~100% success rate (beta phase)
+- **Support Response**: < 48 hours
 
 **Performance Metrics:**
 - **API Response Time**: < 200ms average
@@ -323,7 +314,7 @@ After successful payment execution, the transaction moves to settlement phase.
 - Check geographic restrictions
 - Contact support for assistance
 
-#### Payment Execution Errors
+#### Order Fulfillment Errors
 
 **Execution Failures:**
 - Recipient account issues
@@ -333,7 +324,7 @@ After successful payment execution, the transaction moves to settlement phase.
 
 **Resolution:**
 - Verify recipient details
-- Retry payment execution
+- Retry order fulfillment
 - Check network connectivity
 - Review compliance requirements
 
@@ -389,7 +380,7 @@ After successful payment execution, the transaction moves to settlement phase.
   <Card title="Status Updates">
     - Order creation confirmation
     - Provider assignment notification
-    - Payment execution updates
+    - Order fulfillment updates
     - Settlement confirmation
   </Card>
   <Card title="Error Notifications">
@@ -430,7 +421,7 @@ After successful payment execution, the transaction moves to settlement phase.
 
 ### For Providers
 
-**Payment Execution:**
+**Order Fulfillment:**
 - Execute payments promptly
 - Provide accurate delivery confirmations
 - Report compliance information
@@ -456,4 +447,10 @@ After successful payment execution, the transaction moves to settlement phase.
 - Maintain security standards
 - Provide reliable infrastructure
 
-> **Note:** Understanding the transaction lifecycle helps participants build reliable integrations and provides transparency into the payment process. Each stage is designed to ensure secure, compliant, and efficient payment processing. 
+<Note>
+  Understanding the transaction lifecycle helps participants build reliable integrations and provides transparency into the order routing process. Each stage is designed to ensure secure, compliant, and efficient order coordination.
+</Note>
+
+<Note>
+  **Beta Status:** Paycrest is currently in beta phase. Success rates, processing times, and feature availability may evolve as the protocol matures. We're actively working to improve reliability and performance based on real-world usage.
+</Note> 

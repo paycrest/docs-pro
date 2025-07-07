@@ -13,7 +13,7 @@ A **KYC-verified entity** that initiates either a fiat-to-stablecoin or stableco
 
 - **KYC Required**: Must complete identity verification (KYC/KYB)
 - **API Access**: Uses the Sender API to create orders or can interact directly with the Gateway contract
-- **Fee Structure**: Zero transaction fees (all sender fees are paid by providers)
+- **Fee Structure**: Zero protocol fees, with optional sender fees for business monetization
 - **Flexibility**: Can be smart contracts, dApps, or traditional applications
 
 ### Responsibilities
@@ -22,6 +22,7 @@ A **KYC-verified entity** that initiates either a fiat-to-stablecoin or stableco
 - **Recipient Information**: Provide accurate bank account or wallet details
 - **Compliance**: Maintain KYC status and regulatory compliance
 - **Monitoring**: Track order status and handle webhooks
+- **Fee Management**: Optionally set sender fees to monetize their service
 
 ### Use Cases
 
@@ -29,6 +30,10 @@ A **KYC-verified entity** that initiates either a fiat-to-stablecoin or stableco
 - **Business Payments**: Pay suppliers in different currencies
 - **DeFi Applications**: Bridge between crypto and traditional finance
 - **E-commerce**: Accept crypto payments and settle in fiat
+
+<Note>
+  **Sender Fee Model:** Sender businesses can optionally charge fees to their users by setting `senderFee` and `senderFeeRecipient` when creating orders. This allows businesses to monetize their Paycrest integration while keeping the protocol itself fee-free for end users. The sender fee is distributed to the specified recipient upon successful order settlement.
+</Note>
 
 ## Recipient
 
@@ -100,7 +105,7 @@ A **KYC-verified participant** that supplies fiat liquidity in exchange for stab
 
 ## Aggregator
 
-A **KYC-verified entity** that coordinates the entire payment process and ensures protocol efficiency.
+A **KYC-verified entity** that coordinates the entire order routing process and ensures protocol efficiency.
 
 ### Characteristics
 

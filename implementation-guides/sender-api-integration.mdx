@@ -387,6 +387,10 @@ func sendTokens(order map[string]interface{}) error {
   </Tab>
 </Tabs>
 
+<Note>
+  The amount you send to the receive address should be the sum of `amount`, `senderFee`, and `transactionFee` as returned in the order response.
+</Note>
+
 ## Order Status Monitoring
 
 Your status can either be any of the following:

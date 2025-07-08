@@ -20,8 +20,7 @@ Before you begin, make sure you have:
     
     1. **Register an account** at [app.paycrest.io](https://app.paycrest.io)
     2. **Complete KYC verification** (required for compliance)
-    3. **Generate API credentials** in your dashboard
-    4. **Save your API key** securely
+    3. **Access your API key** in your dashboard
     
     <Note>
       Your API key should be kept secure and never shared publicly. It's used to authenticate all API requests.
@@ -46,12 +45,73 @@ Let's create a simple payment order to send USDT to a Nigerian bank account.
 
 ### Step 1: Get Exchange Rate
 
-First, fetch the current exchange rate for your token and currency pair:
+<Tabs>
+  <Tab title="cURL">
 
 ```bash
 curl -X GET "https://api.paycrest.io/v1/rates/USDT/100/NGN" \
   -H "API-Key: YOUR_API_KEY"
 ```
+
+  </Tab>
+  <Tab title="JavaScript">
+
+```javascript
+const axios = require('axios');
+
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.paycrest.io/v1';
+
+async function getExchangeRate() {
+  const response = await axios.get(`${BASE_URL}/rates/USDT/100/NGN`, {
+    headers: { 'API-Key': API_KEY }
+  });
+  console.log(response.data);
+}
+getExchangeRate();
+```
+
+  </Tab>
+  <Tab title="Python">
+
+```python
+import requests
+
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.paycrest.io/v1'
+
+response = requests.get(
+    f'{BASE_URL}/rates/USDT/100/NGN',
+    headers={'API-Key': API_KEY}
+)
+print(response.json())
+```
+
+  </Tab>
+  <Tab title="Go">
+
+```go
+package main
+
+import (
+    "fmt"
+    "net/http"
+    "io/ioutil"
+)
+
+func main() {
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", "https://api.paycrest.io/v1/rates/USDT/100/NGN", nil)
+    req.Header.Set("API-Key", "YOUR_API_KEY")
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+
+  </Tab>
+</Tabs>
 
 **Response:**
 ```json
@@ -86,7 +146,8 @@ curl -X GET "https://api.paycrest.io/v1/rates/USDT/100/NGN" \
 
 ### Step 2: Create Payment Order
 
-Now create the payment order using the rate you fetched:
+<Tabs>
+  <Tab title="cURL">
 
 ```bash
 curl -X POST "https://api.paycrest.io/v1/sender/orders" \
@@ -108,6 +169,126 @@ curl -X POST "https://api.paycrest.io/v1/sender/orders" \
     "returnAddress": "0x1234567890123456789012345678901234567890"
   }'
 ```
+
+  </Tab>
+  <Tab title="JavaScript">
+
+```javascript
+const axios = require('axios');
+
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.paycrest.io/v1';
+
+async function createOrder() {
+  const response = await axios.post(
+    `${BASE_URL}/sender/orders`,
+    {
+      amount: '100',
+      token: 'USDT',
+      network: 'base',
+      rate: '1250.50',
+      recipient: {
+        institution: 'GTB',
+        accountIdentifier: '1234567890',
+        accountName: 'John Doe',
+        currency: 'NGN',
+        memo: 'Salary payment for January 2024'
+      },
+      reference: 'payment-123',
+      returnAddress: '0x1234567890123456789012345678901234567890'
+    },
+    {
+      headers: {
+        'API-Key': API_KEY,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  console.log(response.data);
+}
+createOrder();
+```
+
+  </Tab>
+  <Tab title="Python">
+
+```python
+import requests
+
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.paycrest.io/v1'
+
+order_data = {
+    "amount": "100",
+    "token": "USDT",
+    "network": "base",
+    "rate": "1250.50",
+    "recipient": {
+        "institution": "GTB",
+        "accountIdentifier": "1234567890",
+        "accountName": "John Doe",
+        "currency": "NGN",
+        "memo": "Salary payment for January 2024"
+    },
+    "reference": "payment-123",
+    "returnAddress": "0x1234567890123456789012345678901234567890"
+}
+
+response = requests.post(
+    f'{BASE_URL}/sender/orders',
+    headers={
+        'API-Key': API_KEY,
+        'Content-Type': 'application/json'
+    },
+    json=order_data
+)
+print(response.json())
+```
+
+  </Tab>
+  <Tab title="Go">
+
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+)
+
+func main() {
+    order := map[string]interface{}{
+        "amount": "100",
+        "token": "USDT",
+        "network": "base",
+        "rate": "1250.50",
+        "recipient": map[string]interface{}{
+            "institution": "GTB",
+            "accountIdentifier": "1234567890",
+            "accountName": "John Doe",
+            "currency": "NGN",
+            "memo": "Salary payment for January 2024",
+        },
+        "reference": "payment-123",
+        "returnAddress": "0x1234567890123456789012345678901234567890",
+    }
+    jsonData, _ := json.Marshal(order)
+    req, _ := http.NewRequest("POST", "https://api.paycrest.io/v1/sender/orders", bytes.NewBuffer(jsonData))
+    req.Header.Set("API-Key", "YOUR_API_KEY")
+    req.Header.Set("Content-Type", "application/json")
+    client := &http.Client{}
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+
+  </Tab>
+</Tabs>
 
 ### Response
 
@@ -131,12 +312,76 @@ curl -X POST "https://api.paycrest.io/v1/sender/orders" \
 
 ## Check Order Status
 
-Monitor your payment order status:
+<Tabs>
+  <Tab title="cURL">
 
 ```bash
 curl -X GET "https://api.paycrest.io/v1/sender/orders/550e8400-e29b-41d4-a716-446655440000" \
   -H "API-Key: YOUR_API_KEY"
 ```
+
+  </Tab>
+  <Tab title="JavaScript">
+
+```javascript
+const axios = require('axios');
+
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.paycrest.io/v1';
+
+async function checkOrderStatus(orderId) {
+  const response = await axios.get(
+    `${BASE_URL}/sender/orders/${orderId}`,
+    { headers: { 'API-Key': API_KEY } }
+  );
+  console.log(response.data);
+}
+checkOrderStatus('550e8400-e29b-41d4-a716-446655440000');
+```
+
+  </Tab>
+  <Tab title="Python">
+
+```python
+import requests
+
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.paycrest.io/v1'
+ORDER_ID = '550e8400-e29b-41d4-a716-446655440000'
+
+response = requests.get(
+    f'{BASE_URL}/sender/orders/{ORDER_ID}',
+    headers={'API-Key': API_KEY}
+)
+print(response.json())
+```
+
+  </Tab>
+  <Tab title="Go">
+
+```go
+package main
+
+import (
+    "fmt"
+    "io/ioutil"
+    "net/http"
+)
+
+func main() {
+    orderId := "550e8400-e29b-41d4-a716-446655440000"
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", "https://api.paycrest.io/v1/sender/orders/"+orderId, nil)
+    req.Header.Set("API-Key", "YOUR_API_KEY")
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+
+  </Tab>
+</Tabs>
 
 <CardGroup cols={2}>
   <Card title="Order Statuses" icon="list">

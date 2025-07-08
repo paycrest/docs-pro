@@ -1,9 +1,7 @@
 ---
-title: "API Reference"
+title: "Introduction"
 description: "API Reference for Paycrest. Explore endpoints, request/response formats, and integration details."
 ---
-
-# API Reference
 
 Welcome to the Paycrest API Reference. Here you'll find detailed documentation for all available endpoints, including request/response formats, authentication, and integration tips.
 
@@ -31,8 +29,7 @@ API-Key: YOUR_API_KEY
 
 1. **Register** at [app.paycrest.io](https://app.paycrest.io)
 2. **Complete KYC verification** (required for compliance)
-3. **Generate API credentials** in your dashboard
-4. **Save your API key** securely
+3. **Access your API key** in your dashboard
 
 <Note>
   Your API key should be kept secure and never shared publicly. It's used to authenticate all API requests and identify your account.
@@ -56,10 +53,6 @@ For entities that create payment orders:
 For liquidity providers that fulfill orders:
 
 - **`GET /provider/orders`** - List available orders for fulfillment
-- **`POST /provider/orders/{id}/accept`** - Accept an order for fulfillment
-- **`POST /provider/orders/{id}/decline`** - Decline an order
-- **`POST /provider/orders/{id}/fulfill`** - Fulfill an order with payment details
-- **`POST /provider/orders/{id}/cancel`** - Cancel an order with reason
 - **`GET /provider/rates/{token}/{fiat}`** - Get market rates
 - **`GET /provider/stats`** - Get provider statistics
 - **`GET /provider/node-info`** - Get node information
@@ -88,6 +81,9 @@ API-Key: YOUR_API_KEY
 
 ### Example Request
 
+<Tabs>
+  <Tab title="cURL">
+
 ```bash
 curl -X POST "https://api.paycrest.io/v1/sender/orders" \
   -H "Content-Type: application/json" \
@@ -108,6 +104,126 @@ curl -X POST "https://api.paycrest.io/v1/sender/orders" \
     "returnAddress": "0x1234567890123456789012345678901234567890"
   }'
 ```
+
+  </Tab>
+  <Tab title="JavaScript">
+
+```javascript
+const axios = require('axios');
+
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.paycrest.io/v1';
+
+const orderData = {
+  amount: 100,
+  token: 'USDT',
+  network: 'base',
+  rate: 1.0,
+  recipient: {
+    institution: 'GTB',
+    accountIdentifier: '1234567890',
+    accountName: 'John Doe',
+    currency: 'NGN',
+    memo: 'Salary payment for January 2024'
+  },
+  reference: 'payment-123',
+  returnAddress: '0x1234567890123456789012345678901234567890'
+};
+
+const response = await axios.post(`${BASE_URL}/sender/orders`, orderData, {
+  headers: {
+    'API-Key': API_KEY,
+    'Content-Type': 'application/json'
+  }
+});
+
+console.log(response.data);
+```
+
+  </Tab>
+  <Tab title="Python">
+
+```python
+import requests
+
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.paycrest.io/v1'
+
+order_data = {
+    "amount": 100,
+    "token": "USDT",
+    "network": "base",
+    "rate": 1.0,
+    "recipient": {
+        "institution": "GTB",
+        "accountIdentifier": "1234567890",
+        "accountName": "John Doe",
+        "currency": "NGN",
+        "memo": "Salary payment for January 2024"
+    },
+    "reference": "payment-123",
+    "returnAddress": "0x1234567890123456789012345678901234567890"
+}
+
+response = requests.post(
+    f'{BASE_URL}/sender/orders',
+    headers={
+        'API-Key': API_KEY,
+        'Content-Type': 'application/json'
+    },
+    json=order_data
+)
+
+print(response.json())
+```
+
+  </Tab>
+  <Tab title="Go">
+
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+)
+
+func main() {
+    orderData := map[string]interface{}{
+        "amount": 100,
+        "token":  "USDT",
+        "network": "base",
+        "rate":   1.0,
+        "recipient": map[string]interface{}{
+            "institution":       "GTB",
+            "accountIdentifier": "1234567890",
+            "accountName":       "John Doe",
+            "currency":          "NGN",
+            "memo":             "Salary payment for January 2024",
+        },
+        "reference":     "payment-123",
+        "returnAddress": "0x1234567890123456789012345678901234567890",
+    }
+
+    jsonData, _ := json.Marshal(orderData)
+    req, _ := http.NewRequest("POST", "https://api.paycrest.io/v1/sender/orders", bytes.NewBuffer(jsonData))
+    req.Header.Set("API-Key", "YOUR_API_KEY")
+    req.Header.Set("Content-Type", "application/json")
+
+    client := &http.Client{}
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+
+  </Tab>
+</Tabs>
 
 ## Response Format
 
@@ -156,9 +272,83 @@ List endpoints support pagination with the following parameters:
 
 ### Example
 
+<Tabs>
+  <Tab title="cURL">
+
 ```bash
-GET /sender/orders?page=2&pageSize=10
+curl -X GET "https://api.paycrest.io/v1/sender/orders?page=2&pageSize=10" \
+  -H "API-Key: YOUR_API_KEY"
 ```
+
+  </Tab>
+  <Tab title="JavaScript">
+
+```javascript
+const axios = require('axios');
+
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.paycrest.io/v1';
+
+async function getOrders(page = 2, pageSize = 10) {
+  const response = await axios.get(`${BASE_URL}/sender/orders`, {
+    headers: { 'API-Key': API_KEY },
+    params: { page, pageSize }
+  });
+  console.log(response.data);
+}
+getOrders();
+```
+
+  </Tab>
+  <Tab title="Python">
+
+```python
+import requests
+
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.paycrest.io/v1'
+
+response = requests.get(
+    f'{BASE_URL}/sender/orders',
+    headers={'API-Key': API_KEY},
+    params={'page': 2, 'pageSize': 10}
+)
+print(response.json())
+```
+
+  </Tab>
+  <Tab title="Go">
+
+```go
+package main
+
+import (
+    "fmt"
+    "io/ioutil"
+    "net/http"
+    "net/url"
+)
+
+func main() {
+    baseURL := "https://api.paycrest.io/v1/sender/orders"
+    params := url.Values{}
+    params.Add("page", "2")
+    params.Add("pageSize", "10")
+    
+    req, _ := http.NewRequest("GET", baseURL+"?"+params.Encode(), nil)
+    req.Header.Set("API-Key", "YOUR_API_KEY")
+    
+    client := &http.Client{}
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+
+  </Tab>
+</Tabs>
 
 Response includes pagination metadata:
 
@@ -204,16 +394,9 @@ Set up webhooks to receive real-time updates:
 }
 ```
 
-## Error Codes
-
-| Code | Description |
-|------|-------------|
-| `400` | Bad Request - Invalid parameters |
-| `401` | Unauthorized - Invalid API key |
-| `403` | Forbidden - Insufficient permissions |
-| `404` | Not Found - Resource not found |
-| `429` | Too Many Requests - Rate limit exceeded |
-| `500` | Internal Server Error - Server error |
+<Note>
+  For detailed webhook implementation guide including signature verification, retry logic, and best practices, see the [Sender API Integration Guide](/implementation-guides/sender-api-integration#webhooks).
+</Note>
 
 ## Testing
 
@@ -228,10 +411,10 @@ Paycrest supports very low minimum orders (as little as $0.50) and uses cost-eff
 Need help with the API?
 
 - **Documentation**: Browse our comprehensive guides
-- **Telegram**: Join our community at [t.me/+Stx-wLOdj49iNDM0](https://t.me/+Stx-wLOdj49iNDM0)
+- **Telegram**: Join our developer community at [t.me/+Stx-wLOdj49iNDM0](https://t.me/+Stx-wLOdj49iNDM0)
 - **GitHub**: Report issues at [github.com/paycrest](https://github.com/paycrest)
 - **Email**: Contact support at [support@paycrest.io](mailto:support@paycrest.io)
 
 ## Fee Model
 
-All sender fees are paid by providers. Senders experience zero or minimal fees, maximizing their payout.
+Protocol fees are paid by providers. Senders experience zero fees, maximizing their payout.

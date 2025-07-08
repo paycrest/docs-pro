@@ -79,21 +79,64 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
     </ul>
     
     <h4>Webhook Signature Verification</h4>
-    ```javascript
-    const crypto = require('crypto');
     
-    function verifyWebhookSignature(payload, signature, secret) {
-      const expectedSignature = crypto
-        .createHmac('sha256', secret)
-        .update(JSON.stringify(payload))
-        .digest('hex');
+    <Tabs>
+      <Tab title="JavaScript">
+      ```javascript
+      const crypto = require('crypto');
       
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature)
-      );
-    }
-    ```
+      function verifyWebhookSignature(payload, signature, secret) {
+        const expectedSignature = crypto
+          .createHmac('sha256', secret)
+          .update(JSON.stringify(payload))
+          .digest('hex');
+        
+        return crypto.timingSafeEqual(
+          Buffer.from(signature),
+          Buffer.from(expectedSignature)
+        );
+      }
+      ```
+      </Tab>
+      <Tab title="Python">
+      ```python
+      import hmac
+      import hashlib
+      import json
+      
+      def verify_webhook_signature(payload, signature, secret):
+          expected_signature = hmac.new(
+              secret.encode('utf-8'),
+              json.dumps(payload, separators=(',', ':')).encode('utf-8'),
+              hashlib.sha256
+          ).hexdigest()
+          
+          return hmac.compare_digest(signature, expected_signature)
+      ```
+      </Tab>
+      <Tab title="Go">
+      ```go
+      package main
+      
+      import (
+          "crypto/hmac"
+          "crypto/sha256"
+          "encoding/hex"
+          "encoding/json"
+          "fmt"
+      )
+      
+      func verifyWebhookSignature(payload interface{}, signature, secret string) bool {
+          payloadBytes, _ := json.Marshal(payload)
+          h := hmac.New(sha256.New, []byte(secret))
+          h.Write(payloadBytes)
+          expectedSignature := hex.EncodeToString(h.Sum(nil))
+          
+          return hmac.Equal([]byte(signature), []byte(expectedSignature))
+      }
+      ```
+      </Tab>
+    </Tabs>
   </Accordion>
   
   <Accordion icon="wifi" title="Network Issues">

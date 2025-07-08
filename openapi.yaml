@@ -4,6 +4,13 @@ info:
   version: 1.0.0
   description: |
     OpenAPI schema for the Paycrest Aggregator API. This covers sender, provider, and general endpoints.
+tags:
+  - name: Sender
+    description: Endpoints for senders to create and manage payment orders
+  - name: Provider
+    description: Endpoints for providers to manage and fulfill orders
+  - name: General
+    description: General protocol and utility endpoints
 servers:
   - url: /v1
 security:
@@ -540,86 +547,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProviderLockOrderList'
-  /provider/orders/{id}/accept:
-    post:
-      tags:
-        - Provider
-      summary: Accept order
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '201':
-          description: Order accepted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AcceptOrderResponse'
-  /provider/orders/{id}/decline:
-    post:
-      tags:
-        - Provider
-      summary: Decline order
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order declined
-  /provider/orders/{id}/fulfill:
-    post:
-      tags:
-        - Provider
-      summary: Fulfill order
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FulfillLockOrderPayload'
-      responses:
-        '200':
-          description: Order fulfilled
-  /provider/orders/{id}/cancel:
-    post:
-      tags:
-        - Provider
-      summary: Cancel order
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelLockOrderPayload'
-      responses:
-        '200':
-          description: Order cancelled
   /provider/rates/{token}/{fiat}:
     get:
       tags:

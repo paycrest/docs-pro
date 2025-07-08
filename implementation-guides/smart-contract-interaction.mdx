@@ -22,6 +22,8 @@ The Gateway contract is a multi-chain EVM-based smart contract that facilitates 
 
 ## Connect Wallet
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 import { createPublicClient, createWalletClient, http, getAddress } from "viem";
 import { base } from "viem/chains";
@@ -39,9 +41,70 @@ const walletClient = await createWalletClient({
 
 const [userAddress] = await walletClient.getAddresses();
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+from web3 import Web3
+from eth_account import Account
+
+# Connect to Base network
+w3 = Web3(Web3.HTTPProvider('https://mainnet.base.org'))
+
+# For browser integration, you'd typically use a wallet like MetaMask
+# This example shows how to connect with a private key
+account = Account.from_key('YOUR_PRIVATE_KEY')
+user_address = account.address
+```
+  </Tab>
+  <Tab title="Go">
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ethereum/go-ethereum/crypto"
+    "github.com/ethereum/go-ethereum/ethclient"
+)
+
+func connectWallet() {
+    // Connect to Base network
+    client, err := ethclient.Dial("https://mainnet.base.org")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Load private key
+    privateKey, err := crypto.HexToECDSA("YOUR_PRIVATE_KEY")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Get account address
+    publicKey := privateKey.Public()
+    publicKeyECDSA, ok := publicKey.(*crypto.PublicKey)
+    if !ok {
+        log.Fatal("error casting public key to ECDSA")
+    }
+
+    userAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+    fmt.Printf("Connected wallet: %s\n", userAddress.Hex())
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Wallet connection is typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Initialize Contracts
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 import { getContract } from "viem";
 
@@ -64,9 +127,56 @@ const usdt = getContract({
   walletClient
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+from web3 import Web3
+
+# Gateway contract configuration
+GATEWAY_ADDRESS = "0xE8bc3B607CfE68F47000E3d200310D49041148Fc"
+USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7"
+
+# Contract instances
+gateway = w3.eth.contract(address=GATEWAY_ADDRESS, abi=GATEWAY_ABI)
+usdt = w3.eth.contract(address=USDT_ADDRESS, abi=USDT_ABI)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+package main
+
+import (
+    "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/ethclient"
+)
+
+// Gateway contract configuration
+const GATEWAY_ADDRESS = "0xE8bc3B607CfE68F47000E3d200310D49041148Fc"
+const USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7"
+
+func initializeContracts(client *ethclient.Client) {
+    gatewayAddress := common.HexToAddress(GATEWAY_ADDRESS)
+    usdtAddress := common.HexToAddress(USDT_ADDRESS)
+    
+    // Contract instances would be created with ABI bindings
+    // This is a simplified example
+    fmt.Printf("Gateway contract: %s\n", gatewayAddress.Hex())
+    fmt.Printf("USDT contract: %s\n", usdtAddress.Hex())
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Contract initialization is typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Create an Order
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 async function createOffRampOrder(amount, recipient, refundAddress) {
   try {
@@ -96,9 +206,107 @@ async function createOffRampOrder(amount, recipient, refundAddress) {
   }
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+async def create_off_ramp_order(amount, recipient, refund_address):
+    try:
+        rate = await get_exchange_rate()
+        account_name = await verify_account(recipient)
+        message_hash = await encrypt_recipient_data({**recipient, 'accountName': account_name})
+        await approve_usdt(amount)
+        
+        # Build transaction
+        tx = gateway.functions.createOrder(
+            USDT_ADDRESS,
+            w3.to_wei(amount, 'ether'),
+            rate,
+            '0x0000000000000000000000000000000000000000',
+            0,
+            refund_address,
+            message_hash
+        ).build_transaction({
+            'from': user_address,
+            'gas': 200000,
+            'gasPrice': w3.eth.gas_price,
+            'nonce': w3.eth.get_transaction_count(user_address)
+        })
+        
+        # Sign and send transaction
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        
+        order_id = extract_order_id(receipt)
+        return {'orderId': order_id, 'transactionHash': receipt['transactionHash'].hex()}
+    except Exception as error:
+        print(f"Error creating order: {error}")
+        raise error
+```
+  </Tab>
+  <Tab title="Go">
+```go
+func createOffRampOrder(amount string, recipient map[string]interface{}, refundAddress string) error {
+    rate, err := getExchangeRate()
+    if err != nil {
+        return err
+    }
+    
+    accountName, err := verifyAccount(recipient)
+    if err != nil {
+        return err
+    }
+    
+    messageHash, err := encryptRecipientData(recipient, accountName)
+    if err != nil {
+        return err
+    }
+    
+    err = approveUSDT(amount)
+    if err != nil {
+        return err
+    }
+    
+    // Build transaction data
+    data := buildCreateOrderData(amount, rate, refundAddress, messageHash)
+    
+    // Create transaction
+    tx := &types.Transaction{
+        To:       &gatewayAddress,
+        Value:    big.NewInt(0),
+        Gas:      200000,
+        GasPrice: big.NewInt(20000000000), // 20 gwei
+        Data:     data,
+    }
+    
+    // Sign and send transaction
+    signedTx, err := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(8453)), privateKey)
+    if err != nil {
+        return err
+    }
+    
+    err = client.SendTransaction(context.Background(), signedTx)
+    if err != nil {
+        return err
+    }
+    
+    fmt.Printf("Order created with hash: %s\n", signedTx.Hash().Hex())
+    return nil
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Smart contract interactions are typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Exchange Rate and Account Verification
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 async function getExchangeRate() {
   const response = await fetch("https://api.paycrest.io/v1/rates/usdt/1/ngn");
@@ -119,9 +327,111 @@ async function verifyAccount(recipient) {
   return data.data;
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import requests
+
+async def get_exchange_rate():
+    response = requests.get("https://api.paycrest.io/v1/rates/usdt/1/ngn")
+    data = response.json()
+    return float(data['data'])
+
+async def verify_account(recipient):
+    response = requests.post(
+        "https://api.paycrest.io/v1/verify-account",
+        headers={"Content-Type": "application/json"},
+        json={
+            "institution": recipient["institution"],
+            "accountIdentifier": recipient["accountIdentifier"]
+        }
+    )
+    data = response.json()
+    return data['data']
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+    "strconv"
+)
+
+func getExchangeRate() (float64, error) {
+    resp, err := http.Get("https://api.paycrest.io/v1/rates/usdt/1/ngn")
+    if err != nil {
+        return 0, err
+    }
+    defer resp.Body.Close()
+    
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return 0, err
+    }
+    
+    var result map[string]interface{}
+    json.Unmarshal(body, &result)
+    
+    rateStr := result["data"].(string)
+    rate, err := strconv.ParseFloat(rateStr, 64)
+    if err != nil {
+        return 0, err
+    }
+    
+    return rate, nil
+}
+
+func verifyAccount(recipient map[string]interface{}) (string, error) {
+    jsonData, _ := json.Marshal(map[string]interface{}{
+        "institution":       recipient["institution"],
+        "accountIdentifier": recipient["accountIdentifier"],
+    })
+    
+    resp, err := http.Post(
+        "https://api.paycrest.io/v1/verify-account",
+        "application/json",
+        bytes.NewBuffer(jsonData),
+    )
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+    
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+    
+    var result map[string]interface{}
+    json.Unmarshal(body, &result)
+    
+    return result["data"].(string), nil
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Get exchange rate
+curl -X GET "https://api.paycrest.io/v1/rates/usdt/1/ngn"
+
+# Verify account
+curl -X POST "https://api.paycrest.io/v1/verify-account" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "institution": "GTB",
+    "accountIdentifier": "1234567890"
+  }'
+```
+  </Tab>
+</Tabs>
 
 ## Data Encryption
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 async function encryptRecipientData(recipient) {
   const response = await fetch("https://api.paycrest.io/v1/pubkey");
@@ -135,9 +445,104 @@ async function encryptRecipientData(recipient) {
   return encrypted;
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import requests
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+import json
+import base64
+
+async def encrypt_recipient_data(recipient):
+    response = requests.get("https://api.paycrest.io/v1/pubkey")
+    public_key = response.json()['data']
+    
+    # Import public key
+    key = RSA.import_key(public_key)
+    cipher = PKCS1_OAEP.new(key)
+    
+    # Encrypt recipient data
+    recipient_json = json.dumps(recipient)
+    encrypted = cipher.encrypt(recipient_json.encode('utf-8'))
+    encrypted_b64 = base64.b64encode(encrypted).decode('utf-8')
+    
+    return encrypted_b64
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "crypto/rand"
+    "crypto/rsa"
+    "crypto/x509"
+    "encoding/base64"
+    "encoding/json"
+    "encoding/pem"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+)
+
+func encryptRecipientData(recipient map[string]interface{}) (string, error) {
+    // Get public key
+    resp, err := http.Get("https://api.paycrest.io/v1/pubkey")
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+    
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+    
+    var result map[string]interface{}
+    json.Unmarshal(body, &result)
+    publicKeyPEM := result["data"].(string)
+    
+    // Parse public key
+    block, _ := pem.Decode([]byte(publicKeyPEM))
+    if block == nil {
+        return "", fmt.Errorf("failed to parse public key")
+    }
+    
+    pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+    if err != nil {
+        return "", err
+    }
+    
+    rsaPubKey, ok := pubKey.(*rsa.PublicKey)
+    if !ok {
+        return "", fmt.Errorf("not an RSA public key")
+    }
+    
+    // Encrypt recipient data
+    recipientJSON, _ := json.Marshal(recipient)
+    encrypted, err := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, recipientJSON)
+    if err != nil {
+        return "", err
+    }
+    
+    return base64.StdEncoding.EncodeToString(encrypted), nil
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Get public key for encryption
+curl -X GET "https://api.paycrest.io/v1/pubkey"
+
+# Note: Encryption is typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Token Approval
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 async function approveUSDT(amount) {
   const usdtAmount = parseUnits(amount, 6);
@@ -151,9 +556,84 @@ async function approveUSDT(amount) {
   }
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+async def approve_usdt(amount):
+    usdt_amount = w3.to_wei(amount, 'ether')
+    allowance = usdt.functions.allowance(user_address, GATEWAY_ADDRESS).call()
+    
+    if allowance < usdt_amount:
+        tx = usdt.functions.approve(
+            GATEWAY_ADDRESS, 
+            usdt_amount
+        ).build_transaction({
+            'from': user_address,
+            'gas': 100000,
+            'gasPrice': w3.eth.gas_price,
+            'nonce': w3.eth.get_transaction_count(user_address)
+        })
+        
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        w3.eth.wait_for_transaction_receipt(tx_hash)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+func approveUSDT(amount string) error {
+    usdtAmount := new(big.Int)
+    usdtAmount.SetString(amount, 10)
+    usdtAmount.Mul(usdtAmount, new(big.Int).Exp(big.NewInt(10), big.NewInt(6), nil)) // USDT has 6 decimals
+    
+    // Check current allowance
+    allowance, err := usdtContract.Allowance(nil, userAddress, gatewayAddress)
+    if err != nil {
+        return err
+    }
+    
+    if allowance.Cmp(usdtAmount) < 0 {
+        // Build approve transaction
+        data := buildApproveData(gatewayAddress, usdtAmount)
+        
+        tx := &types.Transaction{
+            To:       &usdtAddress,
+            Value:    big.NewInt(0),
+            Gas:      100000,
+            GasPrice: big.NewInt(20000000000), // 20 gwei
+            Data:     data,
+        }
+        
+        // Sign and send transaction
+        signedTx, err := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(8453)), privateKey)
+        if err != nil {
+            return err
+        }
+        
+        err = client.SendTransaction(context.Background(), signedTx)
+        if err != nil {
+            return err
+        }
+        
+        fmt.Printf("USDT approved with hash: %s\n", signedTx.Hash().Hex())
+    }
+    
+    return nil
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Token approval is typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Get Order Information
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 async function getOrderInfo(orderId) {
   const orderInfo = await gateway.read.getOrderInfo([orderId]);
@@ -167,9 +647,58 @@ async function getOrderInfo(orderId) {
   };
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+def get_order_info(order_id):
+    order_info = gateway.functions.getOrderInfo(order_id).call()
+    return {
+        'sender': order_info[0],
+        'token': order_info[1],
+        'amount': w3.from_wei(order_info[2], 'ether'),
+        'isFulfilled': order_info[3],
+        'isRefunded': order_info[4],
+        'refundAddress': order_info[5]
+    }
+```
+  </Tab>
+  <Tab title="Go">
+```go
+func getOrderInfo(orderID string) (map[string]interface{}, error) {
+    orderInfo, err := gatewayContract.GetOrderInfo(nil, orderID)
+    if err != nil {
+        return nil, err
+    }
+    
+    amount := new(big.Float).Quo(
+        new(big.Float).SetInt(orderInfo.Amount),
+        new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(6), nil)),
+    )
+    
+    return map[string]interface{}{
+        "sender":        orderInfo.Sender.Hex(),
+        "token":         orderInfo.Token.Hex(),
+        "amount":        amount.Text('f', 6),
+        "isFulfilled":   orderInfo.IsFulfilled,
+        "isRefunded":    orderInfo.IsRefunded,
+        "refundAddress": orderInfo.RefundAddress.Hex(),
+    }, nil
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Get order information from blockchain
+# This requires a Web3 provider and contract interaction
+# Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Event Listening
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 // Listen for events using viem's watchContractEvent
 const unwatchOrderCreated = publicClient.watchContractEvent({
@@ -218,9 +747,131 @@ const unwatchOrderRefunded = publicClient.watchContractEvent({
   }
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+from web3.middleware import geth_poa_middleware
+import asyncio
+
+# Add middleware for Base network
+w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+def handle_order_created(event):
+    print("Order Created:", {
+        'sender': event['args']['sender'],
+        'token': event['args']['token'],
+        'amount': w3.from_wei(event['args']['amount'], 'ether'),
+        'orderId': event['args']['orderId'],
+        'rate': event['args']['rate']
+    })
+
+def handle_order_settled(event):
+    print("Order Settled:", {
+        'orderId': event['args']['orderId'],
+        'liquidityProvider': event['args']['liquidityProvider'],
+        'settlePercent': event['args']['settlePercent']
+    })
+
+def handle_order_refunded(event):
+    print("Order Refunded:", {
+        'fee': w3.from_wei(event['args']['fee'], 'ether'),
+        'orderId': event['args']['orderId']
+    })
+
+# Create event filters
+order_created_filter = gateway.events.OrderCreated.create_filter(fromBlock='latest')
+order_settled_filter = gateway.events.OrderSettled.create_filter(fromBlock='latest')
+order_refunded_filter = gateway.events.OrderRefunded.create_filter(fromBlock='latest')
+
+# Poll for events
+async def poll_events():
+    while True:
+        for event in order_created_filter.get_new_entries():
+            handle_order_created(event)
+        for event in order_settled_filter.get_new_entries():
+            handle_order_settled(event)
+        for event in order_refunded_filter.get_new_entries():
+            handle_order_refunded(event)
+        await asyncio.sleep(1)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "fmt"
+    "log"
+    "time"
+
+    "github.com/ethereum/go-ethereum"
+    "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/core/types"
+)
+
+func watchEvents(client *ethclient.Client) {
+    // Create event filters
+    orderCreatedSig := []byte("OrderCreated(address,address,uint256,bytes32,uint256)")
+    orderSettledSig := []byte("OrderSettled(bytes32,address,uint256)")
+    orderRefundedSig := []byte("OrderRefunded(bytes32,uint256)")
+    
+    orderCreatedSigHash := crypto.Keccak256(orderCreatedSig)
+    orderSettledSigHash := crypto.Keccak256(orderSettledSig)
+    orderRefundedSigHash := crypto.Keccak256(orderRefundedSig)
+    
+    query := ethereum.FilterQuery{
+        Addresses: []common.Address{gatewayAddress},
+        Topics: [][]common.Hash{
+            {common.BytesToHash(orderCreatedSigHash), common.BytesToHash(orderSettledSigHash), common.BytesToHash(orderRefundedSigHash)},
+        },
+    }
+    
+    logs := make(chan types.Log)
+    sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    for {
+        select {
+        case err := <-sub.Err():
+            log.Fatal(err)
+        case vLog := <-logs:
+            if vLog.Topics[0] == common.BytesToHash(orderCreatedSigHash) {
+                handleOrderCreated(vLog)
+            } else if vLog.Topics[0] == common.BytesToHash(orderSettledSigHash) {
+                handleOrderSettled(vLog)
+            } else if vLog.Topics[0] == common.BytesToHash(orderRefundedSigHash) {
+                handleOrderRefunded(vLog)
+            }
+        }
+    }
+}
+
+func handleOrderCreated(log types.Log) {
+    fmt.Printf("Order Created: %+v\n", log)
+}
+
+func handleOrderSettled(log types.Log) {
+    fmt.Printf("Order Settled: %+v\n", log)
+}
+
+func handleOrderRefunded(log types.Log) {
+    fmt.Printf("Order Refunded: %+v\n", log)
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Event listening is typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Error Handling
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 function handleContractError(error) {
   if (error.code === 4001) {
@@ -245,9 +896,79 @@ async function retryTransaction(txFunction, maxRetries = 3) {
   }
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+def handle_contract_error(error):
+    if "user rejected" in str(error).lower():
+        raise Exception("User rejected transaction")
+    elif "insufficient funds" in str(error).lower():
+        raise Exception("Insufficient USDT balance or ETH for gas")
+    elif "execution reverted" in str(error).lower():
+        raise Exception("Transaction reverted - check parameters")
+    else:
+        raise Exception(f"Contract error: {str(error)}")
+
+async def retry_transaction(tx_function, max_retries=3):
+    for attempt in range(1, max_retries + 1):
+        try:
+            return await tx_function()
+        except Exception as error:
+            if attempt == max_retries:
+                raise error
+            await asyncio.sleep(1000 * attempt)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "fmt"
+    "strings"
+    "time"
+)
+
+func handleContractError(err error) error {
+    errStr := strings.ToLower(err.Error())
+    if strings.Contains(errStr, "user rejected") {
+        return fmt.Errorf("user rejected transaction")
+    } else if strings.Contains(errStr, "insufficient funds") {
+        return fmt.Errorf("insufficient USDT balance or ETH for gas")
+    } else if strings.Contains(errStr, "execution reverted") {
+        return fmt.Errorf("transaction reverted - check parameters")
+    } else {
+        return fmt.Errorf("contract error: %v", err)
+    }
+}
+
+func retryTransaction(txFunction func() error, maxRetries int) error {
+    for attempt := 1; attempt <= maxRetries; attempt++ {
+        err := txFunction()
+        if err == nil {
+            return nil
+        }
+        
+        if attempt == maxRetries {
+            return err
+        }
+        
+        time.Sleep(time.Duration(1000*attempt) * time.Millisecond)
+    }
+    return fmt.Errorf("max retries exceeded")
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Error handling is typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Complete Example
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 import { parseUnits, formatUnits, zeroAddress } from "viem";
 
@@ -344,6 +1065,225 @@ const order = await paycrest.createOrder(
   "0x123..." // Refund address
 );
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+from web3 import Web3
+from eth_account import Account
+import asyncio
+
+class PaycrestGateway:
+    def __init__(self, w3, gateway_address, usdt_address):
+        self.w3 = w3
+        self.gateway_address = gateway_address
+        self.usdt_address = usdt_address
+        self.gateway = None
+        self.usdt = None
+        
+    async def initialize(self):
+        self.gateway = self.w3.eth.contract(
+            address=self.gateway_address, 
+            abi=GATEWAY_ABI
+        )
+        self.usdt = self.w3.eth.contract(
+            address=self.usdt_address, 
+            abi=USDT_ABI
+        )
+        self.setup_event_listeners()
+        
+    def setup_event_listeners(self):
+        # Event listeners would be set up here
+        pass
+        
+    async def create_order(self, amount, recipient, refund_address):
+        try:
+            rate = await self.get_exchange_rate()
+            account_name = await self.verify_account(recipient)
+            message_hash = await self.encrypt_recipient_data({**recipient, 'accountName': account_name})
+            await self.approve_usdt(amount)
+            
+            tx = self.gateway.functions.createOrder(
+                self.usdt_address,
+                self.w3.to_wei(amount, 'ether'),
+                rate,
+                '0x0000000000000000000000000000000000000000',
+                0,
+                refund_address,
+                message_hash
+            ).build_transaction({
+                'from': user_address,
+                'gas': 200000,
+                'gasPrice': self.w3.eth.gas_price,
+                'nonce': self.w3.eth.get_transaction_count(user_address)
+            })
+            
+            signed_tx = self.w3.eth.account.sign_transaction(tx, private_key)
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+            
+            return {'orderId': self.extract_order_id(receipt), 'hash': receipt['transactionHash'].hex()}
+        except Exception as error:
+            handle_contract_error(error)
+            
+    # ... other methods (get_exchange_rate, verify_account, etc.)
+
+# Usage
+w3 = Web3(Web3.HTTPProvider('https://mainnet.base.org'))
+paycrest = PaycrestGateway(
+    w3,
+    "0xE8bc3B607CfE68F47000E3d200310D49041148Fc",
+    "0xdac17f958d2ee523a2206206994597c13d831ec7"
+)
+
+await paycrest.initialize()
+
+order = await paycrest.create_order(
+    "100",  # USDT amount
+    {
+        "institution": "GTBINGLA",
+        "accountIdentifier": "123456789"
+    },
+    "0x123..."  # Refund address
+)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "math/big"
+
+    "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/ethclient"
+)
+
+type PaycrestGateway struct {
+    client         *ethclient.Client
+    gatewayAddress common.Address
+    usdtAddress    common.Address
+    gateway        *GatewayContract
+    usdt           *USDTContract
+}
+
+func NewPaycrestGateway(client *ethclient.Client, gatewayAddr, usdtAddr string) *PaycrestGateway {
+    return &PaycrestGateway{
+        client:         client,
+        gatewayAddress: common.HexToAddress(gatewayAddr),
+        usdtAddress:    common.HexToAddress(usdtAddr),
+    }
+}
+
+func (pg *PaycrestGateway) Initialize() error {
+    // Initialize contracts with ABI bindings
+    gateway, err := NewGatewayContract(pg.gatewayAddress, pg.client)
+    if err != nil {
+        return err
+    }
+    pg.gateway = gateway
+    
+    usdt, err := NewUSDTContract(pg.usdtAddress, pg.client)
+    if err != nil {
+        return err
+    }
+    pg.usdt = usdt
+    
+    pg.setupEventListeners()
+    return nil
+}
+
+func (pg *PaycrestGateway) setupEventListeners() {
+    // Event listeners would be set up here
+}
+
+func (pg *PaycrestGateway) CreateOrder(amount string, recipient map[string]interface{}, refundAddress string) error {
+    rate, err := pg.getExchangeRate()
+    if err != nil {
+        return err
+    }
+    
+    accountName, err := pg.verifyAccount(recipient)
+    if err != nil {
+        return err
+    }
+    
+    messageHash, err := pg.encryptRecipientData(recipient, accountName)
+    if err != nil {
+        return err
+    }
+    
+    err = pg.approveUSDT(amount)
+    if err != nil {
+        return err
+    }
+    
+    // Build transaction data
+    data := pg.buildCreateOrderData(amount, rate, refundAddress, messageHash)
+    
+    // Create transaction
+    tx := &types.Transaction{
+        To:       &pg.gatewayAddress,
+        Value:    big.NewInt(0),
+        Gas:      200000,
+        GasPrice: big.NewInt(20000000000), // 20 gwei
+        Data:     data,
+    }
+    
+    // Sign and send transaction
+    signedTx, err := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(8453)), privateKey)
+    if err != nil {
+        return err
+    }
+    
+    err = pg.client.SendTransaction(context.Background(), signedTx)
+    if err != nil {
+        return err
+    }
+    
+    fmt.Printf("Order created with hash: %s\n", signedTx.Hash().Hex())
+    return nil
+}
+
+// Usage
+func main() {
+    client, err := ethclient.Dial("https://mainnet.base.org")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    paycrest := NewPaycrestGateway(
+        client,
+        "0xE8bc3B607CfE68F47000E3d200310D49041148Fc",
+        "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    )
+    
+    err = paycrest.Initialize()
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    recipient := map[string]interface{}{
+        "institution":       "GTBINGLA",
+        "accountIdentifier": "123456789",
+    }
+    
+    err = paycrest.CreateOrder("100", recipient, "0x123...")
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Smart contract interactions are typically done in your application code
+# rather than with cURL. Use one of the programming language examples above.
+```
+  </Tab>
+</Tabs>
 
 ## Supported Networks
 

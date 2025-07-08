@@ -36,6 +36,30 @@ This is because requests without a valid API key will fail with status code `401
 ### Basic Order Creation
 
 <Tabs>
+  <Tab title="cURL">
+
+```bash
+curl -X POST "https://api.paycrest.io/v1/orders" \
+  -H "API-Key: YOUR_CLIENT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": "100",
+    "token": "USDT",
+    "network": "base",
+    "rate": "1.0",
+    "recipient": {
+      "institution": "GTB",
+      "accountIdentifier": "1234567890",
+      "accountName": "John Doe",
+      "currency": "NGN",
+      "memo": "Salary payment for January 2024"
+    },
+    "reference": "payment-123",
+    "returnAddress": "0x1234567890123456789012345678901234567890"
+  }'
+```
+
+  </Tab>
   <Tab title="JavaScript">
 ```javascript
 // Create a payment order
@@ -172,7 +196,6 @@ const {
 await saveOrderToDatabase(order.id, order);
 ```
   </Tab>
-  
   <Tab title="Python">
 ```python
 # The response includes important information
@@ -186,7 +209,6 @@ transaction_fee = order['transactionFee']   # Network transaction fee
 save_order_to_database(order['id'], order)
 ```
   </Tab>
-  
   <Tab title="Go">
 ```go
 // The response includes important information
@@ -197,13 +219,6 @@ type OrderResponse struct {
     SenderFee       float64 `json:"senderFee"`
     TransactionFee  float64 `json:"transactionFee"`
 }
-
-// Parse the response
-var orderResp OrderResponse
-json.Unmarshal(body, &orderResp)
-
-// Store the order ID for tracking
-saveOrderToDatabase(orderResp.ID, orderResp)
 ```
   </Tab>
 </Tabs>
@@ -720,6 +735,8 @@ func checkOrderStatus(orderID string) (*OrderStatus, error) {
 
 ### API Error Handling
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 async function createPaymentOrder(orderData) {
   try {
@@ -756,9 +773,129 @@ async function createPaymentOrder(orderData) {
   }
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import requests
+
+def create_payment_order(order_data):
+    try:
+        response = requests.post(
+            "https://api.paycrest.io/v1/orders",
+            headers={
+                "API-Key": "YOUR_CLIENT_ID",
+                "Content-Type": "application/json"
+            },
+            json=order_data
+        )
+        
+        if not response.ok:
+            if response.status_code == 400:
+                # Validation error
+                validation_errors = response.json()
+                raise Exception(f"Validation failed: {validation_errors}")
+            elif response.status_code == 401:
+                # Authentication error
+                raise Exception("Invalid API key")
+            elif response.status_code == 429:
+                # Rate limit exceeded
+                raise Exception("Rate limit exceeded. Please try again later.")
+            else:
+                # Other errors
+                raise Exception(f"API error: {response.text}")
+        
+        return response.json()
+    except Exception as error:
+        print(f"Error creating payment order: {error}")
+        raise error
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+)
+
+func createPaymentOrder(orderData map[string]interface{}) (map[string]interface{}, error) {
+    jsonData, _ := json.Marshal(orderData)
+    req, _ := http.NewRequest("POST", "https://api.paycrest.io/v1/orders", bytes.NewBuffer(jsonData))
+    req.Header.Set("API-Key", "YOUR_CLIENT_ID")
+    req.Header.Set("Content-Type", "application/json")
+    
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != http.StatusOK {
+        body, _ := ioutil.ReadAll(resp.Body)
+        
+        switch resp.StatusCode {
+        case 400:
+            // Validation error
+            return nil, fmt.Errorf("validation failed: %s", string(body))
+        case 401:
+            // Authentication error
+            return nil, fmt.Errorf("invalid API key")
+        case 429:
+            // Rate limit exceeded
+            return nil, fmt.Errorf("rate limit exceeded. Please try again later.")
+        default:
+            // Other errors
+            return nil, fmt.Errorf("API error: %s", resp.Status)
+        }
+    }
+    
+    var result map[string]interface{}
+    json.NewDecoder(resp.Body).Decode(&result)
+    return result, nil
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Error handling with cURL
+response=$(curl -s -w "%{http_code}" -X POST "https://api.paycrest.io/v1/orders" \
+  -H "API-Key: YOUR_CLIENT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": "100",
+    "token": "USDT",
+    "network": "base",
+    "recipient": {
+      "institution": "GTB",
+      "accountIdentifier": "1234567890",
+      "accountName": "John Doe",
+      "currency": "NGN"
+    }
+  }')
+
+http_code="${response: -3}"
+response_body="${response%???}"
+
+if [ "$http_code" = "400" ]; then
+    echo "Validation failed: $response_body"
+elif [ "$http_code" = "401" ]; then
+    echo "Invalid API key"
+elif [ "$http_code" = "429" ]; then
+    echo "Rate limit exceeded"
+else
+    echo "API error: $http_code"
+fi
+```
+  </Tab>
+</Tabs>
 
 ### Retry Logic
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 async function createOrderWithRetry(orderData, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -776,11 +913,123 @@ async function createOrderWithRetry(orderData, maxRetries = 3) {
   }
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import asyncio
+import time
+
+async def create_order_with_retry(order_data, max_retries=3):
+    for attempt in range(1, max_retries + 1):
+        try:
+            return create_payment_order(order_data)
+        except Exception as error:
+            if attempt == max_retries:
+                raise error
+            
+            # Wait before retrying (exponential backoff)
+            delay = 2 ** attempt
+            await asyncio.sleep(delay)
+```
+
+```python
+# Synchronous version
+def create_order_with_retry_sync(order_data, max_retries=3):
+    for attempt in range(1, max_retries + 1):
+        try:
+            return create_payment_order(order_data)
+        except Exception as error:
+            if attempt == max_retries:
+                raise error
+            
+            # Wait before retrying (exponential backoff)
+            delay = 2 ** attempt
+            time.sleep(delay)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "fmt"
+    "time"
+)
+
+func createOrderWithRetry(orderData map[string]interface{}, maxRetries int) (map[string]interface{}, error) {
+    for attempt := 1; attempt <= maxRetries; attempt++ {
+        result, err := createPaymentOrder(orderData)
+        if err == nil {
+            return result, nil
+        }
+        
+        if attempt == maxRetries {
+            return nil, err
+        }
+        
+        // Wait before retrying (exponential backoff)
+        delay := time.Duration(1<<uint(attempt)) * time.Second
+        time.Sleep(delay)
+    }
+    
+    return nil, fmt.Errorf("max retries exceeded")
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+#!/bin/bash
+
+create_order_with_retry() {
+    local order_data="$1"
+    local max_retries=3
+    
+    for ((attempt=1; attempt<=max_retries; attempt++)); do
+        response=$(curl -s -w "%{http_code}" -X POST "https://api.paycrest.io/v1/orders" \
+          -H "API-Key: YOUR_CLIENT_ID" \
+          -H "Content-Type: application/json" \
+          -d "$order_data")
+        
+        http_code="${response: -3}"
+        
+        if [ "$http_code" = "200" ]; then
+            echo "${response%???}"
+            return 0
+        fi
+        
+        if [ $attempt -eq $max_retries ]; then
+            echo "Failed after $max_retries attempts"
+            return 1
+        fi
+        
+        # Wait before retrying (exponential backoff)
+        delay=$((2 ** attempt))
+        sleep $delay
+    done
+}
+
+# Usage
+order_data='{
+  "amount": "100",
+  "token": "USDT",
+  "network": "base",
+  "recipient": {
+    "institution": "GTB",
+    "accountIdentifier": "1234567890",
+    "accountName": "John Doe",
+    "currency": "NGN"
+  }
+}'
+
+create_order_with_retry "$order_data"
+```
+  </Tab>
+</Tabs>
 
 ## Production Considerations
 
 ### Security Best Practices
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 // Use environment variables for sensitive data
 const config = {
@@ -800,9 +1049,99 @@ app.post('/webhooks/paycrest', async (req, res) => {
   // ...
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Use environment variables for sensitive data
+config = {
+    'api_key': os.environ.get('PAYCREST_API_KEY'),
+    'webhook_secret': os.environ.get('PAYCREST_WEBHOOK_SECRET')
+}
+
+# Validate webhook signatures
+@app.route('/webhooks/paycrest', methods=['POST'])
+def webhook_handler():
+    signature = request.headers.get('x-paycrest-signature')
+    
+    if not validate_webhook_signature(request.json, signature, config['webhook_secret']):
+        return jsonify({'error': 'Invalid signature'}), 401
+    
+    # Process webhook
+    # ...
+    return jsonify({'status': 'success'}), 200
+```
+  </Tab>
+  <Tab title="Go">
+```go
+package main
+
+import (
+    "net/http"
+    "os"
+)
+
+// Use environment variables for sensitive data
+type Config struct {
+    APIKey       string
+    WebhookSecret string
+}
+
+func getConfig() Config {
+    return Config{
+        APIKey:       os.Getenv("PAYCREST_API_KEY"),
+        WebhookSecret: os.Getenv("PAYCREST_WEBHOOK_SECRET"),
+    }
+}
+
+// Validate webhook signatures
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+    signature := r.Header.Get("x-paycrest-signature")
+    
+    if !validateWebhookSignature(r.Body, signature, config.WebhookSecret) {
+        http.Error(w, "Invalid signature", http.StatusUnauthorized)
+        return
+    }
+    
+    // Process webhook
+    // ...
+    w.WriteHeader(http.StatusOK)
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Set environment variables
+export PAYCREST_API_KEY="your_api_key_here"
+export PAYCREST_WEBHOOK_SECRET="your_webhook_secret_here"
+
+# Use environment variables in requests
+curl -X POST "https://api.paycrest.io/v1/orders" \
+  -H "API-Key: $PAYCREST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": "100",
+    "token": "USDT",
+    "network": "base",
+    "recipient": {
+      "institution": "GTB",
+      "accountIdentifier": "1234567890",
+      "accountName": "John Doe",
+      "currency": "NGN"
+    }
+  }'
+```
+  </Tab>
+</Tabs>
 
 ### Database Integration
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 // Example with PostgreSQL
 const { Pool } = require('pg');
@@ -834,11 +1173,90 @@ async function saveOrder(order) {
   ]);
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import psycopg2
+from datetime import datetime
+
+# Example with PostgreSQL
+def save_order(order):
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    cursor = conn.cursor()
+    
+    query = """
+        INSERT INTO payment_orders (
+            id, amount, token, network, status, 
+            recipient_institution, recipient_account, recipient_name,
+            created_at, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    
+    cursor.execute(query, [
+        order['id'],
+        order['amount'],
+        order['token'],
+        order['network'],
+        order['status'],
+        order['recipient']['institution'],
+        order['recipient']['accountIdentifier'],
+        order['recipient']['accountName'],
+        datetime.now(),
+        datetime.now()
+    ])
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+```
+  </Tab>
+  <Tab title="Go">
+```go
+package main
+
+import (
+    "database/sql"
+    "time"
+    _ "github.com/lib/pq"
+)
+
+// Example with PostgreSQL
+func saveOrder(db *sql.DB, order map[string]interface{}) error {
+    query := `
+        INSERT INTO payment_orders (
+            id, amount, token, network, status, 
+            recipient_institution, recipient_account, recipient_name,
+            created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `
+    
+    recipient := order["recipient"].(map[string]interface{})
+    
+    _, err := db.Exec(query,
+        order["id"],
+        order["amount"],
+        order["token"],
+        order["network"],
+        order["status"],
+        recipient["institution"],
+        recipient["accountIdentifier"],
+        recipient["accountName"],
+        time.Now(),
+        time.Now(),
+    )
+    
+    return err
+}
+```
+  </Tab>
+</Tabs>
 
 ## Testing
 
 ### Unit Tests
 
+<Tabs>
+  <Tab title="JavaScript">
 ```javascript
 // Using Jest for testing
 describe('Paycrest Sender API Integration', () => {
@@ -875,6 +1293,135 @@ describe('Paycrest Sender API Integration', () => {
   });
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import unittest
+from unittest.mock import patch
+
+# Using unittest for testing
+class TestPaycrestSenderAPI(unittest.TestCase):
+    
+    def test_create_payment_order_successfully(self):
+        order_data = {
+            'amount': '100',
+            'token': 'USDT',
+            'network': 'base',
+            'recipient': {
+                'institution': 'GTB',
+                'accountIdentifier': '1234567890',
+                'accountName': 'Test User',
+                'currency': 'NGN'
+            }
+        }
+        
+        with patch('requests.post') as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = {
+                'id': 'test-order-id',
+                'receiveAddress': '0x123...',
+                'status': 'pending'
+            }
+            
+            order = create_payment_order(order_data)
+            
+            self.assertIsNotNone(order['id'])
+            self.assertIsNotNone(order['receiveAddress'])
+            self.assertEqual(order['status'], 'pending')
+    
+    def test_handle_api_errors_gracefully(self):
+        invalid_order_data = {
+            'amount': '-100',  # Invalid amount
+            'token': 'USDT',
+            'network': 'base'
+        }
+        
+        with patch('requests.post') as mock_post:
+            mock_post.return_value.status_code = 400
+            mock_post.return_value.json.return_value = {'error': 'Validation failed'}
+            
+            with self.assertRaises(Exception) as context:
+                create_payment_order(invalid_order_data)
+            
+            self.assertIn('Validation failed', str(context.exception))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+package main
+
+import (
+    "net/http"
+    "net/http/httptest"
+    "testing"
+)
+
+// Using Go's testing package
+func TestCreatePaymentOrder(t *testing.T) {
+    orderData := map[string]interface{}{
+        "amount": "100",
+        "token":  "USDT",
+        "network": "base",
+        "recipient": map[string]interface{}{
+            "institution":       "GTB",
+            "accountIdentifier": "1234567890",
+            "accountName":       "Test User",
+            "currency":          "NGN",
+        },
+    }
+    
+    // Create a test server
+    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte(`{
+            "id": "test-order-id",
+            "receiveAddress": "0x123...",
+            "status": "pending"
+        }`))
+    }))
+    defer server.Close()
+    
+    // Test successful order creation
+    result, err := createPaymentOrder(orderData)
+    if err != nil {
+        t.Errorf("Expected no error, got %v", err)
+    }
+    
+    if result["id"] == nil {
+        t.Error("Expected order ID to be defined")
+    }
+    
+    if result["receiveAddress"] == nil {
+        t.Error("Expected receive address to be defined")
+    }
+    
+    if result["status"] != "pending" {
+        t.Errorf("Expected status 'pending', got %v", result["status"])
+    }
+}
+
+func TestHandleAPIErrors(t *testing.T) {
+    invalidOrderData := map[string]interface{}{
+        "amount": "-100", // Invalid amount
+        "token":  "USDT",
+        "network": "base",
+    }
+    
+    // Create a test server that returns an error
+    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte(`{"error": "Validation failed"}`))
+    }))
+    defer server.Close()
+    
+    _, err := createPaymentOrder(invalidOrderData)
+    if err == nil {
+        t.Error("Expected error for invalid order data")
+    }
+}
+```
+  </Tab>
+</Tabs>
 
 ## Deployment Checklist
 

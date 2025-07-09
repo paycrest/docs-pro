@@ -4,3 +4,24 @@ openapi: 'GET /rates/{token}/{amount}/{fiat}'
 ---
 
 Get the rate for a token/amount/fiat combination. 
+
+## Parameters
+
+- `token` (path, required): The token symbol (e.g., "USDC", "USDT")
+- `amount` (path, required): The token amount to get the rate for
+- `fiat` (path, required): The fiat currency code (e.g., "NGN", "KES")
+- `network` (query, optional): The blockchain network identifier (e.g., "arbitrum-one", "polygon", "base"). If not provided, returns the first matching token across all networks.
+- `provider_id` (query, optional): Specific provider ID to get their rate instead of the best available rate
+
+## Example
+
+```bash
+# Get rate for USDC on Arbitrum One
+GET /rates/USDC/100/NGN?network=arbitrum-one
+
+# Get rate for USDC on any network (first match)
+GET /rates/USDC/100/NGN
+
+# Get rate from specific provider
+GET /rates/USDC/100/NGN?provider_id=123&network=arbitrum-one
+``` 

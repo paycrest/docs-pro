@@ -14,6 +14,7 @@ The Paycrest API uses standard HTTP status codes and provides detailed error inf
 | `422` | Unprocessable Entity | Validation failed |
 | `429` | Too Many Requests | Rate limit exceeded |
 | `500` | Internal Server Error | Server error |
+| `503` | Service Unavailable | No providers available to handle the request |
 
 ## Error Response Format
 
@@ -31,6 +32,28 @@ All error responses follow a consistent format:
   ]
 }
 ```
+
+## Common Error Scenarios
+
+### 400 Bad Request
+- **Invalid parameters**: Missing required fields, invalid formats
+- **Unsupported combinations**: Token/currency pairs not supported
+- **Amount validation**: Amounts outside provider limits
+- **Provider issues**: Provider not found or misconfigured
+
+### 503 Service Unavailable
+- **No provider available**: When no providers can handle the specific request
+- **Service temporarily unavailable**: During maintenance or high load
+- **Geographic restrictions**: Service not available in your region
+
+## Handling Service Unavailability
+
+When you receive a 503 error:
+
+1. **Check request parameters**: Verify token, amount, and currency combinations
+2. **Try different amounts**: Some providers have minimum/maximum limits
+3. **Retry later**: Provider availability may change over time
+4. **Contact support**: If the issue persists, reach out to our team
 
 ## Getting Help
 

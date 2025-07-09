@@ -3,7 +3,7 @@ title: 'Get Token Rate'
 openapi: 'GET /rates/{token}/{amount}/{fiat}'
 ---
 
-Get the rate for a token/amount/fiat combination. 
+Get the rate for a token/amount/fiat combination. This endpoint returns the rate from the first available provider in the priority queue that can handle the specified token, amount, and currency combination.
 
 ## Parameters
 
@@ -11,7 +11,7 @@ Get the rate for a token/amount/fiat combination.
 - `amount` (path, required): The token amount to get the rate for
 - `fiat` (path, required): The fiat currency code (e.g., "NGN", "KES")
 - `network` (query, optional): The blockchain network identifier (e.g., "arbitrum-one", "polygon", "base"). If not provided, returns the first matching token across all networks.
-- `provider_id` (query, optional): Specific provider ID to get their rate instead of the best available rate
+- `provider_id` (query, optional): Specific provider ID to get their rate instead of the priority queue selection
 
 ## Example
 
@@ -24,4 +24,77 @@ GET /rates/USDC/100/NGN
 
 # Get rate from specific provider
 GET /rates/USDC/100/NGN?provider_id=123&network=arbitrum-one
-``` 
+```
+
+## Response
+
+### Success Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Rate fetched successfully",
+  "data": "1500.50"
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request
+- **Token not supported**: `"Token USDC is not supported"`
+- **Token not supported on network**: `"Token USDC is not supported on network arbitrum-one"`
+- **Fiat currency not supported**: `"Fiat currency XYZ is not supported"`
+- **Invalid amount**: `"Invalid amount"`
+- **Currency conversion not supported**: `"USDC can only be converted to USD"`
+- **Provider not found**: `"Provider not found"`
+- **Provider configuration error**: `"Provider does not support this token/currency combination"`
+- **Amount out of range**: `"Amount must be between 10 and 1000 for this provider"`
+
+#### 503 Service Unavailable
+- **No provider available**: `"No provider available for USDC to NGN conversion with amount 100"`
+
+## Rate Resolution Logic
+
+The API uses the following logic to determine the rate:
+
+1. **Direct Currency Match**: If the token's base currency matches the fiat currency, returns 1:1 rate
+2. **Provider-Specific Rate**: If `provider_id` is provided, returns that provider's rate (if they support the combination)
+3. **Priority Queue Selection**: Searches through provider buckets in priority order and returns the rate from the first provider that can handle the request
+4. **Service Unavailable**: If no provider can handle the request, returns 503 error
+
+## Priority Queue System
+
+The current implementation uses a priority queue to determine provider selection:
+
+- **Provider Order**: Providers are ranked by priority (highest priority first)
+- **First Available Wins**: The first provider that meets all criteria gets selected
+- **No Rate Comparison**: The system doesn't compare rates to find the "best" one - it uses the first suitable provider
+- **Queue Randomization**: Provider order is randomized periodically to ensure fair distribution
+
+<Note>
+  The priority queue system is the current implementation and may change in future versions. Provider selection is based on priority order, not rate comparison.
+</Note>
+
+## Important Notes
+
+- **Priority-Based Selection**: The API returns the rate from the first available provider in the priority queue, not necessarily the lowest or highest rate
+- **No Market Rate Fallback**: The API does not fall back to market rates when no providers are available
+- **Service Availability**: A 503 response indicates that no providers can currently handle your request
+- **Amount Validation**: Providers have minimum and maximum order amounts that must be respected
+- **Network Filtering**: Network filters are applied to both token selection and provider matching
+
+## Troubleshooting
+
+### Common Issues
+
+1. **503 Service Unavailable**: Try adjusting the amount or currency combination
+2. **400 Bad Request - Amount out of range**: Check provider limits for your token/currency pair
+3. **400 Bad Request - Provider not found**: Verify the provider ID is correct and active
+
+### Best Practices
+
+- Always handle 503 responses gracefully in your application
+- Consider implementing retry logic with different amounts
+- Cache successful rates to reduce API calls
+- Monitor provider availability for your specific use cases
+- Understand that rates are based on priority queue order, not rate comparison 

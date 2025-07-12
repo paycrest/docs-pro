@@ -1130,8 +1130,6 @@ paths:
                       data:
                         type: object
                         properties:
-                          message:
-                            type: string
                           events:
                             type: object
                             properties:

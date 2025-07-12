@@ -12,9 +12,7 @@ tags:
   - name: General
     description: General protocol and utility endpoints
 servers:
-  - url: /v1
-security:
-  - ApiKeyAuth: []
+  - url: https://api.paycrest.io/v1
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -26,6 +24,12 @@ components:
     # Sender Schemas
     NewPaymentOrderPayload:
       type: object
+      required:
+        - amount
+        - token
+        - rate
+        - network
+        - recipient
       properties:
         amount:
           type: number
@@ -46,6 +50,11 @@ components:
           type: string
     PaymentOrderRecipient:
       type: object
+      required:
+        - institution
+        - accountIdentifier
+        - accountName
+        - memo
       properties:
         institution:
           type: string
@@ -58,7 +67,7 @@ components:
           description: Name of the account holder
         memo:
           type: string
-          description: Optional memo or reference for the transaction
+          description: Memo or reference for the transaction
         providerId:
           type: string
           description: Optional provider ID for specific routing
@@ -127,6 +136,8 @@ components:
           type: string
         receiveAddress:
           type: string
+        feeAddress:
+          type: string
         reference:
           type: string
         createdAt:
@@ -146,7 +157,7 @@ components:
     SenderPaymentOrderList:
       type: object
       properties:
-        total:
+        totalRecords:
           type: integer
         page:
           type: integer
@@ -170,7 +181,7 @@ components:
     ProviderLockOrderList:
       type: object
       properties:
-        total:
+        totalRecords:
           type: integer
         page:
           type: integer
@@ -194,18 +205,12 @@ components:
           type: number
         rate:
           type: number
-        blockNumber:
-          type: integer
-        txHash:
-          type: string
         institution:
           type: string
           description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         accountIdentifier:
           type: string
         accountName:
-          type: string
-        providerId:
           type: string
         memo:
           type: string
@@ -249,6 +254,9 @@ components:
           type: object
     FulfillLockOrderPayload:
       type: object
+      required:
+        - psp
+        - txId
       properties:
         psp:
           type: string
@@ -260,6 +268,8 @@ components:
           type: string
     CancelLockOrderPayload:
       type: object
+      required:
+        - reason
       properties:
         reason:
           type: string
@@ -399,12 +409,42 @@ components:
     # System Schemas
     VerifyAccountRequest:
       type: object
+      required:
+        - institution
+        - accountIdentifier
       properties:
         institution:
           type: string
           description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         accountIdentifier:
           type: string
+          description: Bank account number, mobile number, or other account identifier
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Error message
+        data:
+          type: object
+          nullable: true
+    StandardResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Operation successful
+        data:
+          type: object
+          description: The actual response data (e.g., ReceiveAddressResponse, etc.)
+
+
 
 paths:
 
@@ -428,7 +468,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReceiveAddressResponse'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReceiveAddressResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
       tags:
         - Sender
@@ -460,7 +529,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SenderPaymentOrderList'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SenderPaymentOrderList'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /sender/orders/{id}:
     get:
       tags:
@@ -480,7 +566,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentOrderResponse'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentOrderResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /sender/stats:
     get:
       tags:
@@ -494,7 +609,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SenderStatsResponse'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SenderStatsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /orders/{chain_id}/{id}:
     get:
       tags:
@@ -517,7 +649,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LockPaymentOrderStatusResponse'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LockPaymentOrderStatusResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # Provider Endpoints
   /provider/orders:
@@ -546,7 +701,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProviderLockOrderList'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProviderLockOrderList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /provider/rates/{token}/{fiat}:
     get:
       tags:
@@ -571,7 +743,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MarketRateResponse'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MarketRateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /provider/stats:
     get:
       tags:
@@ -590,7 +779,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProviderStatsResponse'
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProviderStatsResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /provider/node-info:
     get:
       tags:
@@ -601,6 +807,35 @@ paths:
       responses:
         '200':
           description: Node info
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
 
   # General Endpoints
   /currencies:
@@ -614,9 +849,30 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SupportedCurrencies'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Operation successful
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupportedCurrencies'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /institutions/{currency_code}:
     get:
       tags:
@@ -634,9 +890,30 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SupportedInstitutions'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Operation successful
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupportedInstitutions'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /tokens:
     get:
       tags:
@@ -655,9 +932,24 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SupportedTokenResponse'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Operation successful
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupportedTokenResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rates/{token}/{amount}/{fiat}:
     get:
       tags:
@@ -693,6 +985,44 @@ paths:
       responses:
         '200':
           description: Token rate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Operation successful
+                  data:
+                    type: number
+                    description: The exchange rate for the token to fiat currency conversion
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /pubkey:
     get:
       tags:
@@ -701,6 +1031,25 @@ paths:
       responses:
         '200':
           description: Public key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Operation successful
+                  data:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /verify-account:
     post:
       tags:
@@ -715,6 +1064,43 @@ paths:
       responses:
         '200':
           description: Account verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Operation successful
+                  data:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Bad gateway
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /reindex/{network}/{tx_hash}:
     get:
       tags:
@@ -733,4 +1119,39 @@ paths:
             type: string
       responses:
         '200':
-          description: Transaction reindexed 
+          description: Transaction reindexed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                          events:
+                            type: object
+                            properties:
+                              Transfer:
+                                type: integer
+                              OrderCreated:
+                                type: integer
+                              OrderSettled:
+                                type: integer
+                              OrderRefunded:
+                                type: integer
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' 

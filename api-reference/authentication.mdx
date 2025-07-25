@@ -1,31 +1,31 @@
-All API requests require authentication using your **Client ID** and **Client Secret**.
+All API requests require authentication using your **API Key** and **API Secret**.
 
 ## API-Key Header
 
-Include your **Client ID** in the `API-Key` header for every API request:
+Include your **API Key** in the `API-Key` header for every API request:
 
 ```http
-API-Key: YOUR_CLIENT_ID
+API-Key: YOUR_API_KEY
 ```
 
-- You can find your Client ID in your dashboard.
+- You can find your API Key in your dashboard.
 - Requests without a valid or correct API-Key will return **401 Unauthorized**.
 
 <Warning>
-Do not commit your API keys to git, or use them in client-side code. Never share your Client Secret. If you believe it has been compromised, rotate it immediately in your dashboard.
+Do not commit your API keys to git, or use them in client-side code. Never share your API Secret. If you believe it has been compromised, rotate it immediately in your dashboard.
 </Warning>
 
-## Client Secret
+## API Secret
 
-Your **Client Secret** is used for sensitive operations such as verifying webhook signatures and should **never** be shared or exposed in client-side code.
+Your **API Secret** is used for sensitive operations such as verifying webhook signatures and should **never** be shared or exposed in client-side code.
 
 <Warning>
-Keep your Client Secret safe. The Client Secret is for server-side use only (e.g., webhook signature verification). Never expose it in frontend code, public repositories, or logs.
+Keep your API Secret safe. The API Secret is for server-side use only (e.g., webhook signature verification). Never expose it in frontend code, public repositories, or logs.
 </Warning>
 
 ## Webhook Signature Verification
 
-When receiving webhooks, use your Client Secret to verify the authenticity of the payload. Refer to the webhook documentation for implementation details.
+When receiving webhooks, use your API Secret to verify the authenticity of the payload. Refer to the webhook documentation for implementation details.
 
 <Warning>
 Always ensure your server verifies the SSL connection to Paycrest. Do not set SSL verification (e.g., `VERIFY_PEER`) to `FALSE` in your HTTP client.

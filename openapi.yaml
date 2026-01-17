@@ -40,7 +40,7 @@ components:
           type: number
         network:
           type: string
-          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
           description: Network identifier for the blockchain
         recipient:
           $ref: '#/components/schemas/PaymentOrderRecipient'
@@ -89,7 +89,7 @@ components:
           description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         network:
           type: string
-          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
           description: Network identifier for the blockchain
         receiveAddress:
           type: string
@@ -124,7 +124,7 @@ components:
           type: number
         network:
           type: string
-          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
           description: Network identifier for the blockchain
         gatewayId:
           type: string
@@ -216,7 +216,7 @@ components:
           type: string
         network:
           type: string
-          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
           description: Network identifier for the blockchain
         status:
           type: string
@@ -333,7 +333,7 @@ components:
           type: string
         network:
           type: string
-          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
           description: Network identifier for the blockchain
 
     # Order Status Schemas
@@ -349,7 +349,7 @@ components:
           description: Token symbol (USDT, USDC, CUSD, CNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         network:
           type: string
-          enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
           description: Network identifier for the blockchain
         settlePercent:
           type: number
@@ -517,7 +517,7 @@ paths:
           name: network
           schema:
             type: string
-            enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+            enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
             description: Network identifier for the blockchain
         - in: query
           name: ordering
@@ -924,7 +924,7 @@ paths:
           name: network
           schema:
             type: string
-            enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+            enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
             description: Network identifier for the blockchain
       responses:
         '200':
@@ -975,7 +975,7 @@ paths:
           name: network
           schema:
             type: string
-            enum: [base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
+            enum: [ethereum, base, bnb-smart-chain, lisk, tron, celo, arbitrum-one, polygon, asset-chain]
             description: Network identifier for the blockchain (optional, filters tokens by network)
         - in: query
           name: provider_id

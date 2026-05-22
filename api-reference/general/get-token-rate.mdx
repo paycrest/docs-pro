@@ -1,9 +1,9 @@
 ---
 title: 'Get Token Rate'
-openapi: "openapi-v2.yaml GET /rates/{network}/{token}/{amount}/{fiat}"
+openapi: "openapi-v2.yaml GET /rates/{network}/{from}/{amount}/{to}"
 ---
 
-Get buy and/or sell quotes for a token amount and fiat pair on a **specific network**. This is the recommended public rates URL for v2 integrations.
+Get buy and/or sell quotes on a **specific network**—either a **token + fiat** pair or a **fiat + fiat** corridor (via USDC). This is the recommended public rates URL for v2 integrations.
 
 <Note>
   The legacy endpoint **`GET /v1/rates/{token}/{amount}/{fiat}`** (optional `network` query) returns a **single numeric** `data` field. The v2 path below returns a structured **`buy` / `sell`** payload.
@@ -14,22 +14,31 @@ Get buy and/or sell quotes for a token amount and fiat pair on a **specific netw
 | Parameter | Description |
 |-----------|-------------|
 | `network` | Network id: `ethereum`, `base`, `bnb-smart-chain`, `lisk`, `scroll`, `celo`, `arbitrum-one`, `polygon`, `asset-chain` |
-| `token` | Token symbol (e.g. `USDT`, `USDC`) |
-| `amount` | Crypto notional the quote applies to |
-| `fiat` | Fiat currency code (e.g. `NGN`, `KES`) |
+| `from` | Fiat currency code **or** token symbol on `network` (paired with `to`) |
+| `amount` | For **token + fiat**: crypto (token) notional. For **fiat + fiat**: amount in **`from`** fiat. |
+| `to` | Fiat currency code **or** token symbol on `network` (paired with `from`) |
+
+**Token + fiat:** exactly **one** fiat and **one** token (`.../USDT/100/NGN` ≡ `.../NGN/100/USDT`). **`from`/`to` cannot both be tokens.** **Path order does not imply trade direction**—use `side` or read **`data.buy`** / **`data.sell`** for onramp vs offramp display.
+
+**Fiat + fiat:** both are fiat codes; the server quotes through **USDC** on the same network. **`sell.rate`** = **`to` per 1 `from`**. **`buy.rate`** = **`from` per 1 `to`** (inverse corridor, **not** the reciprocal of `sell`—each side uses the appropriate leg bid/ask).
 
 ## Query parameters
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `side` | No | `buy` or `sell` to return **only** that side. Omit to receive **both** when available. |
+| `from_source` | No | If `from` matches **both** a fiat currency and a crypto asset on the network, set to **`fiat`** or **`crypto`**. Omit when unambiguous. |
+| `to_source` | No | If `to` matches **both** a fiat currency and a crypto asset on the network, set to **`fiat`** or **`crypto`**. Omit when unambiguous. |
 | `provider_id` | No | Exactly **8 alphabetic** characters (`A–Z`, `a–z`) to pin the quote to one provider. |
 
 ## Example
 
 ```bash
-# Both buy and sell quotes on Base
+# Both buy and sell quotes on Base (token then fiat)
 GET https://api.paycrest.io/v2/rates/base/USDT/100/NGN
+
+# Same pair with fiat then token
+GET https://api.paycrest.io/v2/rates/base/NGN/100/USDT
 
 # Sell side only (typical for offramp display)
 GET https://api.paycrest.io/v2/rates/base/USDT/100/NGN?side=sell
@@ -44,7 +53,7 @@ Each populated side includes:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `rate` | string | Quoted rate (fiat per crypto) for that side |
+| `rate` | string | For token+fiat: fiat per crypto. For fiat+fiat: see path rules above (`sell` = `to` per `from`, `buy` = `from` per `to`). |
 | `providerIds` | string[] | Provider id(s) for the quote |
 | `orderType` | string | e.g. `regular` or `otc` |
 | `refundTimeoutMinutes` | integer | Minutes until automatic refund for that flow |
@@ -76,13 +85,13 @@ When `side=buy` or `side=sell`, only that key is present under `data`.
 
 | HTTP | Typical cause |
 |------|----------------|
-| **400** | Invalid `amount`, invalid `side` (must be `buy` or `sell`), invalid `provider_id` (must be exactly 8 letters A–Z or a–z), token not supported on network, unsupported fiat, or conversion rules (e.g. stable only to its base fiat) |
+| **400** | Invalid `amount`, invalid `side`, invalid `from_source`/`to_source` (must be `fiat` or `crypto`), ambiguous segment without disambiguation, invalid `provider_id`, unsupported asset on network, or conversion rules (e.g. stable only to its base fiat) |
 | **404** | No provider available for the amount/currency/network |
 | **503** | Banking/mobile network issues affecting providers for the currency |
 | **500** | Internal error while resolving the rate |
 
 ## Rate resolution
 
-Behavior matches the priority-queue–based resolution used when creating orders: the quote reflects provider selection and validation for the requested **side** (`buy` vs `sell`). Use **`sell`** for **offramp** (crypto → fiat) UX and **`buy`** for **onramp** (fiat → crypto) when displaying a rate before `POST /v2/sender/orders`.
+Behavior matches the priority-queue–based resolution used when creating orders: the quote reflects provider selection and validation for the requested **side** (`buy` vs `sell`). **Path segment order (`from` / `to`) does not select direction**—use `?side=`, or read **`data.sell`** for **offramp** (crypto → fiat) display and **`data.buy`** for **onramp** (fiat → crypto) before `POST /v2/sender/orders`.
 
 See also [Get Token Rate (v1)](/api-reference/general/get-token-rate-v1) for the legacy scalar response.

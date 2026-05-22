@@ -290,6 +290,59 @@ order = requests.post(
 
 ---
 
+## KES mobile money (M-Pesa, Till, Paybill)
+
+Kenya offramp to mobile rails uses institution **`SAFAKEPC`** (Safaricom M-Pesa) or another KES **mobile_money** code from **[GET /institutions/KES](/api-reference/general/list-supported-institutions)**. **Till** and **Paybill** are not separate institution codes—you pass them in **`destination.recipient.metadata`**.
+
+| Channel | `metadata.channel` | `accountIdentifier` | Notes |
+|---------|-------------------|---------------------|--------|
+| Phone M-Pesa | `Mobile` or omit | Mobile number (e.g. `254712345678`) | Default when channel is omitted and the identifier looks like a phone number. Use **`Mobile`** in new integrations (not `MoMo`, which is provider-internal). |
+| Till (buy goods) | `Till` | Till / buy-goods number | Do not rely on phone normalization; till numbers are not E.164 phones. |
+| Paybill | `Paybill` | Paybill account or reference | Set **`metadata.businessNumber`** to the paybill business number when required. |
+
+**Example — Till**
+
+```json
+"destination": {
+  "type": "fiat",
+  "currency": "KES",
+  "recipient": {
+    "institution": "SAFAKEPC",
+    "accountIdentifier": "123456",
+    "accountName": "Merchant Name",
+    "memo": "Order 42",
+    "metadata": { "channel": "Till" }
+  }
+}
+```
+
+**Example — Paybill**
+
+```json
+"destination": {
+  "type": "fiat",
+  "currency": "KES",
+  "recipient": {
+    "institution": "SAFAKEPC",
+    "accountIdentifier": "INV-001",
+    "accountName": "Customer Name",
+    "memo": "Invoice",
+    "metadata": {
+      "channel": "Paybill",
+      "businessNumber": "400200"
+    }
+  }
+}
+```
+
+**KYC on offramp:** optional **`destination.kyc`** applies to the **recipient** only. Do not send sender or provider KYB on offramp create.
+
+**GET / webhooks (v2):** for offramp orders, **`destination.recipient.metadata`** returns the metadata you supplied on create (same shape as above). **`destination.kyc`** returns destination KYC when stored. There is no v1-style flat metadata fallback on v2 GET.
+
+**Verify-account:** Till and Paybill identifiers are not normalized as mobile phone numbers. Use the exact till or paybill values you will send on the order.
+
+---
+
 ## Handle the create response
 
 The create response includes a `providerAccount` whose shape depends on direction: **offramp** gives a **crypto receive address**; **onramp** gives **virtual account / fiat transfer** instructions.
@@ -539,6 +592,8 @@ Use this when you want **clearer UX** before the user confirms—not because the
 - **Offramp** — verify the **fiat recipient** you will send in `destination.recipient` (same `institution` and `accountIdentifier` as the order).
 - **Onramp** — verify **`source.refundAccount`** (where fiat refunds go), not the crypto wallet in `destination.recipient`.
 
+For **KES Till or Paybill**, pass the same **`accountIdentifier`** and **`metadata.channel`** you will use on create. Phone-style normalization does not apply to till or paybill numbers.
+
 **NGN bank:**
 
 ```bash
@@ -569,7 +624,7 @@ A `200 OK` response returns the resolved name in `data`. If `data` is a real nam
 
 ### Prefetch a quote for the UI
 
-**`GET /v2/rates/{network}/{token}/{amount}/{fiat}`** is **public** (no API key). Use it when you want to **show** a rate before submit, or when you will pass **`rate`** on create (it must stay within market tolerance). If you omit **`rate`** on create, the API still picks an acceptable rate.
+**`GET /v2/rates/{network}/{from}/{amount}/{to}`** is **public** (no API key). **`from` and `to`** are the fiat code and token symbol in either order. Use it when you want to **show** a rate before submit, or when you will pass **`rate`** on create (it must stay within market tolerance). If you omit **`rate`** on create, the API still picks an acceptable rate.
 
 <Note>
   The JSON `data` object includes **`buy`** and **`sell`** (unless you pass `?side=buy` or `?side=sell`). Use **`data.sell.rate`** for **offramp** and **`data.buy.rate`** for **onramp** when displaying a quote. **`provider_id`** is optional and must be exactly **8 letters** (`A–Z` or `a–z`) if you pin a provider.

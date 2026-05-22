@@ -48,6 +48,8 @@ For mobile payment providers, local banks without SWIFT codes, and other financi
 - **SAFAKEPC** - Safaricom M-Pesa (Kenya)
 - **AIRTKEPC** - Airtel Money (Kenya)
 
+For KES **Till** and **Paybill** offramps, keep **`SAFAKEPC`** (or the same mobile institution you use for M-Pesa) and set **`destination.recipient.metadata.channel`** to **`Till`** or **`Paybill`** (and **`businessNumber`** for Paybill). See **[Sender API Integration — KES mobile money](/implementation-guides/sender-api-integration#kes-mobile-money-m-pesa-till-paybill)**.
+
 ## Code Format Rules
 
 ### Currency Codes

@@ -448,7 +448,17 @@ components:
           description: Institution code (SWIFT code or custom PayCrest code ending with 'PC'). See [Code Standards](/resources/code-standards) for details.
         accountIdentifier:
           type: string
-          description: Bank account number, mobile number, or other account identifier
+          description: |
+            Bank account number, mobile wallet MSISDN, Till/Paybill identifier, or other account identifier.
+
+            For **mobile_money** institutions, the API normalizes phone numbers before verification: strips `+`, removes a leading domestic `0`, and adds the country dial code when missing (KES 254, UGX 256, TZS 255, GHS 233, MWK 265). Examples for KES M-Pesa — `0712345678`, `+254712345678`, and `254712345678` all normalize to `254712345678`.
+
+            KES Till/Paybill identifiers are not normalized when `metadata` indicates Till/Paybill, or when the value looks like Paybill (`business|reference`) or Till (fewer than 9 digits).
+        metadata:
+          type: object
+          additionalProperties: true
+          description: |
+            Optional. Used for KES Till/Paybill verify so phone normalization is not applied. Same semantics as recipient `metadata` on order create (e.g. `channel` Till or Paybill, `businessNumber`).
     ErrorResponse:
       type: object
       properties:
@@ -1095,12 +1105,25 @@ paths:
       tags:
         - General
       summary: Verify account
+      description: |
+        Resolves the account holder name when available. For some fiat corridors (e.g. KES M-Pesa), `data` may be `"OK"` when the account is valid but no display name is returned — supply your own `accountName` on the order in that case.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/VerifyAccountRequest'
+            examples:
+              ngnBank:
+                summary: NGN bank account
+                value:
+                  institution: GTBINGLA
+                  accountIdentifier: "0123456789"
+              kesMobile:
+                summary: KES M-Pesa (local MSISDN normalized server-side)
+                value:
+                  institution: SAFAKEPC
+                  accountIdentifier: "0712345678"
       responses:
         '200':
           description: Account verified
@@ -1114,9 +1137,11 @@ paths:
                     example: success
                   message:
                     type: string
-                    example: Operation successful
+                    example: Account name was fetched successfully
                   data:
                     type: string
+                    description: Resolved account name, or `"OK"` when valid but name lookup is unavailable
+                    example: JOHN DOE
         '400':
           description: Bad request
           content:

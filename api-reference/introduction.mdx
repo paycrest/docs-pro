@@ -71,7 +71,7 @@ For protocol information and utilities:
 - **`GET /tokens`** - List supported tokens and contract addresses
 - **`GET /rates/{network}/{token}/{amount}/{fiat}`** - Get public buy/sell rate quotes for a token/fiat pair on a network (no API key)
 - **`GET /pubkey`** - Get aggregator public key
-- **`POST /verify-account`** - Verify bank account details before creating an order
+- **`POST /verify-account`** - Verify bank or mobile money account details before creating an order (mobile MSISDN normalized server-side; see [Verify Account](/api-reference/general/verify-account))
 - **`GET /orders/{chain_id}/{id}`** - Get order status by onchain Gateway ID
 - **`GET /reindex/{network}/{tx_hash_or_address}`** - Reindex a transaction or address
 

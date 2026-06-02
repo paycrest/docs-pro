@@ -489,8 +489,10 @@ Use this when you want **clearer UX** before the user confirms—not because the
 
 **`POST /v2/verify-account`** runs the **same checks** again on create, but calling it first cuts down “invalid account” surprises and returns a canonical **`accountName`** for your form.
 
-- **Offramp** — verify the **fiat recipient** you will send in `destination.recipient` (same `institution`, `accountIdentifier`, and `currency` as the order).
+- **Offramp** — verify the **fiat recipient** you will send in `destination.recipient` (same `institution` and `accountIdentifier` as the order).
 - **Onramp** — verify **`source.refundAccount`** (where fiat refunds go), not the crypto wallet in `destination.recipient`.
+
+**NGN bank:**
 
 ```bash
 curl -X POST "https://api.paycrest.io/v2/verify-account" \
@@ -498,12 +500,25 @@ curl -X POST "https://api.paycrest.io/v2/verify-account" \
   -H "Content-Type: application/json" \
   -d '{
     "institution": "GTBINGLA",
-    "accountIdentifier": "1234567890",
-    "currency": "NGN"
+    "accountIdentifier": "0123456789"
   }'
 ```
 
-A `200 OK` response returns the resolved `accountName` in `data`. If `data` is a real name (e.g. `"JOHN DOE"`), use that exact string as `accountName` on the order. If `data` is `"OK"`, name lookup is not available for that corridor—supply your own `accountName`.
+**KES M-Pesa** — you may send local (`07…`) or international (`254…`) MSISDN; the API normalizes to dial code `254` before verification:
+
+```bash
+curl -X POST "https://api.paycrest.io/v2/verify-account" \
+  -H "API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "institution": "SAFAKEPC",
+    "accountIdentifier": "0712345678"
+  }'
+```
+
+For **KES Till/Paybill**, pass **`metadata`** (e.g. `"channel": "Till"`) so phone normalization is skipped — see [Verify Account](/api-reference/general/verify-account).
+
+A `200 OK` response returns the resolved name in `data`. If `data` is a real name (e.g. `"JOHN DOE"`), use that exact string as `accountName` on the order. If `data` is `"OK"`, name lookup is not available for that corridor—supply your own `accountName`.
 
 ### Prefetch a quote for the UI
 

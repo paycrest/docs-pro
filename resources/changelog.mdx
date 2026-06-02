@@ -7,6 +7,19 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ---
 
+## Q2 2026
+
+### Verify-account mobile money normalization (June 2026)
+
+**`POST /v1/verify-account`** and **`POST /v2/verify-account`** now normalize **mobile_money** `accountIdentifier` values before provider verification (country dial code, strip `+` and leading `0`). Supported fiat dial codes: KES `254`, UGX `256`, TZS `255`, GHS `233`, MWK `265`.
+
+- Optional request field **`metadata`** (KES Till/Paybill) skips normalization when appropriate.
+- Response **`data`** may still be `"OK"` when the account is valid but no display name is returned (e.g. some M-Pesa corridors).
+
+See [Verify Account](/api-reference/general/verify-account).
+
+---
+
 ## Q1 2026
 
 ### Public v2 rates path and buy/sell quotes (April 2026)

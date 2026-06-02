@@ -3,4 +3,39 @@ title: 'Verify Account'
 openapi: "openapi-v2.yaml POST /verify-account"
 ---
 
-Verify an account using institution and account identifier. 
+Verify a bank or mobile money account before creating an order. Currency is determined by the **institution** code (no separate `currency` field on this endpoint).
+
+## Mobile money identifiers
+
+For institutions with type **mobile_money**, the API **normalizes** `accountIdentifier` before calling providers:
+
+- Strips `+` and non-digit characters
+- Removes a leading domestic `0` and adds the country dial code when missing
+
+| Fiat | Dial code |
+|------|-----------|
+| KES | 254 |
+| UGX | 256 |
+| TZS | 255 |
+| GHS | 233 |
+| MWK | 265 |
+
+**KES M-Pesa example:** `0712345678`, `+254712345678`, and `254712345678` all normalize to `254712345678`.
+
+You can send local or international MSISDN format; normalization also runs on order create for the same institution types.
+
+## KES Till and Paybill
+
+Phone normalization is **not** applied when:
+
+- **`metadata`** indicates Till or Paybill (same shape as [recipient metadata](/implementation-guides/sender-api-integration) on order create), or
+- The identifier looks like Paybill (`businessNumber|reference`) or Till (fewer than 9 digits)
+
+Pass optional **`metadata`** on the verify request for Till/Paybill validation.
+
+## Response `data`
+
+- A **real name** (e.g. `"JOHN DOE"`) — use that exact string as `accountName` on the order.
+- **`"OK"`** — account treated as valid but name lookup is unavailable for that corridor (common for some KES/GHS/UGX/MWK mobile flows). Provide your own `accountName` on the order.
+
+The same checks run again when you create an order; calling verify first improves checkout UX.

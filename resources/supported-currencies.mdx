@@ -67,7 +67,8 @@ const order = {
     currency: "KES",
     recipient: {
       institution: "SAFAKEPC",
-      accountIdentifier: "254700000000",
+      // Local (07…) or international (254…) MSISDN; API normalizes on create and verify-account
+      accountIdentifier: "0712345678",
       accountName: "Jane Smith",
       memo: "Mobile payment"
     }

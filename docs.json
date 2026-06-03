@@ -82,7 +82,10 @@
                   "api-reference/sender/initiate-payment-order-v2",
                   "api-reference/sender/list-payment-orders-v2",
                   "api-reference/sender/get-payment-order-by-id-v2",
-                  "api-reference/sender/get-sender-stats"
+                  "api-reference/sender/get-sender-stats",
+                  "api-reference/sender/list-webhook-deliveries",
+                  "api-reference/sender/get-webhook-delivery-by-id",
+                  "api-reference/sender/retry-webhook-delivery"
                 ]
               },
               {

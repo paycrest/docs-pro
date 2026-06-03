@@ -461,6 +461,53 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
   </Tab>
 </Tabs>
 
+### Webhook delivery logs & retry
+
+Every webhook we send is recorded as a **delivery** you can inspect and replay — so a briefly-down endpoint no longer means a lost event.
+
+**Automatic retries.** A delivery that fails — either a transport error **or a non-2xx response** — is retried automatically with exponential backoff. Retries continue for a cumulative **24-hour window**, after which the delivery is marked `expired` and we email your sender account once. Return a `2xx` status as soon as you've accepted the event to stop retries.
+
+Each delivery has a `status`:
+
+| Status | Meaning |
+|--------|---------|
+| `pending` | Queued or awaiting its next retry |
+| `success` | Your endpoint returned a 2xx |
+| `failed` | Transport error or non-2xx; scheduled for retry |
+| `expired` | Gave up after the 24h retry window |
+
+The `trigger` field records what produced an attempt: `automatic` (first send), `cron_retry` (automatic backoff retry), or `manual_sync` / `manual_async` (a retry you initiated).
+
+**Inspect deliveries.** List your deliveries (newest first), filtered by `status`, `event`, `event_id`, `order_id`, or a `from`/`to` date range:
+
+```bash
+curl "https://api.paycrest.io/v2/sender/webhooks?status=failed" \
+  -H "API-Key: YOUR_API_KEY"
+```
+
+Fetch a single delivery to see the frozen request payload and the captured response body (truncated to 4KB):
+
+```bash
+curl "https://api.paycrest.io/v2/sender/webhooks/DELIVERY_ID" \
+  -H "API-Key: YOUR_API_KEY"
+```
+
+**Replay a delivery.** Retry replays the original frozen payload. Use `?sync=true` to replay immediately and get the HTTP result inline:
+
+```bash
+curl -X POST "https://api.paycrest.io/v2/sender/webhooks/DELIVERY_ID/retry?sync=true" \
+  -H "API-Key: YOUR_API_KEY"
+```
+
+Omit `sync` to queue a new delivery for the retry worker instead — the response is `202` with the new delivery's `id`:
+
+```bash
+curl -X POST "https://api.paycrest.io/v2/sender/webhooks/DELIVERY_ID/retry" \
+  -H "API-Key: YOUR_API_KEY"
+```
+
+All three endpoints are scoped to the authenticated sender; another sender's delivery returns `404`. See [List Webhook Deliveries](/api-reference/sender/list-webhook-deliveries), [Get Webhook Delivery](/api-reference/sender/get-webhook-delivery-by-id), and [Retry Webhook Delivery](/api-reference/sender/retry-webhook-delivery).
+
 ### Polling
 
 ```javascript

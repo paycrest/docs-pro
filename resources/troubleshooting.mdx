@@ -77,6 +77,15 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
       <li>Ensure your webhook endpoint can handle POST requests</li>
       <li>Verify webhook signature for security</li>
     </ul>
+
+    <h4>Inspect and replay deliveries</h4>
+    <p>You don't need to re-trigger the order flow to recover a missed event. Every send is logged as a delivery you can audit and replay:</p>
+    <ul>
+      <li>List failed deliveries: <code>GET /v2/sender/webhooks?status=failed</code></li>
+      <li>Read the captured response body and error: <code>GET /v2/sender/webhooks/:id</code></li>
+      <li>Replay the original payload: <code>POST /v2/sender/webhooks/:id/retry</code> (<code>?sync=true</code> returns the HTTP result inline; otherwise it's queued)</li>
+    </ul>
+    <p>Failed deliveries (transport errors and non-2xx responses) are also retried automatically with exponential backoff for 24 hours before being marked <code>expired</code>. See the <a href="/implementation-guides/sender-api-integration#webhook-delivery-logs--retry">webhook delivery logs &amp; retry guide</a>.</p>
     
     <h4>Webhook Signature Verification</h4>
     

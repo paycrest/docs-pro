@@ -123,7 +123,7 @@ The complete set of order status values:
 
 ## Webhook Events
 
-Paycrest sends webhooks to your configured endpoint as an order progresses. The event name format is `payment_order.<status>`.
+Paycrest sends webhooks to your configured endpoint as an order progresses. The event name format is `payment_order.<status>`. Failed deliveries are retried automatically with exponential backoff, and every delivery is queryable and replayable via the [sender webhook endpoints](/implementation-guides/sender-api-integration#webhook-delivery-logs--retry).
 
 | Event | Triggered When |
 |-------|---------------|

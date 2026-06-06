@@ -17,6 +17,20 @@ components:
       type: apiKey
       in: header
       name: API-Key
+  parameters:
+    OptionalOrderDirection:
+      name: direction
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [onramp, offramp]
+      description: |
+        Filter to **onramp** (fiat → crypto) or **offramp** (crypto → fiat). Omit to include **both** directions.
+
+        On **stats** endpoints, invalid values return **400 Bad Request**. On **list** endpoints, values other than `onramp` or `offramp` are ignored (no direction filter).
+
+        **HMAC (GET):** the signed payload includes all query parameters—include `direction` when you send it (alongside `timestamp`, `currency`, etc.).
   schemas:
 
     # Sender Schemas
@@ -614,6 +628,9 @@ components:
         institution:
           type: string
           description: Bank or mobile provider code (SWIFT prefix or Paycrest institution code)
+        institutionName:
+          type: string
+          description: Human-readable institution name (e.g. OPay). Present on GET responses when the code resolves in Paycrest.
         accountIdentifier:
           type: string
           description: Account number or mobile number
@@ -637,6 +654,9 @@ components:
         providerId:
           type: string
           description: Pin order to a specific provider (optional)
+        kyc:
+          type: object
+          description: Optional destination (recipient) KYC for offramp. Do not send sender or provider KYB on offramp create.
         recipient:
           $ref: '#/components/schemas/V2FiatRecipient'
 
@@ -646,13 +666,29 @@ components:
       properties:
         institution:
           type: string
+          description: Institution code (e.g. SAFAKEPC for Safaricom M-Pesa). Till and Paybill use the same mobile institution with channel metadata.
+        institutionName:
+          type: string
+          description: Human-readable institution name (e.g. OPay). Present on GET responses when the code resolves in Paycrest.
         accountIdentifier:
           type: string
+          description: Bank account, mobile phone (E.164 or local), till number, or paybill account reference depending on channel.
         accountName:
           type: string
         memo:
           type: string
           description: Payment narration / reference
+        metadata:
+          type: object
+          description: Corridor-specific hints. For KES mobile offramp, use channel and optional businessNumber (see Sender API Integration guide).
+          properties:
+            channel:
+              type: string
+              enum: [Mobile, Till, Paybill]
+              description: KES payout channel. Mobile = phone M-Pesa; Till = buy goods; Paybill = paybill. Omit for default phone M-Pesa when accountIdentifier is a mobile number.
+            businessNumber:
+              type: string
+              description: Paybill business number (required for Paybill when not inferrable from accountIdentifier alone).
 
     V2CryptoDestination:
       type: object
@@ -700,7 +736,7 @@ components:
       properties:
         institution:
           type: string
-          description: Bank or mobile provider code
+          description: Institution label for the virtual account (human-readable; from provider or stored metadata).
         accountIdentifier:
           type: string
           description: Account number or mobile number to send fiat to
@@ -1025,6 +1061,8 @@ paths:
         - ApiKeyAuth: []
       servers:
         - url: https://api.paycrest.io/v2
+      parameters:
+        - $ref: '#/components/parameters/OptionalOrderDirection'
       responses:
         '200':
           description: Sender stats
@@ -1037,6 +1075,12 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/SenderStatsResponse'
+        '400':
+          description: Bad request (e.g. invalid `direction`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
           content:
@@ -1316,8 +1360,11 @@ paths:
       parameters:
         - in: query
           name: currency
+          required: true
           schema:
             type: string
+          description: Fiat currency code (e.g. NGN, KES).
+        - $ref: '#/components/parameters/OptionalOrderDirection'
       responses:
         '200':
           description: Provider stats
@@ -1331,7 +1378,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/ProviderStatsResponse'
         '400':
-          description: Bad request
+          description: Bad request (e.g. missing `currency`, invalid `direction`)
         '401':
           description: Unauthorized
 
@@ -1452,13 +1499,21 @@ paths:
                     items:
                       $ref: '#/components/schemas/SupportedTokenResponse'
 
-  /rates/{network}/{token}/{amount}/{fiat}:
+  /rates/{network}/{from}/{amount}/{to}:
     get:
       tags:
         - General
       summary: Get token rate (v2)
       description: |
-        Public quote for a crypto notional on a specific network. Returns **buy** and/or **sell** quotes (fiat per crypto), provider id(s), order type, and refund timeout.
+        Public quote on a specific network. Returns **buy** and/or **sell** quotes, order type, and refund timeout.
+
+        **Token + fiat:** each of **`from`** / **`to`** is either an enabled **fiat currency code** or an enabled **crypto (token) symbol** on **`network`**. Exactly one must be fiat and one crypto (`.../USDT/100/NGN` and `.../NGN/100/USDT` are equivalent). **`amount`** is the **crypto notional**. Rates are **fiat per 1 token** for each side. **`from` and `to` cannot both be crypto.**
+
+        **Ambiguous segment:** if a path value matches **both** an enabled fiat code **and** an enabled crypto symbol on that network (e.g. same string), the request returns **400** unless **`from_source`** and/or **`to_source`** is set to **`fiat`** or **`crypto`** to pick the leg.
+
+        **Fiat + fiat:** both segments are fiat codes. The quote **bridges through USDC** on the same **`network`**. **`amount`** is denominated in **`from`** fiat. **`sell`** is **destination fiat per 1 unit of `from` fiat** (buy USDC with `from`, sell USDC for `to`). **`buy`** is **`from` fiat per 1 unit of `to` fiat** (inverse corridor; buy USDC with `to`, sell USDC for `from`)—asymmetric from **`sell`**, not a simple reciprocal.
+
+        Path order does **not** imply trade direction for token/fiat pairs; omitting **`side`** returns **both** sides when available.
 
         For the legacy single-number response, use **`GET /v1/rates/{token}/{amount}/{fiat}`** with optional `network` query.
       servers:
@@ -1472,29 +1527,41 @@ paths:
             enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
           description: Blockchain network identifier (lowercase in URL).
         - in: path
-          name: token
+          name: from
           required: true
           schema:
             type: string
-          description: Token symbol (e.g. USDT, USDC).
+          description: Fiat code or token symbol on `network` (paired with `to`).
         - in: path
           name: amount
           required: true
           schema:
             type: string
-          description: Token amount the quote applies to.
+          description: For token+fiat pairs, the **token** notional. For fiat+fiat pairs, the amount in **`from`** fiat.
         - in: path
-          name: fiat
+          name: to
           required: true
           schema:
             type: string
-          description: Fiat currency code (e.g. NGN, KES).
+          description: Fiat code or token symbol on `network` (paired with `from`).
         - in: query
           name: side
           schema:
             type: string
             enum: [buy, sell]
           description: Return only the buy or sell quote. Omit for both sides.
+        - in: query
+          name: from_source
+          schema:
+            type: string
+            enum: [fiat, crypto]
+          description: When `from` matches both a fiat and a crypto asset on `network`, set to `fiat` or `crypto` to disambiguate. Ignored when `from` is unambiguous.
+        - in: query
+          name: to_source
+          schema:
+            type: string
+            enum: [fiat, crypto]
+          description: When `to` matches both a fiat and a crypto asset on `network`, set to `fiat` or `crypto` to disambiguate. Ignored when `to` is unambiguous.
         - in: query
           name: provider_id
           schema:
@@ -1514,7 +1581,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/V2RateQuoteResponse'
         '400':
-          description: Bad request (invalid amount, side, provider_id, unsupported token/fiat/network, etc.)
+          description: Bad request (invalid amount, side, provider_id, ambiguous from/to without from_source/to_source, unsupported asset/network, etc.)
         '404':
           description: No provider available for the requested swap
         '500':
@@ -1757,6 +1824,7 @@ paths:
           schema:
             type: string
             enum: [initiated, deposited, pending, fulfilling, fulfilled, validated, settling, settled, cancelled, refunding, refunded, expired]
+        - $ref: '#/components/parameters/OptionalOrderDirection'
       responses:
         '200':
           description: List of orders
@@ -1991,7 +2059,7 @@ paths:
       tags:
         - Provider
       summary: List v2 payment orders (provider)
-      description: Returns a paginated list of payment orders assigned to the authenticated provider, in the v2 response schema. Requires a `currency` query parameter. Supports `search`, `export=csv`, `from`/`to` date filters, and `ordering` (asc/desc).
+      description: Returns a paginated list of payment orders assigned to the authenticated provider, in the v2 response schema. Requires a `currency` query parameter. Supports optional `direction` (`onramp` / `offramp`), `search`, `export=csv`, `from`/`to` date filters, and `ordering` (asc/desc).
       security:
         - ApiKeyAuth: []
       servers:
@@ -2048,6 +2116,7 @@ paths:
             type: string
             format: date
           description: End date for CSV export (YYYY-MM-DD). Required when `export=csv`.
+        - $ref: '#/components/parameters/OptionalOrderDirection'
       responses:
         '200':
           description: Paginated list of orders

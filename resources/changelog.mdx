@@ -35,11 +35,35 @@ See [Verify Account](/api-reference/general/verify-account).
 
 ---
 
+### KES Till and Paybill offramp (May 2026)
+
+**Offramp** to Kenya mobile rails now supports **Till** (buy goods) and **Paybill** in addition to phone M-Pesa.
+
+- On create, set **`destination.recipient.metadata.channel`** to **`Mobile`**, **`Till`**, or **`Paybill`** (use **`Mobile`** for phone M-Pesa; omit channel only when the identifier is a standard mobile number).
+- **Paybill** may require **`metadata.businessNumber`**.
+- Optional **`destination.kyc`** on offramp is **recipient-only** (no sender/provider KYB on create).
+- **v2 GET / webhooks:** **`destination.recipient.metadata`** echoes create-time recipient metadata; **`destination.kyc`** when stored.
+- Till/Paybill identifiers are not normalized as phone numbers on create or verify-account.
+
+See **[Sender API Integration — KES mobile money](/implementation-guides/sender-api-integration#kes-mobile-money-m-pesa-till-paybill)** and **[Supported Currencies](/resources/supported-currencies)**.
+
+---
+
+### Optional `direction` on v2 order lists and stats (April 2026)
+
+**`GET /v2/sender/orders`** and **`GET /v2/provider/orders`** accept an optional query parameter **`direction`**, either **`onramp`** or **`offramp`**, to return only orders for that flow. Omit it to list both directions (default). On list endpoints, values other than `onramp` or `offramp` are ignored (no direction filter is applied).
+
+**`GET /v2/sender/stats`** and **`GET /v2/provider/stats`** accept the same optional **`direction`** parameter; omitted means totals and aggregates include both directions. Invalid **`direction`** values return **400 Bad Request**.
+
+**HMAC (ApiKeyAuth) on GET:** request signatures are built from all query parameters—include **`direction`** in the signed payload when you send it (e.g. alongside `timestamp` and `currency` on provider stats).
+
+---
+
 ## Q1 2026
 
 ### Public v2 rates path and buy/sell quotes (April 2026)
 
-**`GET /v2/rates/{network}/{token}/{amount}/{fiat}`** is the supported public rates URL. The network is a **path** segment (not the `network` query used on v1). Responses use structured **`buy`** and **`sell`** objects (`rate`, `providerIds`, `orderType`, `refundTimeoutMinutes`) instead of a single scalar `data` value.
+**`GET /v2/rates/{network}/{from}/{amount}/{to}`** is the supported public rates URL. The network is a **path** segment (not the `network` query used on v1). **`from` and `to`** may be a **token + fiat** pair (either order; **not** two tokens) or **two fiat codes**. Fiat–fiat quotes **bridge through USDC** on the same network; **`amount`** is in **`from`** fiat; **`sell`** / **`buy`** use asymmetric inverse-corridor semantics (not simple reciprocals). Path order does **not** imply trade direction for token/fiat—omit **`side`** to get **both** sides when available. Responses use structured **`buy`** and **`sell`** objects (`rate`, `providerIds`, `orderType`, `refundTimeoutMinutes`) instead of a single scalar `data` value.
 
 Optional query parameters:
 
@@ -61,6 +85,8 @@ No REST schema changes. For **FX onramp** pay-in, the aggregator now sizes oncha
 Onchain principal amounts may differ slightly from older builds that used a looser ceiling gross-up; recipients should match the quoted net more precisely.
 
 ---
+
+## Q1 2026
 
 ### v2 API — Onramp & Offramp (March 2026)
 

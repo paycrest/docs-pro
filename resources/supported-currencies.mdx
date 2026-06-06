@@ -53,6 +53,11 @@ const order = {
 ```
 
 ### Mobile Money (Kenya)
+
+Phone M-Pesa, **Till** (buy goods), and **Paybill** all use a KES mobile institution (typically **`SAFAKEPC`**). Set **`destination.recipient.metadata.channel`** to **`Mobile`**, **`Till`**, or **`Paybill`**. Full rules and KYC notes are in **[Sender API Integration — KES mobile money](/implementation-guides/sender-api-integration#kes-mobile-money-m-pesa-till-paybill)**.
+
+**Phone M-Pesa**
+
 ```javascript
 const order = {
   amount: "50",
@@ -70,10 +75,35 @@ const order = {
       // Local (07…) or international (254…) MSISDN; API normalizes on create and verify-account
       accountIdentifier: "0712345678",
       accountName: "Jane Smith",
-      memo: "Mobile payment"
+      memo: "Mobile payment",
+      metadata: { channel: "Mobile" }
     }
   }
 };
+```
+
+**Till**
+
+```javascript
+recipient: {
+  institution: "SAFAKEPC",
+  accountIdentifier: "123456",
+  accountName: "Shop Name",
+  memo: "Payment",
+  metadata: { channel: "Till" }
+}
+```
+
+**Paybill**
+
+```javascript
+recipient: {
+  institution: "SAFAKEPC",
+  accountIdentifier: "INV-001",
+  accountName: "Customer",
+  memo: "Bill pay",
+  metadata: { channel: "Paybill", businessNumber: "400200" }
+}
 ```
 
 ### PIX (Brazil)

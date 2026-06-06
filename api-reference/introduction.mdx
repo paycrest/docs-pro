@@ -448,6 +448,14 @@ Webhook signatures use HMAC-SHA256 over the **exact raw request body**. Do not r
 }
 ```
 
+### Delivery logs & retry
+
+Every webhook send is recorded as a **delivery**. Failed deliveries — transport errors **and** non-2xx responses — are retried automatically with exponential backoff for a 24-hour window, then marked `expired`. You can audit and replay deliveries yourself:
+
+- [List Webhook Deliveries](/api-reference/sender/list-webhook-deliveries) — newest first, filter by `status`, `event`, `event_id`, `order_id`, or date range.
+- [Get Webhook Delivery](/api-reference/sender/get-webhook-delivery-by-id) — full record including request payload and response body.
+- [Retry Webhook Delivery](/api-reference/sender/retry-webhook-delivery) — replay a delivery (`?sync=true` for an inline result, otherwise queued).
+
 <Note>
   For detailed webhook implementation guide including signature verification, retry logic, and best practices, see the [Sender API Integration Guide](/implementation-guides/sender-api-integration#webhooks).
 </Note>

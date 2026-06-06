@@ -894,6 +894,122 @@ components:
               type: string
               format: date-time
 
+    WebhookDelivery:
+      type: object
+      description: |
+        A single outbound webhook delivery attempt. Returned in list responses
+        (the large `requestPayload` and `responseBody` fields are omitted from list
+        items — fetch a single delivery to see them).
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique ID of this delivery record.
+        event:
+          type: string
+          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired]
+          description: The webhook event that was delivered.
+        eventId:
+          type: string
+          description: Identifier of the underlying event (matches the `event_id` filter).
+        orderId:
+          type: string
+          format: uuid
+          description: The payment order this delivery relates to, if any.
+        status:
+          type: string
+          enum: [pending, success, failed, expired]
+          description: |
+            Delivery status. `pending` — queued or awaiting retry; `success` — the
+            endpoint returned a 2xx; `failed` — a transport error or non-2xx response,
+            scheduled for retry; `expired` — gave up after the 24h retry window.
+        trigger:
+          type: string
+          enum: [automatic, cron_retry, manual_sync, manual_async]
+          description: |
+            What produced this attempt. `automatic` — first send on the event;
+            `cron_retry` — automatic backoff retry; `manual_sync`/`manual_async` —
+            a sender-initiated retry via the retry endpoint.
+        httpStatusCode:
+          type: integer
+          description: HTTP status code returned by your endpoint (0 if no response was received).
+          example: 200
+        attemptNumber:
+          type: integer
+          description: 1-based attempt counter for this delivery.
+          example: 1
+        destinationUrl:
+          type: string
+          format: uri
+          description: The webhook URL the request was sent to.
+        signature:
+          type: string
+          description: The `X-Paycrest-Signature` (HMAC-SHA256 hex) sent with the request.
+        errorMessage:
+          type: string
+          description: Transport or HTTP error message, if the attempt failed.
+        durationMs:
+          type: integer
+          description: Round-trip duration of the attempt, in milliseconds.
+        nextRetryTime:
+          type: string
+          format: date-time
+          description: When the next automatic retry is scheduled (null once delivered or expired).
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    WebhookDeliveryDetail:
+      description: A single webhook delivery including the frozen request payload and captured response body.
+      allOf:
+        - $ref: '#/components/schemas/WebhookDelivery'
+        - type: object
+          properties:
+            requestPayload:
+              type: object
+              description: The exact JSON body that was (or will be) sent, frozen at first attempt.
+            responseBody:
+              type: string
+              description: Response body returned by your endpoint, truncated to 4KB.
+
+    WebhookDeliveryList:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDelivery'
+
+    WebhookRetryResult:
+      type: object
+      description: |
+        Result of a synchronous retry (`?sync=true`). Reports the HTTP outcome of
+        replaying the original payload inline.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID of the delivery record created for this retry.
+        status:
+          type: string
+          enum: [success, failed]
+        httpStatusCode:
+          type: integer
+          example: 200
+        durationMs:
+          type: integer
+        errorMessage:
+          type: string
+
 
 
 servers:
@@ -1688,6 +1804,185 @@ paths:
           description: Unauthorized
         '404':
           description: Order not found
+
+  /sender/webhooks:
+    get:
+      tags:
+        - Sender
+      summary: List webhook deliveries
+      description: |
+        Returns the authenticated sender's webhook delivery log, newest first.
+        Use this to audit which events were delivered and to find failed or expired
+        deliveries to replay. List items omit the large `requestPayload` and
+        `responseBody` fields — fetch a single delivery to see them.
+      security:
+        - ApiKeyAuth: []
+      servers:
+        - url: https://api.paycrest.io/v2
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, success, failed, expired]
+          description: Filter by delivery status.
+        - in: query
+          name: event
+          schema:
+            type: string
+          description: Filter by event name, e.g. `payment_order.settled`.
+        - in: query
+          name: event_id
+          schema:
+            type: string
+          description: Filter by the underlying event identifier.
+        - in: query
+          name: order_id
+          schema:
+            type: string
+            format: uuid
+          description: Filter to deliveries for a single payment order.
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Only deliveries created at or after this timestamp.
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Only deliveries created at or before this timestamp.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of webhook deliveries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/WebhookDeliveryList'
+        '401':
+          description: Unauthorized
+
+  /sender/webhooks/{id}:
+    get:
+      tags:
+        - Sender
+      summary: Get a webhook delivery by ID
+      description: |
+        Returns a single webhook delivery, including the frozen `requestPayload`
+        and the captured `responseBody`. Returns `404` if the delivery belongs to
+        another sender.
+      security:
+        - ApiKeyAuth: []
+      servers:
+        - url: https://api.paycrest.io/v2
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Webhook delivery
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/WebhookDeliveryDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Delivery not found
+
+  /sender/webhooks/{id}/retry:
+    post:
+      tags:
+        - Sender
+      summary: Retry a webhook delivery
+      description: |
+        Replays a webhook delivery using its original frozen payload.
+
+        - **Synchronous** (`?sync=true`): the payload is re-sent immediately and the
+          HTTP result is returned inline (`200`).
+        - **Asynchronous** (default): a new `pending` delivery is queued for the retry
+          worker and the new delivery ID is returned (`202`).
+
+        Returns `404` if the delivery belongs to another sender.
+      security:
+        - ApiKeyAuth: []
+      servers:
+        - url: https://api.paycrest.io/v2
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: sync
+          schema:
+            type: boolean
+            default: false
+          description: When `true`, replay immediately and return the HTTP result inline.
+      responses:
+        '200':
+          description: Synchronous retry result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/WebhookRetryResult'
+        '202':
+          description: Asynchronous retry queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Webhook retry queued
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: ID of the newly queued delivery.
+        '401':
+          description: Unauthorized
+        '404':
+          description: Delivery not found
 
   # ─── V2 Provider Endpoints ────────────────────────────────────────────────────
 

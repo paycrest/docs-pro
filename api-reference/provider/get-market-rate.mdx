@@ -9,11 +9,89 @@ Returns **buy** and **sell** market rate **bands** (reference rate plus min/max 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `buy` | object (optional) | Buy-side band: `marketRate`, `minimumRate`, `maximumRate` |
-| `sell` | object (optional) | Sell-side band: `marketRate`, `minimumRate`, `maximumRate` |
+| `buy` | object (optional) | Buy-side band — see fields below |
+| `sell` | object (optional) | Sell-side band — see fields below |
+
+Each side object:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `marketRate` | string | Reference market rate for this side (fiat per crypto) |
+| `minimumRate` | string | Minimum allowed rate for this side |
+| `maximumRate` | string | Maximum allowed rate for this side |
+| `position` | object (optional) | Rate benchmark vs. best public peer — see below |
 
 Numeric values are returned as **strings** (decimal). Either side may be omitted depending on corridor configuration.
 
+## `position` object
+
+When qualifying public offers exist for this corridor, each side includes a `position` object so you can see how your effective rate compares to the best public peer:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `bestPublicRate` | string | Best rate among enabled non-testnet public peers (highest for sell; lowest for buy) |
+| `yourEffectiveRate` | string | Your own effective rate for this corridor and side |
+| `deltaVsBest` | string | `yourEffectiveRate − bestPublicRate` |
+
+**Interpreting `deltaVsBest`:**
+- **Sell** (offramp): a **positive** delta means your rate is higher than the best peer — you are more competitive.
+- **Buy** (onramp): a **negative** delta means your rate is lower than the best peer — you are more competitive.
+
+`position` is **omitted** when:
+- No qualifying public offers exist for the corridor, or
+- You have no effective rate configured for this corridor.
+
+The reference fields `marketRate`, `minimumRate`, and `maximumRate` are **unchanged** — `position` is purely additive (backward compatible).
+
+The benchmark pool uses all enabled, non-testnet networks; it is not filtered by the `{token}/{fiat}` path parameters' network.
+
+## Example
+
+```json
+{
+  "status": "success",
+  "message": "Rate fetched successfully",
+  "data": {
+    "sell": {
+      "marketRate": "1605.00",
+      "minimumRate": "1580.00",
+      "maximumRate": "1630.00",
+      "position": {
+        "bestPublicRate": "1608.00",
+        "yourEffectiveRate": "1605.00",
+        "deltaVsBest": "-3.00"
+      }
+    },
+    "buy": {
+      "marketRate": "1598.00",
+      "minimumRate": "1575.00",
+      "maximumRate": "1620.00",
+      "position": {
+        "bestPublicRate": "1595.00",
+        "yourEffectiveRate": "1598.00",
+        "deltaVsBest": "3.00"
+      }
+    }
+  }
+}
+```
+
+Example when `position` is omitted (no public benchmark available):
+
+```json
+{
+  "status": "success",
+  "message": "Rate fetched successfully",
+  "data": {
+    "sell": {
+      "marketRate": "1605.00",
+      "minimumRate": "1580.00",
+      "maximumRate": "1630.00"
+    }
+  }
+}
+```
+
 <Note>
-  **`GET /v1/provider/rates/{token}/{fiat}`** uses the same response shape as this v2 route.
+  **`GET /v1/provider/rates/{token}/{fiat}`** uses the same response shape as this v2 route, including the `position` field. See [Get Market Rate (v1)](/api-reference/provider/get-market-rate-v1).
 </Note>

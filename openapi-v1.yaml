@@ -290,6 +290,22 @@ components:
       properties:
         reason:
           type: string
+    MarketPosition:
+      type: object
+      description: |
+        Provider's rate standing versus the best public peer in the same corridor.
+        Omitted when no qualifying public offers exist or the provider has no effective rate for the corridor (backward compatible).
+      properties:
+        bestPublicRate:
+          type: string
+          description: Best rate among enabled non-testnet public peers for this side (highest effective sell rate; lowest effective buy rate).
+        yourEffectiveRate:
+          type: string
+          description: The provider's own effective rate for this corridor and side.
+        deltaVsBest:
+          type: string
+          description: |
+            `yourEffectiveRate − bestPublicRate`. For **sell** a positive delta means you offer a higher rate than the best peer (more competitive). For **buy** a negative delta means you offer a lower rate than the best peer (more competitive).
     MarketRateSide:
       type: object
       description: Tolerance band for one side (buy or sell) of the market rate.
@@ -300,6 +316,10 @@ components:
           type: string
         maximumRate:
           type: string
+        position:
+          allOf:
+            - $ref: '#/components/schemas/MarketPosition'
+          description: Rate benchmark vs. best public peer. Omitted when no public benchmark exists (backward compatible).
     MarketRateResponse:
       type: object
       description: Market rate bounds split by side (same shape as `GET /v2/provider/rates/{token}/{fiat}`).

@@ -1,0 +1,131 @@
+---
+title: 'Get Markets'
+openapi: "openapi-v2.yaml GET /markets"
+---
+
+Returns the live protocol **orderbook** (every funded, available provider quote across corridors × tokens × networks) plus **network-wide aggregate statistics**. Use this endpoint to display live liquidity, rates, and protocol health without requiring authentication.
+
+<Note>
+  **Public endpoint** — no API key or HMAC signature required. CORS is open. Responses are served from a ~10 s Redis cache and are per-IP rate limited.
+</Note>
+
+## Response shape (`data`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `as_of` | string (ISO 8601) | Timestamp when the response was generated |
+| `aggregates` | object | Network-wide aggregate statistics (see below) |
+| `book` | array | Provider quote rows forming the live orderbook |
+
+## Book row fields
+
+Each element of `book` is a single provider quote for one `side` on one `network`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `provider_id` | string | Provider identifier |
+| `side` | string | `sell` = offramp (crypto → fiat); `buy` = onramp (fiat → crypto) |
+| `token` | string | Token symbol, e.g. `USDT`, `USDC` |
+| `fiat` | string | Fiat currency code, e.g. `NGN`, `KES` |
+| `network` | string | Network identifier, e.g. `base`, `ethereum` |
+| `rate` | string | Provider's effective rate (fiat per crypto for sell; crypto per fiat for buy) |
+| `rate_type` | string | `fixed` or `floating` |
+| `min` | string | Minimum order amount for this corridor |
+| `max` | string | Maximum order amount for this corridor |
+| `balance` | string | Available liquidity: fiat amount for sell rows, token amount for buy rows |
+| `balance_ccy` | string | Currency of `balance` — fiat code for sell, token symbol for buy |
+| `balance_usd` | string | Balance normalised to USD |
+| `settled` | integer | Total settled orders for this provider in this corridor |
+| `success_pct` | string \| null | Success rate as a percentage string (`null` when no settled or refunded history) |
+
+<Note>
+  `balance` is a **shared pool** repeated across a provider's networks for the same fiat (sell) or token (buy). De-duplicate by `provider_id + fiat` (sell) or `provider_id + token` (buy) when summing total depth to avoid double-counting.
+</Note>
+
+**Qualifying offer filters:** `is_available = true`, funded (positive balance), enabled fiat/token, non-testnet network. All book rows are public regardless of a provider's visibility setting—visibility only affects the narrower position benchmark pool on the [Get Market Rate](/api-reference/provider/get-market-rate) endpoint.
+
+## Aggregates fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `settled_volume_usd` | windowed | USD volume of settled orders — `24h`, `7d`, `30d`, `all` (strings) |
+| `settled_txns` | windowed | Count of settled transactions — `24h`, `7d`, `30d`, `all` (integers) |
+| `network_success_pct` | windowed | Network success rate (settled / (settled + refunded)) — `24h`, `7d`, `30d` (strings or null) |
+| `median_delivery_secs` | windowed | Median order delivery time in seconds — `24h`, `7d`, `30d` (integers or null) |
+| `active_providers` | windowed | Distinct providers with ≥1 settled order — `24h`, `7d`, `30d`, `all` (integers) |
+| `active_senders` | windowed | Distinct senders with ≥1 settled order — `24h`, `7d`, `30d`, `all` (integers) |
+| `live_liquidity_usd` | string | Total available USD-denominated liquidity across all book rows |
+| `corridors` | integer | Distinct token/fiat pairs in the current book |
+| `tokens` | integer | Distinct tokens in the current book |
+| `networks` | integer | Distinct networks in the current book |
+
+Windowed success and median fields are `null` for a window when no terminal orders exist in that period.
+
+## Example
+
+```bash
+GET https://api.paycrest.io/v2/markets
+```
+
+```json
+{
+  "status": "success",
+  "message": "OK",
+  "data": {
+    "as_of": "2026-06-08T14:30:00Z",
+    "aggregates": {
+      "settled_volume_usd": { "24h": "48200.00", "7d": "312500.00", "30d": "1420000.00", "all": "9800000.00" },
+      "settled_txns":       { "24h": 118,         "7d": 790,         "30d": 3350,         "all": 43000 },
+      "network_success_pct": { "24h": "98.30", "7d": "97.60", "30d": "97.10" },
+      "median_delivery_secs": { "24h": 175, "7d": 190, "30d": 205 },
+      "active_providers":   { "24h": 42, "7d": 49, "30d": 55, "all": 115 },
+      "active_senders":     { "24h": 1150, "7d": 8200, "30d": 33000, "all": 490000 },
+      "live_liquidity_usd": "2350000.00",
+      "corridors": 11,
+      "tokens": 3,
+      "networks": 4
+    },
+    "book": [
+      {
+        "provider_id": "AbCdEfGh",
+        "side": "sell",
+        "token": "USDT",
+        "fiat": "NGN",
+        "network": "base",
+        "rate": "1605.50",
+        "rate_type": "floating",
+        "min": "500.00",
+        "max": "500000.00",
+        "balance": "12000000.00",
+        "balance_ccy": "NGN",
+        "balance_usd": "7462.69",
+        "settled": 3200,
+        "success_pct": "98.90"
+      },
+      {
+        "provider_id": "IjKlMnOp",
+        "side": "buy",
+        "token": "USDC",
+        "fiat": "KES",
+        "network": "ethereum",
+        "rate": "130.25",
+        "rate_type": "fixed",
+        "min": "100.00",
+        "max": "100000.00",
+        "balance": "9500.00",
+        "balance_ccy": "USDC",
+        "balance_usd": "9500.00",
+        "settled": 850,
+        "success_pct": "97.20"
+      }
+    ]
+  }
+}
+```
+
+## Errors
+
+| HTTP | Cause |
+|------|-------|
+| **429** | Per-IP rate limit exceeded |
+| **500** | Internal error |

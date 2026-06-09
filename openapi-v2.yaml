@@ -351,7 +351,7 @@ components:
         One provider quote row in the public markets orderbook (one row per provider × side × token × fiat × network).
         All funded, available providers appear regardless of visibility setting—only `is_available`, funded, enabled, and non-testnet gating applies.
       properties:
-        provider_id:
+        providerId:
           type: string
           description: Provider identifier.
         side:
@@ -370,7 +370,7 @@ components:
         rate:
           type: string
           description: Provider's effective exchange rate for this row (fiat per crypto for sell; crypto per fiat for buy).
-        rate_type:
+        rateType:
           type: string
           enum: [fixed, floating]
           description: Whether the rate is fixed or floating.
@@ -383,20 +383,20 @@ components:
         balance:
           type: string
           description: |
-            Provider's available liquidity for this side. For **sell** this is in fiat (`balance_ccy` = fiat code);
-            for **buy** this is in token (`balance_ccy` = token symbol).
+            Provider's available liquidity for this side. For **sell** this is in fiat (`balanceCurrency` = fiat code);
+            for **buy** this is in token (`balanceCurrency` = token symbol).
             The balance is the shared pool repeated across a provider's networks for the same fiat/token—
-            de-duplicate by `provider_id + fiat` (sell) or `provider_id + token` (buy) when summing depth.
-        balance_ccy:
+            de-duplicate by `providerId + fiat` (sell) or `providerId + token` (buy) when summing depth.
+        balanceCurrency:
           type: string
           description: Currency of `balance` — fiat code for sell rows, token symbol for buy rows.
-        balance_usd:
+        balanceUsd:
           type: string
           description: Balance normalised to USD.
         settled:
           type: integer
           description: Total number of settled orders for this provider in this corridor.
-        success_pct:
+        successPercent:
           type: string
           nullable: true
           description: Provider's success rate (settled / (settled + refunded)) as a percentage string. `null` when there is no settled or refunded history.
@@ -450,7 +450,7 @@ components:
           description: Network success rate over the past 30 days (null if no terminal orders).
     MarketsWindowedMedian:
       type: object
-      description: Median delivery time in seconds across windows. Null when the raw Postgres driver is unavailable (e.g. SQLite in tests) or no data exists.
+      description: Median delivery time in seconds across windows. Null for a window when no data exists.
       properties:
         24h:
           type: integer
@@ -468,31 +468,31 @@ components:
       type: object
       description: Network-wide stats block included in the markets response.
       properties:
-        settled_volume_usd:
+        settledVolumeUsd:
           allOf:
             - $ref: '#/components/schemas/MarketsWindowedVolume'
           description: USD volume of settled orders across windows.
-        settled_txns:
+        settledTxns:
           allOf:
             - $ref: '#/components/schemas/MarketsWindowedCount'
           description: Count of settled transactions across windows.
-        network_success_pct:
+        networkSuccessPercent:
           allOf:
             - $ref: '#/components/schemas/MarketsWindowedSuccess'
           description: Network-wide success rate (settled / (settled + refunded)) across windows.
-        median_delivery_secs:
+        medianDeliverySecs:
           allOf:
             - $ref: '#/components/schemas/MarketsWindowedMedian'
           description: Median order delivery time in seconds across windows.
-        active_providers:
+        activeProviders:
           allOf:
             - $ref: '#/components/schemas/MarketsWindowedCount'
           description: Count of distinct providers with at least one settled order across windows.
-        active_senders:
+        activeSenders:
           allOf:
             - $ref: '#/components/schemas/MarketsWindowedCount'
           description: Count of distinct senders with at least one settled order across windows.
-        live_liquidity_usd:
+        liveLiquidityUsd:
           type: string
           description: Total available USD-denominated liquidity across all book rows.
         corridors:
@@ -508,7 +508,7 @@ components:
       type: object
       description: Public markets orderbook and network-wide aggregates.
       properties:
-        as_of:
+        asOf:
           type: string
           format: date-time
           description: Timestamp when the response was generated (ISO 8601 UTC).
@@ -1910,7 +1910,7 @@ paths:
         plus network-wide aggregate statistics.
 
         **Public endpoint** — no authentication required, CORS open.
-        Responses are served from a ~10 s Redis cache. Requests are per-IP rate limited.
+        Responses are cached for ~10 s. Requests are per-IP rate limited.
 
         Provider balances and success rates are intentionally public to support integrator tooling and the Paycrest Markets dashboard.
       servers:

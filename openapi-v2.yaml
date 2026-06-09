@@ -304,6 +304,22 @@ components:
       properties:
         reason:
           type: string
+    MarketPosition:
+      type: object
+      description: |
+        Provider's rate standing versus the best public peer in the same corridor.
+        Omitted when no qualifying public offers exist or the provider has no effective rate for the corridor (backward compatible).
+      properties:
+        bestPublicRate:
+          type: string
+          description: Best rate among enabled non-testnet public peers for this side (highest effective sell rate; lowest effective buy rate).
+        yourEffectiveRate:
+          type: string
+          description: The provider's own effective rate for this corridor and side.
+        deltaVsBest:
+          type: string
+          description: |
+            `yourEffectiveRate − bestPublicRate`. For **sell** a positive delta means you offer a higher rate than the best peer (more competitive). For **buy** a negative delta means you offer a lower rate than the best peer (more competitive).
     MarketRateSide:
       type: object
       description: Tolerance band for one side (buy or sell) of the market rate.
@@ -317,6 +333,10 @@ components:
         maximumRate:
           type: string
           description: Maximum allowed rate for this side.
+        position:
+          allOf:
+            - $ref: '#/components/schemas/MarketPosition'
+          description: Rate benchmark vs. best public peer. Omitted when no public benchmark exists (backward compatible).
     MarketRateResponse:
       type: object
       description: Market rate bounds split by side. Either or both of `buy` and `sell` may be present depending on corridor configuration.
@@ -325,6 +345,180 @@ components:
           $ref: '#/components/schemas/MarketRateSide'
         sell:
           $ref: '#/components/schemas/MarketRateSide'
+    MarketOffer:
+      type: object
+      description: |
+        One provider quote row in the public markets orderbook (one row per provider × side × token × fiat × network).
+        All funded, available providers appear regardless of visibility setting—only `is_available`, funded, enabled, and non-testnet gating applies.
+      properties:
+        providerId:
+          type: string
+          description: Provider identifier.
+        side:
+          type: string
+          enum: [sell, buy]
+          description: '`sell` = offramp (crypto → fiat); `buy` = onramp (fiat → crypto).'
+        token:
+          type: string
+          description: Token symbol (e.g. `USDT`, `USDC`).
+        fiat:
+          type: string
+          description: Fiat currency code (e.g. `NGN`, `KES`).
+        network:
+          type: string
+          description: Network identifier (e.g. `base`, `ethereum`).
+        rate:
+          type: string
+          description: Provider's effective exchange rate for this row (fiat per crypto for sell; crypto per fiat for buy).
+        rateType:
+          type: string
+          enum: [fixed, floating]
+          description: Whether the rate is fixed or floating.
+        min:
+          type: string
+          description: Minimum order amount accepted by this provider for this corridor.
+        max:
+          type: string
+          description: Maximum order amount accepted by this provider for this corridor.
+        balance:
+          type: string
+          description: |
+            Provider's available liquidity for this side. For **sell** this is in fiat (`balanceCurrency` = fiat code);
+            for **buy** this is in token (`balanceCurrency` = token symbol).
+            The balance is the shared pool repeated across a provider's networks for the same fiat/token—
+            de-duplicate by `providerId + fiat` (sell) or `providerId + token` (buy) when summing depth.
+        balanceCurrency:
+          type: string
+          description: Currency of `balance` — fiat code for sell rows, token symbol for buy rows.
+        balanceUsd:
+          type: string
+          description: Balance normalised to USD.
+        settled:
+          type: integer
+          description: Total number of settled orders for this provider in this corridor.
+        successPercent:
+          type: string
+          nullable: true
+          description: Provider's success rate (settled / (settled + refunded)) as a percentage string. `null` when there is no settled or refunded history.
+    MarketsWindowedVolume:
+      type: object
+      description: A USD/amount metric broken down across time windows.
+      properties:
+        24h:
+          type: string
+          description: Value over the past 24 hours.
+        7d:
+          type: string
+          description: Value over the past 7 days.
+        30d:
+          type: string
+          description: Value over the past 30 days.
+        all:
+          type: string
+          description: All-time value.
+    MarketsWindowedCount:
+      type: object
+      description: An integer count metric broken down across time windows.
+      properties:
+        24h:
+          type: integer
+          description: Count over the past 24 hours.
+        7d:
+          type: integer
+          description: Count over the past 7 days.
+        30d:
+          type: integer
+          description: Count over the past 30 days.
+        all:
+          type: integer
+          description: All-time count.
+    MarketsWindowedSuccess:
+      type: object
+      description: Success-percentage metric across 24h/7d/30d windows. Null for a window when no terminal orders exist in that window.
+      properties:
+        24h:
+          type: string
+          nullable: true
+          description: Network success rate over the past 24 hours (null if no terminal orders).
+        7d:
+          type: string
+          nullable: true
+          description: Network success rate over the past 7 days (null if no terminal orders).
+        30d:
+          type: string
+          nullable: true
+          description: Network success rate over the past 30 days (null if no terminal orders).
+    MarketsWindowedMedian:
+      type: object
+      description: Median delivery time in seconds across windows. Null for a window when no data exists.
+      properties:
+        24h:
+          type: integer
+          nullable: true
+          description: Median delivery seconds over the past 24 hours.
+        7d:
+          type: integer
+          nullable: true
+          description: Median delivery seconds over the past 7 days.
+        30d:
+          type: integer
+          nullable: true
+          description: Median delivery seconds over the past 30 days.
+    MarketsAggregates:
+      type: object
+      description: Network-wide stats block included in the markets response.
+      properties:
+        settledVolumeUsd:
+          allOf:
+            - $ref: '#/components/schemas/MarketsWindowedVolume'
+          description: USD volume of settled orders across windows.
+        settledTxns:
+          allOf:
+            - $ref: '#/components/schemas/MarketsWindowedCount'
+          description: Count of settled transactions across windows.
+        networkSuccessPercent:
+          allOf:
+            - $ref: '#/components/schemas/MarketsWindowedSuccess'
+          description: Network-wide success rate (settled / (settled + refunded)) across windows.
+        medianDeliverySecs:
+          allOf:
+            - $ref: '#/components/schemas/MarketsWindowedMedian'
+          description: Median order delivery time in seconds across windows.
+        activeProviders:
+          allOf:
+            - $ref: '#/components/schemas/MarketsWindowedCount'
+          description: Count of distinct providers with at least one settled order across windows.
+        activeSenders:
+          allOf:
+            - $ref: '#/components/schemas/MarketsWindowedCount'
+          description: Count of distinct senders with at least one settled order across windows.
+        liveLiquidityUsd:
+          type: string
+          description: Total available USD-denominated liquidity across all book rows.
+        corridors:
+          type: integer
+          description: Number of distinct token/fiat pairs currently in the book.
+        tokens:
+          type: integer
+          description: Number of distinct tokens currently in the book.
+        networks:
+          type: integer
+          description: Number of distinct networks currently in the book.
+    MarketsResponse:
+      type: object
+      description: Public markets orderbook and network-wide aggregates.
+      properties:
+        asOf:
+          type: string
+          format: date-time
+          description: Timestamp when the response was generated (ISO 8601 UTC).
+        aggregates:
+          $ref: '#/components/schemas/MarketsAggregates'
+        book:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketOffer'
+          description: Array of provider quote rows forming the live orderbook.
     V2RateQuoteSide:
       type: object
       description: Quote details for one side from the public v2 rates endpoint.
@@ -1705,6 +1899,36 @@ paths:
                             type: object
         '400':
           description: Bad request
+
+  /markets:
+    get:
+      tags:
+        - General
+      summary: Get markets orderbook
+      description: |
+        Returns the live protocol orderbook (all funded, available provider quotes across corridors × tokens × networks)
+        plus network-wide aggregate statistics.
+
+        **Public endpoint** — no authentication required, CORS open.
+        Responses are cached for ~10 s. Requests are per-IP rate limited.
+
+        Provider balances and success rates are intentionally public to support integrator tooling and the Paycrest Markets dashboard.
+      servers:
+        - url: https://api.paycrest.io/v2
+      responses:
+        '200':
+          description: Markets orderbook and aggregates
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MarketsResponse'
+        '429':
+          description: Too many requests (per-IP rate limit exceeded)
 
   # ─── V2 Sender Endpoints ─────────────────────────────────────────────────────
 

@@ -9,6 +9,27 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ## Q2 2026
 
+### Public markets orderbook & provider rate position (June 2026)
+
+**New:** `GET /v2/markets` — unauthenticated public endpoint returning the live protocol orderbook and network-wide aggregate statistics. No API key required; CORS open; ~10 s cache; per-IP rate limited.
+
+- **`data.book`** — array of provider quote rows (one per provider × side × token × fiat × network), including `rate`, `rateType`, `min`, `max`, `balance`, `balanceUsd`, `settled`, and `successPercent`.
+- **`data.aggregates`** — network-wide stats: settled volume/txns (24h/7d/30d/all-time), success rate, median delivery seconds, active providers/senders, live liquidity USD, and corridor/token/network counts.
+
+**Updated:** `GET /v1/provider/rates/{token}/{fiat}` and `GET /v2/provider/rates/{token}/{fiat}` — each side (`buy`, `sell`) now carries an optional **`position`** object so providers can benchmark their effective rate against the best public peer in the same corridor:
+
+| Field | Description |
+|-------|-------------|
+| `bestPublicRate` | Best rate among enabled non-testnet public peers (highest for sell; lowest for buy) |
+| `yourEffectiveRate` | Your effective rate for this corridor |
+| `deltaVsBest` | `yourEffectiveRate − bestPublicRate` — positive means higher; for sell positive is more competitive, for buy negative is more competitive |
+
+`position` is omitted when no qualifying public offers exist or you have no effective rate configured (backward compatible).
+
+See [Get Markets](/api-reference/general/get-markets) and [Get Market Rate](/api-reference/provider/get-market-rate).
+
+---
+
 ### Webhook delivery logs & retry API (June 2026)
 
 Senders can now audit and replay webhook deliveries instead of re-triggering the order flow when an endpoint is briefly down.

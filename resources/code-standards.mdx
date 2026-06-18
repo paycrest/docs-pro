@@ -50,6 +50,16 @@ For mobile payment providers, local banks without SWIFT codes, and other financi
 
 For KES **Till** and **Paybill** offramps, keep **`SAFAKEPC`** (or the same mobile institution you use for M-Pesa) and set **`destination.recipient.metadata.channel`** to **`Till`** or **`Paybill`** (and **`businessNumber`** for Paybill). See **[Sender API Integration — KES mobile money](/implementation-guides/sender-api-integration#kes-mobile-money-m-pesa-till-paybill)**.
 
+### Canonical Code vs. SWIFT/BIC
+
+The institution **code is the canonical Paycrest identifier** — it is what the API accepts, what is stored on orders, and the key every integration looks up. It is *derived* from SWIFT but is **not** the raw SWIFT/BIC. Where a bank's official SWIFT differs from its Paycrest code, the Paycrest code stays canonical and the SWIFT is only a reference alias — never used in its place.
+
+#### Examples:
+- **SBICNGLA** — Stanbic IBTC Bank. The official SWIFT is `SBICNGLX`; that is an alias and is **not** a valid institution code.
+- **PROVNGLA** — Providus Bank. The raw SWIFT-style `UMPLNGLA` is an alias, **not** the code.
+
+Always use the exact code returned by **[GET /institutions/{currency_code}](/api-reference/general/list-supported-institutions)**. Do not derive a code from an external SWIFT/BIC database — codes there can differ from the canonical Paycrest code and will be rejected.
+
 ## Code Format Rules
 
 ### Currency Codes

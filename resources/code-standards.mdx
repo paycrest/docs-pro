@@ -25,9 +25,9 @@ Paycrest uses **ISO 4217** standard currency codes, which are the internationall
 
 Paycrest uses a hybrid approach for institution codes to accommodate both international banks and local financial institutions.
 
-### SWIFT Codes (International Banks)
+### SWIFT Codes (Banks)
 
-For major international banks and domestic banks with SWIFT codes, Paycrest uses the first **7 characters** of the SWIFT/BIC code.
+For a bank that has a SWIFT/BIC, the Paycrest code **is** the bank's 8-character SWIFT/BIC code.
 
 #### Examples:
 - **GTBINGLA** - Guaranty Trust Bank (Nigeria)
@@ -36,6 +36,12 @@ For major international banks and domestic banks with SWIFT codes, Paycrest uses
 - **SCBLNGLA** - Standard Chartered Bank Nigeria
 - **KCBLKENX** - Kenya Commercial Bank
 - **EQBLKENA** - Equity Bank Kenya
+
+Some codes reflect a bank's **former name** but are still its real BIC — e.g. `ZEIBNGLA` (Zenith, from "Zenith International Bank"), `NAMENGLA` (Sterling, from the former NAL Bank), and `KDHLNGLA` (FBNQuest, from Kakawa Discount House).
+
+A few historical codes differ from the bank's current SWIFT — use the Paycrest code, not the SWIFT you may find elsewhere:
+- **`SBICNGLA`** — Stanbic IBTC Bank (SWIFT `SBICNGLX`)
+- **`PROVNGLA`** — Providus Bank (SWIFT `UMPLNGLA`)
 
 ### Custom Codes (Local Institutions)
 
@@ -49,17 +55,6 @@ For mobile payment providers, local banks without SWIFT codes, and other financi
 - **AIRTKEPC** - Airtel Money (Kenya): `AIRT` + `KE` + `PC`
 
 For KES **Till** and **Paybill** offramps, keep **`SAFAKEPC`** (or the same mobile institution you use for M-Pesa) and set **`destination.recipient.metadata.channel`** to **`Till`** or **`Paybill`** (and **`businessNumber`** for Paybill). See **[Sender API Integration — KES mobile money](/implementation-guides/sender-api-integration#kes-mobile-money-m-pesa-till-paybill)**.
-
-### Codes and SWIFT/BIC
-
-For an institution that has a SWIFT/BIC, the Paycrest code **is** that 8-character SWIFT/BIC — including banks whose code reflects a former name. For example **`ZEIBNGLA`** (Zenith, from "Zenith International Bank"), **`NAMENGLA`** (Sterling, from the former NAL Bank), and **`KDHLNGLA`** (FBNQuest, from Kakawa Discount House) are all the banks' real BICs. Institutions without a SWIFT — mobile money, microfinance banks, and other fintechs — use a custom code ending in **`PC`**.
-
-A few historical codes predate this convention and differ from the bank's current SWIFT:
-
-- **`SBICNGLA`** — Stanbic IBTC Bank (official SWIFT `SBICNGLX`)
-- **`PROVNGLA`** — Providus Bank (official SWIFT `UMPLNGLA`)
-
-Because of these exceptions, **always use the exact code returned by [GET /institutions/{currency_code}](/api-reference/general/list-supported-institutions)** — it is the single source of truth. Do not assume a code equals the bank's public SWIFT, and do not derive codes from an external SWIFT/BIC directory.
 
 ## Code Format Rules
 

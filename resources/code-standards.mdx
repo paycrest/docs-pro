@@ -25,9 +25,9 @@ Paycrest uses **ISO 4217** standard currency codes, which are the internationall
 
 Paycrest uses a hybrid approach for institution codes to accommodate both international banks and local financial institutions.
 
-### SWIFT Codes (International Banks)
+### SWIFT Codes (Banks)
 
-For major international banks and domestic banks with SWIFT codes, Paycrest uses the first **7 characters** of the SWIFT/BIC code.
+For a bank that has a SWIFT/BIC, the Paycrest code **is** the bank's 8-character SWIFT/BIC code.
 
 #### Examples:
 - **GTBINGLA** - Guaranty Trust Bank (Nigeria)
@@ -37,16 +37,22 @@ For major international banks and domestic banks with SWIFT codes, Paycrest uses
 - **KCBLKENX** - Kenya Commercial Bank
 - **EQBLKENA** - Equity Bank Kenya
 
+Some codes reflect a bank's **former name** but are still its real BIC — e.g. `ZEIBNGLA` (Zenith, from "Zenith International Bank"), `NAMENGLA` (Sterling, from the former NAL Bank), and `KDHLNGLA` (FBNQuest, from Kakawa Discount House).
+
+A few historical codes differ from the bank's current SWIFT — use the Paycrest code, not the SWIFT you may find elsewhere:
+- **`SBICNGLA`** — Stanbic IBTC Bank (SWIFT `SBICNGLX`)
+- **`PROVNGLA`** — Providus Bank (SWIFT `UMPLNGLA`)
+
 ### Custom Codes (Local Institutions)
 
-For mobile payment providers, local banks without SWIFT codes, and other financial institutions, Paycrest uses custom codes that follow a SWIFT-like format ending with **"PC"** (PayCrest).
+For mobile payment providers, local banks without SWIFT codes, and other financial institutions, Paycrest uses custom 8-character codes built as: **4 letters from the institution's name** (where possible) + the **2-letter ISO country code** + **`PC`** (PayCrest).
 
 #### Examples:
-- **KUDANGPC** - Kuda Bank (Nigeria)
-- **OPAYNGPC** - OPay (Nigeria)
-- **MONINGPC** - Moniepoint (Nigeria)
-- **SAFAKEPC** - Safaricom M-Pesa (Kenya)
-- **AIRTKEPC** - Airtel Money (Kenya)
+- **KUDANGPC** - Kuda (Nigeria): `KUDA` + `NG` + `PC`
+- **OPAYNGPC** - OPay (Nigeria): `OPAY` + `NG` + `PC`
+- **MONINGPC** - Moniepoint (Nigeria): `MONI` + `NG` + `PC`
+- **SAFAKEPC** - Safaricom M-Pesa (Kenya): `SAFA` + `KE` + `PC`
+- **AIRTKEPC** - Airtel Money (Kenya): `AIRT` + `KE` + `PC`
 
 For KES **Till** and **Paybill** offramps, keep **`SAFAKEPC`** (or the same mobile institution you use for M-Pesa) and set **`destination.recipient.metadata.channel`** to **`Till`** or **`Paybill`** (and **`businessNumber`** for Paybill). See **[Sender API Integration — KES mobile money](/implementation-guides/sender-api-integration#kes-mobile-money-m-pesa-till-paybill)**.
 
@@ -60,8 +66,8 @@ For KES **Till** and **Paybill** offramps, keep **`SAFAKEPC`** (or the same mobi
 
 ### Institution Codes
 - **Format**: 8 characters
-- **International Banks**: First 7 characters of SWIFT code
-- **Local Institutions**: Custom code ending with "PC"
+- **Banks with a SWIFT/BIC**: the bank's 8-character SWIFT/BIC code
+- **Local Institutions (no SWIFT)**: 4 letters from the name + 2-letter ISO country code + `PC`
 - **Case**: Always uppercase
 - **Examples**: `GTBINGLA`, `KUDANGPC`
 

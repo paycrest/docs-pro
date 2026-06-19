@@ -39,14 +39,14 @@ For major international banks and domestic banks with SWIFT codes, Paycrest uses
 
 ### Custom Codes (Local Institutions)
 
-For mobile payment providers, local banks without SWIFT codes, and other financial institutions, Paycrest uses custom codes that follow a SWIFT-like format ending with **"PC"** (PayCrest).
+For mobile payment providers, local banks without SWIFT codes, and other financial institutions, Paycrest uses custom 8-character codes built as: **4 letters from the institution's name** (where possible) + the **2-letter ISO country code** + **`PC`** (PayCrest).
 
 #### Examples:
-- **KUDANGPC** - Kuda Bank (Nigeria)
-- **OPAYNGPC** - OPay (Nigeria)
-- **MONINGPC** - Moniepoint (Nigeria)
-- **SAFAKEPC** - Safaricom M-Pesa (Kenya)
-- **AIRTKEPC** - Airtel Money (Kenya)
+- **KUDANGPC** - Kuda (Nigeria): `KUDA` + `NG` + `PC`
+- **OPAYNGPC** - OPay (Nigeria): `OPAY` + `NG` + `PC`
+- **MONINGPC** - Moniepoint (Nigeria): `MONI` + `NG` + `PC`
+- **SAFAKEPC** - Safaricom M-Pesa (Kenya): `SAFA` + `KE` + `PC`
+- **AIRTKEPC** - Airtel Money (Kenya): `AIRT` + `KE` + `PC`
 
 For KES **Till** and **Paybill** offramps, keep **`SAFAKEPC`** (or the same mobile institution you use for M-Pesa) and set **`destination.recipient.metadata.channel`** to **`Till`** or **`Paybill`** (and **`businessNumber`** for Paybill). See **[Sender API Integration — KES mobile money](/implementation-guides/sender-api-integration#kes-mobile-money-m-pesa-till-paybill)**.
 
@@ -71,8 +71,8 @@ Because of these exceptions, **always use the exact code returned by [GET /insti
 
 ### Institution Codes
 - **Format**: 8 characters
-- **International Banks**: First 7 characters of SWIFT code
-- **Local Institutions**: Custom code ending with "PC"
+- **Banks with a SWIFT/BIC**: the bank's 8-character SWIFT/BIC code
+- **Local Institutions (no SWIFT)**: 4 letters from the name + 2-letter ISO country code + `PC`
 - **Case**: Always uppercase
 - **Examples**: `GTBINGLA`, `KUDANGPC`
 

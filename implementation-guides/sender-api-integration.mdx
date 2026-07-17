@@ -12,6 +12,8 @@ Both flows use the same endpoint: **`POST /v2/sender/orders`**. Direction comes 
 
 **Fastest path to production:** one authenticated create call. The API **validates** bank or mobile account details and **resolves** an acceptable rate inside that request—you are **not** required to call verify-account or the public rates URL first. The sections after [Create a payment order](#create-a-payment-order) cover what happens next (response shape, webhooks). [Optional: prefetch quotes and account names](#optional-prefetch-quotes-and-account-names) explains how to polish checkout when you want prefetching—not because it is required.
 
+Prefer Cursor / natural language? See [Sender MCP](/implementation-guides/sender-mcp).
+
 ## Flow Overview
 
 <Tabs>

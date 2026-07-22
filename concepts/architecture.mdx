@@ -140,7 +140,7 @@ The **aggregator node** is the coordination layer: it monitors onchain events, m
 
 ## Multi-Chain Support
 
-The protocol is live on 8 EVM-compatible networks:
+The protocol is live on 8 EVM-compatible networks plus Starknet:
 
 | Network | Chain ID | Primary Use |
 |---------|----------|-------------|
@@ -152,6 +152,9 @@ The protocol is live on 8 EVM-compatible networks:
 | Lisk | 1135 | USDT, USDC |
 | Celo | 42220 | USDT, USDC |
 | Scroll | 534352 | USDT, USDC |
+| Starknet | SN_MAIN | USDT, USDC |
+
+Use the API network identifier **`starknet`** when creating orders. Starknet addresses are felt-sized hex (`0x` + up to 64 hex digits), not EVM checksum addresses.
 
 See [Gateway Contract Addresses](/resources/gateway-contract-addresses) for the full deployment table, and [Supported Stablecoins](/resources/supported-stablecoins) for per-network token details.
 

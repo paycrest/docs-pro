@@ -9,6 +9,10 @@ Interact directly with the Paycrest Gateway smart contract for onchain <strong>s
   This guide uses **Viem** for smart contract interactions, which is the recommended Ethereum library for modern applications. Viem provides better TypeScript support, improved performance, and a more intuitive API compared to ethers.js.
 </Note>
 
+<Note>
+  **Starknet:** Gateway is live on Starknet, but this page documents **EVM** contract calls only. For Starknet orders, use the [Sender API Integration](/implementation-guides/sender-api-integration) with `network: "starknet"`. Gateway address and token contracts are listed under [Gateway Contract Addresses](/resources/gateway-contract-addresses) and [Supported Stablecoins](/resources/supported-stablecoins).
+</Note>
+
 ## Overview
 
 The Gateway contract is a multi-chain EVM-based smart contract that facilitates the onchain lifecycle of payment orders. It empowers users to create off-ramp orders while enabling liquidity providers to facilitate those orders at competitive exchange rates.
@@ -1337,6 +1341,7 @@ func main() {
 - **Lisk**: USDT, USDC
 - **Celo**: USDT, USDC
 - **Scroll**: USDT, USDC
+- **Starknet**: USDT, USDC
 
 See [Gateway Contract Addresses](/resources/gateway-contract-addresses) for deployment addresses per network.
 

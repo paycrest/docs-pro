@@ -3,23 +3,23 @@ title: "Supported Stablecoins"
 description: "Complete list of supported stablecoins and their network availability"
 ---
 
-Paycrest supports three stablecoins across eight blockchain networks. Use the [GET /tokens](/api-reference/general/list-supported-tokens) endpoint for the live list including contract addresses, decimals, and network availability.
+Paycrest supports three stablecoins across nine blockchain networks (eight EVM chains plus Starknet). Use the [GET /tokens](/api-reference/general/list-supported-tokens) endpoint for the live list including contract addresses, decimals, and network availability.
 
 ## Stablecoin Overview
 
 | Stablecoin | Networks | Base Currency | Notes |
 |------------|----------|--------------|-------|
-| **USDT** | Ethereum, Base, Arbitrum One, Polygon, BNB Smart Chain, Lisk, Celo, Scroll | USD | Most widely supported |
-| **USDC** | Ethereum, Base, Arbitrum One, Polygon, BNB Smart Chain, Lisk, Celo, Scroll | USD | Regulated, high security standards |
+| **USDT** | Ethereum, Base, Arbitrum One, Polygon, BNB Smart Chain, Lisk, Celo, Scroll, Starknet | USD | Most widely supported |
+| **USDC** | Ethereum, Base, Arbitrum One, Polygon, BNB Smart Chain, Lisk, Celo, Scroll, Starknet | USD | Regulated, high security standards |
 | **cNGN** | Ethereum, Base, Polygon, BNB Smart Chain | NGN | Stablecoin pegged to the Nigerian Naira |
 
 ## Support Matrix
 
-| Stablecoin | Ethereum | Base | Arbitrum One | Polygon | BNB Smart Chain | Lisk | Celo | Scroll |
-|------------|----------|------|--------------|---------|-----------------|------|------|--------|
-| **USDT** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **USDC** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **cNGN** | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Stablecoin | Ethereum | Base | Arbitrum One | Polygon | BNB Smart Chain | Lisk | Celo | Scroll | Starknet |
+|------------|----------|------|--------------|---------|-----------------|------|------|--------|----------|
+| **USDT** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **USDC** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **cNGN** | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ## Contract Addresses
 
@@ -39,6 +39,7 @@ Paycrest supports three stablecoins across eight blockchain networks. Use the [G
 | Lisk | `0x05D032ac25d322df992303dCa074EE7392C117b9` | 6 |
 | Celo | `0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e` | 6 |
 | Scroll | `0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df` | 6 |
+| Starknet | `0x068F5c6a61780768455de69077E07e89787839bf8166dEcfBf92B645209c0fB8` | 6 |
 
 ### USDC
 
@@ -52,6 +53,7 @@ Paycrest supports three stablecoins across eight blockchain networks. Use the [G
 | Lisk | `0xF242275d3a6527d877f2c927a82D9b057609cc71` | 6 |
 | Celo | `0xcebA9300f2b948710d2653dD7B07f33A8B32118C` | 6 |
 | Scroll | `0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4` | 6 |
+| Starknet | `0x033068F6539f8e6e6b131e6B2B814e6c34A5224bC66947c47DaB9dFeE93b35fb` | 6 |
 
 ### cNGN
 
@@ -64,7 +66,7 @@ Paycrest supports three stablecoins across eight blockchain networks. Use the [G
 
 ## Network Configuration
 
-When creating orders, specify the stablecoin and network using the `token` and `network` parameters (v1) or via the `source`/`destination` objects (v2):
+When creating orders, specify the stablecoin and network using the `token` and `network` parameters (v1) or via the `source`/`destination` objects (v2). Use **`starknet`** as the network identifier for Starknet.
 
 <Tabs>
   <Tab title="v2 API (recommended)">
@@ -77,6 +79,31 @@ const order = {
     currency: "USDT",
     network: "base",
     refundAddress: "0xYourAddress"
+  },
+  destination: {
+    type: "fiat",
+    currency: "NGN",
+    recipient: {
+      institution: "GTBINGLA",
+      accountIdentifier: "1234567890",
+      accountName: "John Doe",
+      memo: "Payment"
+    }
+  }
+};
+```
+  </Tab>
+  <Tab title="v2 Starknet offramp">
+```javascript
+// Offramp: USDT on Starknet → NGN bank account
+// refundAddress must be a Starknet address (0x + 63–64 hex chars)
+const order = {
+  amount: "100",
+  source: {
+    type: "crypto",
+    currency: "USDT",
+    network: "starknet",
+    refundAddress: "0x046a056257607e1126a73b789bc6b56216e260261d4b54dd0809df46638bcbad"
   },
   destination: {
     type: "fiat",
@@ -110,6 +137,10 @@ const order = {
 ```
   </Tab>
 </Tabs>
+
+<Note>
+  **Starknet addresses** are felt-sized hex strings (`0x` + 63–64 hex digits). Do not use EVM checksum formatting. The zero address is rejected. Pad shorter hex values to 64 digits when normalizing for wallets or explorers.
+</Note>
 
 ## API Endpoints
 

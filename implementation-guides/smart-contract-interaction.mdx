@@ -10,7 +10,7 @@ Interact directly with the Paycrest Gateway smart contract for onchain <strong>s
 </Note>
 
 <Note>
-  **Starknet:** Gateway is live on Starknet, but this page documents **EVM** contract calls only. For Starknet orders, use the [Sender API Integration](/implementation-guides/sender-api-integration) with `network: "starknet"`. Gateway address and token contracts are listed under [Gateway Contract Addresses](/resources/gateway-contract-addresses) and [Supported Stablecoins](/resources/supported-stablecoins).
+  **Starknet and Tron:** Gateways are live on both networks, but this page documents **EVM** contract calls only. For those orders, use the [Sender API Integration](/implementation-guides/sender-api-integration) with `network: "starknet"` or `network: "tron"`. Addresses and token contracts are listed under [Gateway Contract Addresses](/resources/gateway-contract-addresses) and [Supported Stablecoins](/resources/supported-stablecoins).
 </Note>
 
 ## Overview
@@ -1340,8 +1340,8 @@ func main() {
 - **BNB Smart Chain**: USDT, USDC, cNGN
 - **Lisk**: USDT, USDC
 - **Celo**: USDT, USDC
-- **Scroll**: USDT, USDC
 - **Starknet**: USDT, USDC
+- **Tron**: USDT
 
 See [Gateway Contract Addresses](/resources/gateway-contract-addresses) for deployment addresses per network.
 

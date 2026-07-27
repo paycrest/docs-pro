@@ -9,14 +9,23 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ## Q2 2026
 
-### Starknet network support (July 2026)
+### Starknet and Tron network support (July 2026)
 
-Starknet (chain ID `SN_MAIN`) is now fully supported by the aggregator. Gateway contract: `0x06ff3a3b1532da65594fc98f9ca7200af6c3dbaf37e7339b0ebd3b3f2390c583`.
+**Starknet** (chain ID `23448594291968334`) and **Tron** (chain ID `728126428`) are fully supported by the aggregator.
 
-- **Network identifier:** `starknet` on create-order, rates, and token list responses
-- **Tokens:** USDT and USDC (6 decimals)
-- **Addresses:** use Starknet felt hex (`0x` + 63–64 hex characters) for `refundAddress` and crypto recipient `address` — not EVM checksum addresses
-- **Integration path:** prefer the [Sender API](/implementation-guides/sender-api-integration); see [Gateway Contract Addresses](/resources/gateway-contract-addresses) and [Supported Stablecoins](/resources/supported-stablecoins)
+**Starknet**
+- Gateway: `0x06ff3a3b1532da65594fc98f9ca7200af6c3dbaf37e7339b0ebd3b3f2390c583`
+- Network identifier: `starknet`
+- Tokens: USDT and USDC (6 decimals)
+- Addresses: felt hex (`0x` + 63–64 hex characters)
+
+**Tron**
+- Gateway: `THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU`
+- Network identifier: `tron`
+- Tokens: USDT (6 decimals; contract `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`)
+- Addresses: Base58Check starting with `T`
+
+**Docs cleanup:** Scroll and Asset Chain are no longer listed as supported networks. Prefer the [Sender API](/implementation-guides/sender-api-integration) for Starknet and Tron orders; see [Gateway Contract Addresses](/resources/gateway-contract-addresses) and [Supported Stablecoins](/resources/supported-stablecoins).
 
 ---
 

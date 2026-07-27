@@ -32,7 +32,7 @@ The Paycrest protocol consists of several key components working together:
 
 ### 1. Gateway Smart Contract
 
-The core multi-chain contract deployed on supported networks (EVM L2s such as Base, Arbitrum, and Lisk, plus Starknet). It manages:
+The core multi-chain contract deployed on supported networks (EVM L2s such as Base, Arbitrum, and Lisk, plus Starknet and Tron). It manages:
 
 - **Order creation** and validation
 - **Token escrow** and conditional settlement
@@ -171,7 +171,7 @@ A KYB-verified entity that coordinates the entire order routing process:
 
 ## Multi-Chain Support
 
-Paycrest is live on **8 EVM-compatible networks** plus **Starknet**:
+Paycrest is live on **7 EVM-compatible networks** plus **Starknet** and **Tron**:
 
 - **Ethereum**
 - **Base**
@@ -180,10 +180,10 @@ Paycrest is live on **8 EVM-compatible networks** plus **Starknet**:
 - **Arbitrum One**
 - **Lisk**
 - **Celo**
-- **Scroll**
-- **Starknet** (USDT, USDC — use network identifier `starknet`)
+- **Starknet** (USDT, USDC — network identifier `starknet`)
+- **Tron** (USDT — network identifier `tron`)
 
-Additional networks (Tron, Asset Chain, Optimism) have Gateway contracts deployed but aggregator support is pending. See [Gateway Contract Addresses](/resources/gateway-contract-addresses) for the full deployment table.
+Additional networks (Optimism) have Gateway contracts deployed but aggregator support is pending. See [Gateway Contract Addresses](/resources/gateway-contract-addresses) for the full deployment table.
 
 ## Security & Compliance
 

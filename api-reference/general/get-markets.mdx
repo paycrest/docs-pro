@@ -9,13 +9,26 @@ Returns the live protocol **orderbook** (every funded, available provider quote 
   **Public endpoint** — no API key or HMAC signature required. CORS is open. Responses are cached for ~10 s and are per-IP rate limited.
 </Note>
 
+## Query parameters
+
+Optional filters narrow `data.book` only. **`data.aggregates` always remain network-wide** (same values whether or not you filter the book).
+
+| Param | Form | Description |
+|-------|------|-------------|
+| `side` | single | `buy` or `sell`; omit for both. Invalid values return **400** |
+| `fiat` | comma-separated | e.g. `NGN,KES` (case-sensitive codes as stored) |
+| `token` | comma-separated | e.g. `USDC,USDT` |
+| `network` | comma-separated | e.g. `base,polygon` |
+
+Empty or omitted params apply no filter on that dimension.
+
 ## Response shape (`data`)
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `asOf` | string (ISO 8601) | Timestamp when the response was generated |
-| `aggregates` | object | Network-wide aggregate statistics (see below) |
-| `book` | array | Provider quote rows forming the live orderbook |
+| `aggregates` | object | Network-wide aggregate statistics (see below) — not affected by query filters |
+| `book` | array | Provider quote rows forming the live orderbook (optionally filtered) |
 
 ## Book row fields
 
@@ -123,9 +136,18 @@ GET https://api.paycrest.io/v2/markets
 }
 ```
 
+### Filtered example
+
+Sell-side USDC offers on Base for NGN or KES. Aggregates in the response are still the full network-wide KPIs.
+
+```bash
+GET https://api.paycrest.io/v2/markets?side=sell&fiat=NGN,KES&token=USDC&network=base
+```
+
 ## Errors
 
 | HTTP | Cause |
 |------|-------|
+| **400** | Invalid `side` (expected `buy` or `sell`) |
 | **429** | Per-IP rate limit exceeded |
 | **500** | Internal error |

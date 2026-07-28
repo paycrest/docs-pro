@@ -7,6 +7,25 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ---
 
+## Q3 2026
+
+### Markets orderbook query filters (July 2026)
+
+**Updated:** `GET /v2/markets` accepts optional query filters to narrow the returned orderbook:
+
+| Param | Form | Behavior |
+|-------|------|----------|
+| `side` | single | `buy` or `sell`; omit for both. Invalid values return **400** |
+| `fiat` | comma-separated | e.g. `NGN,KES` |
+| `token` | comma-separated | e.g. `USDC,USDT` |
+| `network` | comma-separated | e.g. `base,polygon` |
+
+Filters apply only to **`data.book`**. **`data.aggregates` remain network-wide** (unfiltered), matching dashboard behavior (global KPIs, filtered table).
+
+See [Get Markets](/api-reference/general/get-markets).
+
+---
+
 ## Q2 2026
 
 ### Public markets orderbook & provider rate position (June 2026)

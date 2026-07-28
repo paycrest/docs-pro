@@ -1912,9 +1912,42 @@ paths:
         **Public endpoint** — no authentication required, CORS open.
         Responses are cached for ~10 s. Requests are per-IP rate limited.
 
+        Optional query filters (`side`, `fiat`, `token`, `network`) apply only to `data.book`.
+        `data.aggregates` always remain network-wide (unfiltered).
+
         Provider balances and success rates are intentionally public to support integrator tooling and the Paycrest Markets dashboard.
       servers:
         - url: https://api.paycrest.io/v2
+      parameters:
+        - in: query
+          name: side
+          schema:
+            type: string
+            enum: [buy, sell]
+          description: |
+            Return only buy or sell book rows. Omit for both sides.
+            Invalid values return `400`.
+        - in: query
+          name: fiat
+          schema:
+            type: string
+          description: |
+            Comma-separated fiat currency codes (e.g. `NGN,KES`). Case-sensitive as stored.
+            Filters `data.book` only; omit for all fiats.
+        - in: query
+          name: token
+          schema:
+            type: string
+          description: |
+            Comma-separated token symbols (e.g. `USDC,USDT`).
+            Filters `data.book` only; omit for all tokens.
+        - in: query
+          name: network
+          schema:
+            type: string
+          description: |
+            Comma-separated network identifiers (e.g. `base,polygon`).
+            Filters `data.book` only; omit for all networks.
       responses:
         '200':
           description: Markets orderbook and aggregates
@@ -1927,6 +1960,12 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/MarketsResponse'
+        '400':
+          description: Invalid `side` (expected `buy` or `sell`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
           description: Too many requests (per-IP rate limit exceeded)
 

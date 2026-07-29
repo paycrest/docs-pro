@@ -754,10 +754,20 @@ components:
           description: Quoted exchange rate (fiat per crypto unit). Optional — protocol uses best available rate if omitted.
         senderFee:
           type: string
-          description: Fixed sender fee in crypto units.
+          description: Fixed sender fee in crypto units. Mutually exclusive with `senderFeePercent`. When the effective sender fee is greater than zero, `senderFeeAddress` (or a fee address configured on the sender profile) is required.
+          example: "0.5"
         senderFeePercent:
           type: string
-          description: Sender fee as a percentage of the order amount (alternative to senderFee).
+          description: Sender fee as a percentage of the order amount (alternative to `senderFee`). Mutually exclusive with `senderFee`. When the effective sender fee is greater than zero, `senderFeeAddress` (or a fee address configured on the sender profile) is required.
+          example: "1"
+        senderFeeAddress:
+          type: string
+          description: |
+            Optional fee recipient address for this order. Required when the effective sender fee is greater than zero
+            (from `senderFee`, `senderFeePercent`, or a profile-configured fee) and no fee address is configured on the
+            sender profile for the token. Not required when the effective fee is zero. Must be a valid address for the
+            order's crypto network (EVM, Tron, or Starknet).
+          example: "0xYourFeeRecipientAddress"
         reference:
           type: string
           description: Your internal reference ID for this order.

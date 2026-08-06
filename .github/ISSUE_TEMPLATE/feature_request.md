@@ -1,9 +1,6 @@
 ---
 name: Feature request
 about: Request a change — tracked in Jira (project KAN)
-title: "Redirect — use Jira"
-labels: ''
-assignees: ''
 ---
 
 ## Issues are tracked in Jira

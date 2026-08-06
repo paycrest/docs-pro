@@ -1,9 +1,6 @@
 ---
 name: Bug report
 about: Report a bug — tracked in Jira (project KAN)
-title: "Redirect — use Jira"
-labels: ''
-assignees: ''
 ---
 
 ## Issues are tracked in Jira

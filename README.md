@@ -181,9 +181,10 @@ When adding code examples:
 
 For documentation issues or questions:
 
-- **GitHub**: Create an issue in the repository
 - **Discord**: Ask in the #documentation channel
 - **Email**: Contact the documentation team
+
+Paycrest team members: file engineering work in [Jira KAN](https://paycrest-io.atlassian.net/jira/software/projects/KAN/boards/1) (label `repo-docs-pro`).
 
 ## License
 

@@ -1,0 +1,26 @@
+---
+name: Feature request
+about: Request a change — tracked in Jira (project KAN)
+title: "Redirect — use Jira"
+labels: ''
+assignees: ''
+---
+
+## Issues are tracked in Jira
+
+New features, chores, and documentation requests should **not** be opened as GitHub Issues.
+
+**Create a ticket on the KAN board:**  
+https://paycrest-io.atlassian.net/jira/software/projects/KAN/boards/1
+
+When creating the ticket:
+
+- Add label: **`repo-docs-pro`**
+- Use issue type **Task** (enhancements, vertical slices, chores)
+
+Link your GitHub PR with:
+
+- Branch / title: `KAN-123: Short description`
+- PR description: `Jira Issue: https://paycrest-io.atlassian.net/browse/KAN-123`
+
+Existing GitHub issues remain open; this applies to **new** work only.

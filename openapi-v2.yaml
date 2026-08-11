@@ -52,7 +52,7 @@ components:
           type: number
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
           description: Network identifier for the blockchain
         recipient:
           $ref: '#/components/schemas/PaymentOrderRecipient'
@@ -101,7 +101,7 @@ components:
           description: Token symbol (USDT, USDC, cNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
           description: Network identifier for the blockchain
         receiveAddress:
           type: string
@@ -140,7 +140,7 @@ components:
           type: string
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
           description: Network identifier for the blockchain
         gatewayId:
           type: string
@@ -245,7 +245,7 @@ components:
           type: string
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
           description: Network identifier for the blockchain
         orderType:
           type: string
@@ -598,7 +598,7 @@ components:
           type: string
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
           description: Network identifier for the blockchain
 
     # Order Status Schemas
@@ -616,7 +616,7 @@ components:
           description: Token symbol (USDT, USDC, cNGN). See [Supported Stablecoins](/resources/supported-stablecoins) for available options.
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
           description: Network identifier for the blockchain
         settlePercent:
           type: string
@@ -794,7 +794,7 @@ components:
           description: Stablecoin symbol (e.g. USDT, USDC, cNGN)
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
         refundAddress:
           type: string
           description: Wallet address for refunds if the order can't be fulfilled
@@ -908,7 +908,7 @@ components:
           description: Wallet address to receive stablecoins
         network:
           type: string
-          enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon]
+          enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
 
     V2CryptoProviderAccount:
       type: object
@@ -1674,7 +1674,7 @@ paths:
           name: network
           schema:
             type: string
-            enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+            enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
       responses:
         '200':
           description: List of tokens
@@ -1718,7 +1718,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [ethereum, base, bnb-smart-chain, lisk, scroll, celo, arbitrum-one, polygon, asset-chain]
+            enum: [ethereum, base, bnb-smart-chain, lisk, celo, arbitrum-one, polygon, starknet, tron]
           description: Blockchain network identifier (lowercase in URL).
         - in: path
           name: from

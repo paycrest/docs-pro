@@ -82,7 +82,9 @@ CURRENCIES=KES # single currency
 # CURRENCIES=NGN,KES,UGX # multiple currencies must be comma-separated
 ENVIRONMENT=production # local, staging, production
 SERVER_URL=https://your-server-domain-or-ip
-EVM_PRIVATE_KEY= # required for onramp settlements
+EVM_PRIVATE_KEY= # required for EVM onramp settlements
+STARKNET_SNIP9_USER_ADDRESS= # required for Starknet onramp (payin)
+STARKNET_SNIP9_PRIVATE_KEY= # required for Starknet onramp (payin)
 
 # Aggregator Config
 AGGREGATOR_CLIENT_ID=your_paycrest_api_key # Provider Dashboard → Settings → Payout → API Keys
@@ -92,9 +94,7 @@ AGGREGATOR_BASE_URL=https://api.paycrest.io/v2/provider
 # PSP Config - Only configure for PSPs you are using
 # Example env prefix (Payaza — names shown in dashboard; availability varies by corridor/currency)
 PAYAZA_API_KEY=
-PAYAZA_BASE_URL=
 PAYAZA_TRANSACTION_PIN=
-PAYAZA_SUPPORTS_PAYIN=false
 ```
 
 > **Credential Mapping**
@@ -105,9 +105,18 @@ PAYAZA_SUPPORTS_PAYIN=false
 #### `EVM_PRIVATE_KEY` explained
 
 - **What it is**: The private key for a dedicated EVM wallet (EOA) used by your provision node.
-- **When you need it**: Required for onramp-related wallet/authorization flows. If you're running offramp-only operations, you can leave it unset.
+- **When you need it**: Required for EVM onramp-related wallet/authorization flows. If you're running offramp-only operations, you can leave it unset.
 - **How to generate it**: Create a new dedicated EVM wallet (do not reuse a personal wallet) and use that wallet's private key.
 - **Security**: Treat this as a production secret. Never commit it to git, store it in a secure secret manager or protected `.env`, and rotate it immediately if exposed.
+
+#### Starknet onramp envs explained
+
+- **What they are**:
+  - `STARKNET_SNIP9_USER_ADDRESS` — Starknet account address used to sign SNIP-9 OutsideExecution payin messages
+  - `STARKNET_SNIP9_PRIVATE_KEY` — private key for that Starknet account
+- **When you need them**: Required when fulfilling **Starknet onramp (payin)** orders. If you only handle EVM/Tron or offramp-only flows, you can leave them unset.
+- **Address format**: Use a Starknet felt hex address (`0x` + 63–64 hex characters), not an EVM checksum address.
+- **Security**: Treat both as production secrets. Never commit them to git, store them in a secure secret manager or protected `.env`, and rotate them immediately if exposed.
 
 > **Important Notes:**
 > - One node works for multiple currencies and can support multiple PSPs (for the same currency)
@@ -174,6 +183,8 @@ Expected response:
 **Configure Networks**
 - Add settlement addresses for all supported networks and tokens
 - You can add a settlement address on multiple networks for flexibility
+- For **Starknet**, use a Starknet wallet address (`0x` + 63–64 hex characters), not an EVM address — network identifier is `starknet`
+- For **Tron**, use a Tron Base58 address (starts with `T`), not an EVM address — network identifier is `tron`
 
 ### Step 6: Node Testing & Launch
 

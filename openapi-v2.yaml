@@ -525,12 +525,19 @@ components:
       properties:
         rate:
           type: string
-          description: Achievable rate (fiat per crypto) for this side and notional.
+          description: Achievable rate (fiat per crypto) for this side and notional. This is the rate of `providerIds[0]`.
         providerIds:
           type: array
+          maxItems: 3
           items:
             type: string
-          description: Provider id(s) tied to the quote (single id when `provider_id` was requested).
+          description: |
+            Ranked provider queue for this side, best first — the order assignment would try them in.
+            Up to 3 ids by default; use `limit` to request fewer. `providerIds[0]` is the provider whose rate
+            is quoted in `rate`. Returns a single id when `provider_id` pins the quote or when `orderType`
+            is `otc`. The fallback provider is never listed. Always an array — `[]` when no provider is available,
+            never `null`. Pass these ids to `destination.providerIds` on order creation to lock routing to the
+            providers you quoted.
         orderType:
           type: string
           description: Order flow type, e.g. `regular` or `otc`.
@@ -848,6 +855,21 @@ components:
         providerId:
           type: string
           description: Pin order to a specific provider (optional)
+        providerIds:
+          type: array
+          writeOnly: true
+          maxItems: 3
+          items:
+            type: string
+            pattern: '^[A-Za-z]{8}$'
+          description: |
+            Optional ordered provider queue (max 3). Assignment tries entries in order, moving to the next
+            when one declines, expires, or exhausts its retries. Typically the `providerIds` from a
+            [rate quote](/api-reference/general/get-token-rate).
+            Mutually exclusive with `providerId` — sending both returns **400**.
+            Entries must be open, standard-tier providers serving this corridor; OTC, restricted, and
+            fallback providers are rejected — pin those with `providerId` instead.
+            Accepted on create only; order responses and webhooks return the singular assigned `providerId`.
         kyc:
           type: object
           description: Optional destination (recipient) KYC for offramp. Do not send sender or provider KYB on offramp create.
@@ -896,6 +918,7 @@ components:
           description: Stablecoin symbol (e.g. USDT, USDC)
         providerId:
           type: string
+          description: Pin order to a specific provider (optional). Onramp does not support the `providerIds` queue.
         recipient:
           $ref: '#/components/schemas/V2CryptoRecipient'
 
@@ -1709,6 +1732,8 @@ paths:
 
         Path order does **not** imply trade direction for token/fiat pairs; omitting **`side`** returns **both** sides when available.
 
+        **Provider queue:** each side carries **`providerIds`** — up to 3 provider ids ranked best first, in the order assignment would try them. Pass them to **`destination.providerIds`** on `POST /sender/orders` to lock routing to the providers you quoted. Use **`limit`** to request fewer.
+
         For the legacy single-number response, use **`GET /v1/rates/{token}/{amount}/{fiat}`** with optional `network` query.
       servers:
         - url: https://api.paycrest.io/v2
@@ -1761,7 +1786,15 @@ paths:
           schema:
             type: string
             pattern: '^[A-Za-z]{8}$'
-          description: Optional. When set, limits the quote to this provider. Must be exactly 8 alphabetic characters (A–Z, a–z).
+          description: Optional. When set, limits the quote to this provider. Must be exactly 8 alphabetic characters (A–Z, a–z). Returns a single entry in `providerIds`.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3
+            default: 3
+          description: Maximum number of ranked provider ids to return in `providerIds`, per side. Values outside 1–3 return **400**.
       responses:
         '200':
           description: Token rate quote(s)
@@ -1775,7 +1808,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/V2RateQuoteResponse'
         '400':
-          description: Bad request (invalid amount, side, provider_id, ambiguous from/to without from_source/to_source, unsupported asset/network, etc.)
+          description: Bad request (invalid amount, side, provider_id, limit outside 1–3, ambiguous from/to without from_source/to_source, unsupported asset/network, etc.)
         '404':
           description: No provider available for the requested swap
         '500':
@@ -1983,6 +2016,14 @@ paths:
           The response `providerAccount` contains a `receiveAddress` to send tokens to.
         - **Onramp** (fiat → stablecoin): set `source.type = "fiat"` and `destination.type = "crypto"`.
           The response `providerAccount` contains a virtual bank account for the user to deposit fiat into.
+
+        **Provider routing (offramp).** Leave `destination.providerId` and `destination.providerIds` unset and the
+        API resolves a ranked queue of up to 3 providers at creation; assignment walks it in order. Set
+        `destination.providerIds` to supply your own queue (typically the ids from a
+        [rate quote](/api-reference/general/get-token-rate)), or `destination.providerId` to pin one provider.
+        The two are mutually exclusive. Queue exhaustion is not an immediate refund — fallback assignment runs
+        first, then the refund window. Provider-queue validation failures return **400** with `data` as a single
+        `{ field, message }` object rather than an array.
       security:
         - ApiKeyAuth: []
       servers:
@@ -2006,6 +2047,24 @@ paths:
                   destination:
                     type: fiat
                     currency: NGN
+                    recipient:
+                      institution: GTBINGLA
+                      accountIdentifier: "1234567890"
+                      accountName: John Doe
+                      memo: Payment
+              offrampWithQueue:
+                summary: Offramp with an explicit provider queue from a rate quote
+                value:
+                  amount: "100"
+                  source:
+                    type: crypto
+                    currency: USDT
+                    network: base
+                    refundAddress: "0xYourAddress"
+                  destination:
+                    type: fiat
+                    currency: NGN
+                    providerIds: [AbCdEfGh, IjKlMnOp, QrStUvWx]
                     recipient:
                       institution: GTBINGLA
                       accountIdentifier: "1234567890"

@@ -288,6 +288,54 @@ order = requests.post(
 | `source` | object | ✅ | `{ type: "crypto", ... }` for offramp; `{ type: "fiat", ... }` for onramp. |
 | `destination` | object | ✅ | `{ type: "fiat", ... }` for offramp; `{ type: "crypto", ... }` for onramp. |
 
+### Pin a provider queue
+
+By default the API resolves a **ranked queue of up to 3 providers** at order creation and assignment walks it in order—if the first declines, expires, or exhausts its retries, the order moves to the next. You don't have to do anything to get this.
+
+Set **`destination.providerIds`** when you want routing pinned to providers you already quoted. Typically you pass through the ids from [`GET /v2/rates`](/api-reference/general/get-token-rate) so the user is routed to the provider whose rate they saw:
+
+```json
+"destination": {
+  "type": "fiat",
+  "currency": "NGN",
+  "providerIds": ["AbCdEfGh", "IjKlMnOp", "QrStUvWx"],
+  "recipient": {
+    "institution": "GTBINGLA",
+    "accountIdentifier": "1234567890",
+    "accountName": "John Doe",
+    "memo": "Payment"
+  }
+}
+```
+
+| Rule | Detail |
+|------|--------|
+| Order matters | Entries are tried first to last. `providerIds[0]` should be the provider whose rate you locked in `rate`. |
+| Max **3** | More than 3 entries returns **400**. |
+| Format | Each id is exactly **8 alphabetic** characters (`A–Z`, `a–z`). |
+| Mutually exclusive with `providerId` | Sending **both** returns **400**. Use `providerIds` for a queue, `providerId` to pin exactly one. |
+| No duplicates, no empty strings | Both return **400**. |
+| Offramp only | `destination.providerIds` applies to `destination.type: "fiat"`. Onramp supports only the singular `providerId`. |
+| Eligible providers only | Entries must be **open, standard-tier** providers serving this corridor. **OTC**, **restricted**, and **fallback** providers are rejected—pin those with `providerId` instead. |
+
+Validation failures return **400** with `message: "Failed to validate payload"` and `data` as a single object—`{ "field": "Destination", "message": "..." }`—not an array:
+
+| `data.message` | Cause |
+|----------------|-------|
+| `providerId and providerIds are mutually exclusive; provide only one` | Both fields sent |
+| `providerIds accepts at most 3 providers` | More than 3 entries |
+| `Invalid provider ID "xyz". Expected 8 alphabetic characters` | Malformed entry |
+| `providerIds contains an empty provider ID` | Empty-string entry |
+| `providerIds contains duplicate provider ID: AbCdEfGh` | Repeated entry |
+| `provider AbCdEfGh cannot be queued explicitly` | Entry is the fallback provider |
+| `provider AbCdEfGh cannot serve this order` | Entry is inactive, restricted, OTC-only, or has no live offer for this corridor |
+
+<Note>
+  **Exhausting the queue does not refund immediately.** After the last entry, the order falls through to **fallback assignment**, and only then to refund after the refund window. `providerIds` is accepted on create but **not echoed back**—order responses and webhooks return the singular assigned **`providerId`**.
+</Note>
+
+On the **v1** API the same field lives at **`recipient.providerIds`** with identical rules; its errors use `"field": "Recipient"`.
+
 ---
 
 ## KES mobile money (M-Pesa, Till, Paybill)
@@ -628,6 +676,8 @@ A `200 OK` response returns the resolved name in `data`. If `data` is a real nam
 
 <Note>
   The JSON `data` object includes **`buy`** and **`sell`** (unless you pass `?side=buy` or `?side=sell`). Use **`data.sell.rate`** for **offramp** and **`data.buy.rate`** for **onramp** when displaying a quote. **`provider_id`** is optional and must be exactly **8 letters** (`A–Z` or `a–z`) if you pin a provider.
+
+  Each side also carries **`providerIds`**—up to **3** ranked provider ids, best first. Pass them to **`destination.providerIds`** on create to route the order to the providers you quoted (see [Pin a provider queue](#pin-a-provider-queue)). Add **`?limit=1|2|3`** to request fewer.
 </Note>
 
 <Tabs>
@@ -641,6 +691,9 @@ curl "https://api.paycrest.io/v2/rates/base/USDT/100/NGN"
 const res = await fetch("https://api.paycrest.io/v2/rates/base/USDT/100/NGN").then((r) => r.json());
 const sellRate = res.data?.sell?.rate; // offramp display
 const buyRate = res.data?.buy?.rate;   // onramp display
+
+// Ranked provider queue — pass straight through on create as destination.providerIds
+const providerIds = res.data?.sell?.providerIds ?? [];
 ```
   </Tab>
   <Tab title="Python">
@@ -650,6 +703,9 @@ res = requests.get("https://api.paycrest.io/v2/rates/base/USDT/100/NGN")
 data = res.json()["data"]
 sell_rate = (data.get("sell") or {}).get("rate")
 buy_rate = (data.get("buy") or {}).get("rate")
+
+# Ranked provider queue — pass straight through on create as destination.providerIds
+provider_ids = (data.get("sell") or {}).get("providerIds") or []
 ```
   </Tab>
 </Tabs>

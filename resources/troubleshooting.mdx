@@ -34,6 +34,16 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
       <li><strong>Invalid network</strong>: Ensure the network supports your chosen token</li>
       <li><strong>Missing recipient details</strong>: All recipient fields are required</li>
       <li><strong>Invalid institution</strong>: Check supported institutions for the currency</li>
+      <li><strong>Provider queue rejected</strong>: <code>providerIds</code> and <code>providerId</code> are mutually exclusive, capped at 3 entries, and must name open standard-tier providers serving the corridor. See <a href="/implementation-guides/sender-api-integration#pin-a-provider-queue">Pin a provider queue</a></li>
+    </ul>
+
+    <h4>"Recipient data too large for encryption"</h4>
+    <p>The recipient object is capped at <strong>500 bytes</strong> of JSON before encryption. The size check budgets for a full 3-provider routing queue on <strong>every</strong> order — including orders that send no <code>providerIds</code> — because the aggregator may resolve one onto the order and it rides in the message hash at gateway submit.</p>
+    <ul>
+      <li>Effective budget is <strong>~49 bytes smaller</strong> than it was before optimistic routing (<strong>~41</strong> when you pin a <code>providerId</code>). Payloads that used to pass can now fail</li>
+      <li>Trim <code>memo</code> first, then <code>metadata</code> — keep only <code>apiKey</code> and corridor-required keys like <code>channel</code></li>
+      <li><code>accountName</code> from <a href="/api-reference/general/verify-account">verify-account</a> is often longer than what you supplied; count the resolved value</li>
+      <li>The check runs in <strong>production and staging only</strong>, so it will not reproduce against a local aggregator</li>
     </ul>
     
     <h4>Example Error Response</h4>

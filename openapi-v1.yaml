@@ -69,6 +69,19 @@ components:
         providerId:
           type: string
           description: Optional provider ID for specific routing
+        providerIds:
+          type: array
+          writeOnly: true
+          maxItems: 3
+          items:
+            type: string
+            pattern: '^[A-Za-z]{8}$'
+          description: |
+            Optional ordered provider queue (max 3). Assignment tries entries in order, moving to the next
+            when one declines, expires, or exhausts its retries. Mutually exclusive with `providerId` —
+            sending both returns **400**. Entries must be open, standard-tier providers serving this corridor;
+            OTC, restricted, and fallback providers are rejected — pin those with `providerId` instead.
+            Accepted on create only; order responses and webhooks return the singular assigned `providerId`.
         metadata:
           type: object
           description: Additional metadata for the transaction

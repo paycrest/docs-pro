@@ -495,8 +495,6 @@ Omit both and the aggregator resolves a queue itself at order creation. Entries 
   **Budget ~450 bytes for recipient data.** `MESSAGE_HASH_MAX_SIZE` caps the recipient JSON at **500 bytes**, measured **before** encryption. The size check reserves room for a full 3-provider queue on **every** order—including orders that send no `providerIds`—because the aggregator may resolve one onto the order, and it rides in the message hash at gateway submit.
 
   That reservation costs about **49 bytes** (**~41** if you pin a `providerId`), leaving roughly **450 bytes** for `accountIdentifier` + `accountName` + `memo` + `metadata` combined. Exceeding it returns **400** with `"Recipient data too large for encryption"`. Trim `memo` and `metadata` first—see [Troubleshooting](/resources/troubleshooting).
-
-  The check runs in **production and staging only**, so an oversized payload will not reproduce against a local aggregator.
 </Warning>
 
 <Note>

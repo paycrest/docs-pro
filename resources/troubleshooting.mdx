@@ -45,7 +45,6 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
       <li>That reservation costs about <strong>49 bytes</strong> (<strong>~41</strong> when you pin a <code>providerId</code>), leaving roughly <strong>450 bytes</strong> for <code>accountIdentifier</code> + <code>accountName</code> + <code>memo</code> + <code>metadata</code> combined</li>
       <li>Trim <code>memo</code> first, then <code>metadata</code> — keep only <code>apiKey</code> and corridor-required keys like <code>channel</code></li>
       <li><code>accountName</code> from <a href="/api-reference/general/verify-account">verify-account</a> is often longer than what you supplied; count the resolved value</li>
-      <li>The check runs in <strong>production and staging only</strong>, so it will not reproduce against a local aggregator</li>
     </ul>
     
     <h4>Example Error Response</h4>

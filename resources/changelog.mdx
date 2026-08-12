@@ -9,6 +9,21 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ## Q3 2026
 
+### Optional `senderFeeAddress` on V2 create order (July 2026)
+
+**Updated:** `POST /v2/sender/orders` accepts an optional top-level **`senderFeeAddress`**.
+
+| Effective sender fee | `senderFeeAddress` |
+|----------------------|--------------------|
+| Greater than zero (from `senderFee`, `senderFeePercent`, or a profile-configured fee) | **Required** — pass it on the request, or configure a fee address on the sender profile for that token |
+| Zero | **Not required** |
+
+`senderFee` and `senderFeePercent` remain mutually exclusive. Applies to both offramp and onramp. V1 create order is unchanged (still requires fee and refund addresses on the sender profile).
+
+See [Sender API Integration — Sender Fees](/implementation-guides/sender-api-integration#sender-fees) and [Initiate Order](/api-reference/sender/initiate-payment-order-v2).
+
+---
+
 ### Markets orderbook query filters (July 2026)
 
 **Updated:** `GET /v2/markets` accepts optional query filters to narrow the returned orderbook:
@@ -166,7 +181,7 @@ The v2 API introduces a unified endpoint for both offramp and onramp flows, repl
 | Direction support | Offramp only | Offramp + onramp |
 | Request schema | Flat: `token`, `network`, `recipient` | Polymorphic: `source`, `destination` with `type` discriminator |
 | Amount direction | Always crypto | `amountIn: "fiat"` or `"crypto"` |
-| Sender fee | Fixed amount via dashboard | Dashboard required; `senderFeePercent` on request overrides it |
+| Sender fee | Fixed amount via dashboard | Optional; `senderFee` / `senderFeePercent` on request. If fee > 0, `senderFeeAddress` (or profile fee address) is required |
 | Numeric field types | `decimal.Decimal` | `string` |
 | Webhook version | `webhookVersion: "1"` | `webhookVersion: "2"` |
 

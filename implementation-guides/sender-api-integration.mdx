@@ -351,7 +351,9 @@ order = requests.post(
 | `amount` | string | ✅ | Payment amount. Denomination set by `amountIn` (defaults to crypto units). |
 | `amountIn` | string | — | `"crypto"` (default) or `"fiat"`. Set to `"fiat"` when `amount` is in the fiat currency. |
 | `rate` | string | — | Exchange rate (fiat per crypto). **Omit** to let the API choose a valid rate. Pass **`rate`** only when you lock a quote from the user; it must stay within market tolerance. See [Prefetch a quote for the UI](#prefetch-a-quote-for-the-ui) if you display rates before create. |
-| `senderFeePercent` | string | — | Optional fee percentage you collect, settled atomically onchain. |
+| `senderFee` | string | — | Optional fixed fee in crypto units. Mutually exclusive with `senderFeePercent`. |
+| `senderFeePercent` | string | — | Optional fee percentage you collect, settled atomically onchain. Mutually exclusive with `senderFee`. |
+| `senderFeeAddress` | string | Conditionally | Fee recipient address. **Required when the effective sender fee is greater than zero** and no fee address is configured on the sender profile. Not required when fee is zero. |
 | `reference` | string | — | Your internal order ID. |
 | `source` | object | ✅ | `{ type: "crypto", ... }` for offramp; `{ type: "fiat", ... }` for onramp. |
 | `destination` | object | ✅ | `{ type: "fiat", ... }` for offramp; `{ type: "crypto", ... }` for onramp. |
@@ -726,13 +728,76 @@ buy_rate = (data.get("buy") or {}).get("rate")
 
 ## Sender Fees
 
-You can optionally charge your users a fee on each order. It's settled atomically onchain — no offchain billing required. Configure your fee in [Sender Dashboard](https://app.paycrest.io) settings (required). You can override it per-request by passing `senderFeePercent` in the order payload.
+You can optionally charge your users a fee on each order. It's settled atomically onchain — no offchain billing required.
+
+You can configure a default fee in [Sender Dashboard](https://app.paycrest.io) settings, or pass a per-request fee via `senderFee` (fixed amount) or `senderFeePercent`. Do not send both `senderFee` and `senderFeePercent` on the same request.
+
+**Fee address rule:** when the effective sender fee is greater than zero (from the request or a profile-configured fee), a fee recipient address is **required** — either configured on the sender profile for that token, or passed as `senderFeeAddress` on the create payload. When the effective fee is zero, `senderFeeAddress` is not required.
+
+**Example — with sender fee (fee address required):**
 
 ```json
 {
   "amount": "100",
-  "senderFeePercent": "0.5",
+  "amountIn": "fiat",
+  "senderFeePercent": "1",
+  "senderFeeAddress": "0xYourFeeRecipientAddress",
+  "reference": "order-ref-001",
+  "source": {
+    "type": "fiat",
+    "currency": "NGN",
+    "refundAccount": {
+      "institution": "MOMONGPC",
+      "accountIdentifier": "1234567890",
+      "accountName": "John Doe"
+    }
+  },
+  "destination": {
+    "type": "crypto",
+    "currency": "USDC",
+    "recipient": {
+      "address": "0xRecipientWalletAddress",
+      "network": "base"
+    }
+  }
+}
+```
+
+Fixed fee alternative:
+
+```json
+{
+  "amount": "100",
+  "senderFee": "0.5",
+  "senderFeeAddress": "0xYourFeeRecipientAddress",
   ...
+}
+```
+
+**Example — no sender fee (fee address not required):**
+
+```json
+{
+  "amount": "100",
+  "amountIn": "fiat",
+  "reference": "order-ref-002",
+  "source": {
+    "type": "fiat",
+    "currency": "NGN",
+    "refundAccount": {
+      "institution": "MOMONGPC",
+      "accountIdentifier": "1234567890",
+      "accountName": "John Doe"
+    }
+  },
+  "destination": {
+    "type": "crypto",
+    "currency": "USDC",
+    "recipient": {
+      "address": "0xRecipientWalletAddress",
+      "network": "base"
+    }
+  }
 }
 ```
 
@@ -787,7 +852,7 @@ The response includes `receiveAddress` (string) and `validUntil`. Send tokens to
 | Schema | Flat: `token`, `network`, `recipient` | Polymorphic: `source`, `destination` with `type` |
 | `refundAddress` | `returnAddress` (top-level) | `source.refundAddress` (offramp); onramp uses `source.refundAccount` |
 | Amount direction | Always crypto | `amountIn: "fiat"` or `"crypto"` |
-| Sender fee | Fixed via dashboard | Dashboard (fixed) **or** `senderFeePercent` on request |
+| Sender fee | Fixed via dashboard (fee + refund addresses required on profile) | Optional; `senderFee` / `senderFeePercent` on request. If fee > 0, `senderFeeAddress` (or profile fee address) is required |
 | Numeric types | Number | String |
 | Webhook version | `"1"` | `"2"` |
 

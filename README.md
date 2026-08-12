@@ -184,7 +184,7 @@ For documentation issues or questions:
 - **Discord**: Ask in the #documentation channel
 - **Email**: Contact the documentation team
 
-Paycrest team members: file engineering work in [Jira KAN](https://paycrest-io.atlassian.net/jira/software/projects/KAN/boards/1) (label `repo-docs-pro`).
+Paycrest team members: file engineering work in [Jira KAN](https://paycrest-io.atlassian.net/jira/software/projects/KAN/boards/1) (label `docs`).
 
 ## License
 

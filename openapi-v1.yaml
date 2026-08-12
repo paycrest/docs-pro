@@ -68,7 +68,9 @@ components:
           description: Memo or reference for the transaction
         providerId:
           type: string
-          description: Optional provider ID for specific routing
+          description: |
+            Optional provider ID for specific routing. Retained for backward compatibility —
+            prefer `providerIds`, which expresses the same thing as a one-entry queue.
         providerIds:
           type: array
           writeOnly: true
@@ -80,7 +82,7 @@ components:
             Optional ordered provider queue (max 3). Assignment tries entries in order, moving to the next
             when one declines, expires, or exhausts its retries. Mutually exclusive with `providerId` —
             sending both returns **400**. Entries must be open, standard-tier providers serving this corridor;
-            restricted and fallback providers are rejected — pin those with `providerId` instead.
+            restricted and fallback providers are rejected.
             Accepted on create only; order responses and webhooks return the singular assigned `providerId`.
         metadata:
           type: object

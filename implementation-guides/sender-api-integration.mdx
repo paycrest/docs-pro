@@ -383,10 +383,10 @@ Set **`destination.providerIds`** when you want routing pinned to providers you 
 | Order matters | Entries are tried first to last. `providerIds[0]` should be the provider whose rate you locked in `rate`. |
 | Max **3** | More than 3 entries returns **400**. |
 | Format | Each id is exactly **8 alphabetic** characters (`A–Z`, `a–z`). |
-| Mutually exclusive with `providerId` | Sending **both** returns **400**. Use `providerIds` for a queue, `providerId` to pin exactly one. |
+| Mutually exclusive with `providerId` | Sending **both** returns **400**. To route to a single provider, send a one-entry `providerIds`—the singular `providerId` is retained for backward compatibility. |
 | No duplicates, no empty strings | Both return **400**. |
 | Offramp only | `destination.providerIds` applies to `destination.type: "fiat"`. Onramp supports only the singular `providerId`. |
-| Eligible providers only | Entries must be **open, standard-tier** providers serving this corridor. **Restricted** and **fallback** providers are rejected—pin those with `providerId` instead. |
+| Eligible providers only | Entries must be **open, standard-tier** providers serving this corridor. **Restricted** and **fallback** providers are rejected. |
 
 Validation failures return **400** with `message: "Failed to validate payload"` and `data` as a single object—`{ "field": "Destination", "message": "..." }`—not an array:
 

@@ -28,7 +28,7 @@ Pinned (`?provider_id=`) quotes still return exactly one id. The fallback provid
 | Mutually exclusive with `providerId` | Sending both returns **400** |
 | Max 3 entries, no duplicates, no empty strings | **400** |
 | Format | Exactly 8 alphabetic characters per id |
-| Eligibility | Open, standard-tier providers serving the corridor. Restricted and fallback providers are rejected — pin those with `providerId` |
+| Eligibility | Open, standard-tier providers serving the corridor. Restricted and fallback providers are rejected |
 | Scope | Offramp only. Onramp keeps the singular `providerId` |
 | Response | Accepted on create, never echoed back. Orders and webhooks return the singular assigned `providerId` |
 

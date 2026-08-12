@@ -385,8 +385,10 @@ Set **`destination.providerIds`** when you want routing pinned to providers you 
 | Format | Each id is exactly **8 alphabetic** characters (`A–Z`, `a–z`). |
 | Mutually exclusive with `providerId` | Sending **both** returns **400**. To route to a single provider, send a one-entry `providerIds`—the singular `providerId` is retained for backward compatibility. |
 | No duplicates, no empty strings | Both return **400**. |
-| Offramp only | `destination.providerIds` applies to `destination.type: "fiat"`. Onramp supports only the singular `providerId`. |
-| Eligible providers only | Entries must be **open, standard-tier** providers serving this corridor. **Restricted** and **fallback** providers are rejected. |
+| Providers you can route to | Multi-entry queues must name **active** providers with a **live standard offer** for this corridor. A provider restricted to specific senders is allowed when **you are on its list**. |
+| Fallback is ignored, not rejected | Listing the fallback provider is accepted and has no effect—it is already tried after the queue is exhausted. |
+
+**A one-entry queue is a pin.** `providerIds: ["AbCdEfGh"]` routes exactly like `providerId: "AbCdEfGh"`, for every provider you're able to pin—the corridor checks above apply only to queues of two or more. That equivalence is what lets you use `providerIds` everywhere and never reach for the singular field.
 
 Validation failures return **400** with `message: "Failed to validate payload"` and `data` as a single object—`{ "field": "Destination", "message": "..." }`—not an array:
 
@@ -397,14 +399,36 @@ Validation failures return **400** with `message: "Failed to validate payload"` 
 | `Invalid provider ID "xyz". Expected 8 alphabetic characters` | Malformed entry |
 | `providerIds contains an empty provider ID` | Empty-string entry |
 | `providerIds contains duplicate provider ID: AbCdEfGh` | Repeated entry |
-| `provider AbCdEfGh cannot be queued explicitly` | Entry is the fallback provider |
-| `provider AbCdEfGh cannot serve this order` | Entry is inactive, restricted, or has no live offer for this corridor |
+| `provider AbCdEfGh cannot serve this order` | Entry is inactive, has no live offer for this corridor, or is restricted to senders that don't include you |
 
 <Note>
   **Exhausting the queue does not refund immediately.** After the last entry, the order falls through to **fallback assignment**, and only then to refund after the refund window. `providerIds` is accepted on create but **not echoed back**—order responses and webhooks return the singular assigned **`providerId`**.
 </Note>
 
-On the **v1** API the same field lives at **`recipient.providerIds`** with identical rules; its errors use `"field": "Recipient"`.
+### Pinning on onramp
+
+Onramp picks its provider while the order is being created rather than walking a queue, so **`destination.providerIds` accepts at most one entry**—it is a pin in queue form, there so you never need the singular field:
+
+```json
+"destination": {
+  "type": "crypto",
+  "currency": "USDT",
+  "providerIds": ["AbCdEfGh"],
+  "recipient": { "address": "0xRecipientWalletAddress", "network": "base" }
+}
+```
+
+| `data.message` | Cause |
+|----------------|-------|
+| `providerIds accepts a single entry on onramp orders` | Two or more entries |
+| `providerId and providerIds are mutually exclusive; provide only one` | Both fields sent |
+| `provider AbCdEfGh cannot serve this order` | The provider is restricted to senders that don't include you |
+
+<Warning>
+  Pinning an onramp order to a provider restricted to other senders returns **400**. Offramp has always behaved this way; onramp now matches, and it applies to **`providerId`** as well as `providerIds`. If you pin providers on onramp, confirm you're authorized for them.
+</Warning>
+
+On the **v1** API the offramp field lives at **`recipient.providerIds`** with identical rules; its errors use `"field": "Recipient"`.
 
 ---
 

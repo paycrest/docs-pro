@@ -489,7 +489,7 @@ The recipient object may carry routing hints—this is the only channel for them
 
 The two are **mutually exclusive**. A hash carrying both is not rejected—the queue wins and `providerId` is ignored. A queue whose entries can't serve the corridor is **dropped silently** and the order routes as unpinned; there is no onchain rejection and no error webhook, so validate ids against a rate quote before encrypting.
 
-Omit both and the aggregator resolves a queue itself at order creation. Entries must be **open, standard-tier** providers serving the corridor; restricted and fallback providers are rejected.
+Omit both and the aggregator resolves a queue itself at order creation. Entries in a multi-entry queue must name providers that can serve the corridor—active, with a live standard offer, and, for a provider restricted to specific senders, one whose list includes the sender resolved from `metadata.apiKey`. A one-entry queue is simply a pin. The fallback provider may be listed but is ignored.
 
 <Warning>
   **Budget ~450 bytes for recipient data.** `MESSAGE_HASH_MAX_SIZE` caps the recipient JSON at **500 bytes**, measured **before** encryption. The size check reserves room for a full 3-provider queue on **every** order—including orders that send no `providerIds`—because the aggregator may resolve one onto the order, and it rides in the message hash at gateway submit.

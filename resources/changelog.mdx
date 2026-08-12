@@ -40,6 +40,21 @@ See [Get Token Rate](/api-reference/general/get-token-rate), [Pin a provider que
 
 ---
 
+### Optional `senderFeeAddress` on V2 create order (July 2026)
+
+**Updated:** `POST /v2/sender/orders` accepts an optional top-level **`senderFeeAddress`**.
+
+| Effective sender fee | `senderFeeAddress` |
+|----------------------|--------------------|
+| Greater than zero (from `senderFee`, `senderFeePercent`, or a profile-configured fee) | **Required** — pass it on the request, or configure a fee address on the sender profile for that token |
+| Zero | **Not required** |
+
+`senderFee` and `senderFeePercent` remain mutually exclusive. Applies to both offramp and onramp. V1 create order is unchanged (still requires fee and refund addresses on the sender profile).
+
+See [Sender API Integration — Sender Fees](/implementation-guides/sender-api-integration#sender-fees) and [Initiate Order](/api-reference/sender/initiate-payment-order-v2).
+
+---
+
 ### Markets orderbook query filters (July 2026)
 
 **Updated:** `GET /v2/markets` accepts optional query filters to narrow the returned orderbook:
@@ -58,6 +73,26 @@ See [Get Markets](/api-reference/general/get-markets).
 ---
 
 ## Q2 2026
+
+### Starknet and Tron network support (July 2026)
+
+**Starknet** (chain ID `23448594291968334`) and **Tron** (chain ID `728126428`) are fully supported by the aggregator.
+
+**Starknet**
+- Gateway: `0x06ff3a3b1532da65594fc98f9ca7200af6c3dbaf37e7339b0ebd3b3f2390c583`
+- Network identifier: `starknet`
+- Tokens: USDT and USDC (6 decimals)
+- Addresses: felt hex (`0x` + 63–64 hex characters)
+
+**Tron**
+- Gateway: `THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU`
+- Network identifier: `tron`
+- Tokens: USDT (6 decimals; contract `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`)
+- Addresses: Base58Check starting with `T`
+
+**Docs cleanup:** Scroll and Asset Chain are no longer listed as supported networks. Prefer the [Sender API](/implementation-guides/sender-api-integration) for Starknet and Tron orders; see [Gateway Contract Addresses](/resources/gateway-contract-addresses) and [Supported Stablecoins](/resources/supported-stablecoins).
+
+---
 
 ### Public markets orderbook & provider rate position (June 2026)
 
@@ -177,7 +212,7 @@ The v2 API introduces a unified endpoint for both offramp and onramp flows, repl
 | Direction support | Offramp only | Offramp + onramp |
 | Request schema | Flat: `token`, `network`, `recipient` | Polymorphic: `source`, `destination` with `type` discriminator |
 | Amount direction | Always crypto | `amountIn: "fiat"` or `"crypto"` |
-| Sender fee | Fixed amount via dashboard | Dashboard required; `senderFeePercent` on request overrides it |
+| Sender fee | Fixed amount via dashboard | Optional; `senderFee` / `senderFeePercent` on request. If fee > 0, `senderFeeAddress` (or profile fee address) is required |
 | Numeric field types | `decimal.Decimal` | `string` |
 | Webhook version | `webhookVersion: "1"` | `webhookVersion: "2"` |
 

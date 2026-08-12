@@ -32,6 +32,8 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
       <li><strong>Invalid amount</strong>: Amount must be a positive number</li>
       <li><strong>Unsupported token</strong>: Check supported tokens in the resources section</li>
       <li><strong>Invalid network</strong>: Ensure the network supports your chosen token</li>
+      <li><strong>Invalid Starknet address</strong>: For `network: "starknet"`, use felt hex (`0x` + 63–64 hex digits), not an EVM checksum address</li>
+      <li><strong>Invalid Tron address</strong>: For `network: "tron"`, use a Base58 address starting with `T`, not an EVM `0x` address</li>
       <li><strong>Missing recipient details</strong>: All recipient fields are required</li>
       <li><strong>Invalid institution</strong>: Check supported institutions for the currency</li>
       <li><strong>Provider queue rejected</strong>: <code>providerIds</code> and <code>providerId</code> are mutually exclusive, capped at 3 entries, and must name open standard-tier providers serving the corridor. See <a href="/implementation-guides/sender-api-integration#pin-a-provider-queue">Pin a provider queue</a></li>
@@ -188,7 +190,8 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
         <ul>
           <li>Ethereum</li>
           <li>BNB Smart Chain</li>
-          <li>Scroll</li>
+          <li>Starknet</li>
+          <li>Tron</li>
         </ul>
       </Card>
     </CardGroup>

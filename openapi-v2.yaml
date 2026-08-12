@@ -534,13 +534,12 @@ components:
           description: |
             Ranked provider queue for this side, best first — the order assignment would try them in.
             Up to 3 ids by default; use `limit` to request fewer. `providerIds[0]` is the provider whose rate
-            is quoted in `rate`. Returns a single id when `provider_id` pins the quote or when `orderType`
-            is `otc`. The fallback provider is never listed. Always an array — `[]` when no provider is available,
-            never `null`. Pass these ids to `destination.providerIds` on order creation to lock routing to the
-            providers you quoted.
+            is quoted in `rate`. Returns a single id when `provider_id` pins the quote. The fallback provider
+            is never listed. Always an array — `[]` when no provider is available, never `null`. Pass these ids
+            to `destination.providerIds` on order creation to lock routing to the providers you quoted.
         orderType:
           type: string
-          description: Order flow type, e.g. `regular` or `otc`.
+          description: Order flow type, e.g. `regular`.
         refundTimeoutMinutes:
           type: integer
           description: Minutes until automatic refund for this flow.
@@ -877,7 +876,7 @@ components:
             when one declines, expires, or exhausts its retries. Typically the `providerIds` from a
             [rate quote](/api-reference/general/get-token-rate).
             Mutually exclusive with `providerId` — sending both returns **400**.
-            Entries must be open, standard-tier providers serving this corridor; OTC, restricted, and
+            Entries must be open, standard-tier providers serving this corridor; restricted and
             fallback providers are rejected — pin those with `providerId` instead.
             Accepted on create only; order responses and webhooks return the singular assigned `providerId`.
         kyc:
@@ -991,7 +990,7 @@ components:
           type: string
         orderType:
           type: string
-          enum: [regular, otc]
+          enum: [regular]
         timestamp:
           type: string
           format: date-time
@@ -1034,7 +1033,7 @@ components:
           enum: [initiated, deposited, pending, fulfilling, fulfilled, validated, settling, settled, cancelled, refunding, refunded, expired]
         orderType:
           type: string
-          enum: [regular, otc]
+          enum: [regular]
         direction:
           type: string
           enum: [offramp, onramp]

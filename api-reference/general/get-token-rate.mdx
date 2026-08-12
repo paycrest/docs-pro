@@ -59,7 +59,7 @@ Each populated side includes:
 |-------|------|-------------|
 | `rate` | string | For token+fiat: fiat per crypto. For fiat+fiat: see path rules above (`sell` = `to` per `from`, `buy` = `from` per `to`). This is the rate of **`providerIds[0]`**. |
 | `providerIds` | string[] | **Ranked provider queue**, best first—up to **3** ids, in the order assignment would try them. See [Rate resolution](#rate-resolution). |
-| `orderType` | string | e.g. `regular` or `otc` |
+| `orderType` | string | e.g. `regular` |
 | `refundTimeoutMinutes` | integer | Minutes until automatic refund for that flow |
 
 ```json
@@ -85,7 +85,7 @@ Each populated side includes:
 
 When `side=buy` or `side=sell`, only that key is present under `data`.
 
-**`providerIds` is always an array**—`[]` when no provider is available, never `null`. It carries **exactly one** id when you pass `?provider_id=`, when `?limit=1`, or when `orderType` is **`otc`**. Fewer than 3 ids simply means fewer eligible providers for that corridor and notional. The **fallback provider is never listed**.
+**`providerIds` is always an array**—`[]` when no provider is available, never `null`. It carries **exactly one** id when you pass `?provider_id=` or `?limit=1`. Fewer than 3 ids means fewer eligible providers for that corridor and notional. The **fallback provider is never listed**.
 
 ## Errors
 
@@ -104,7 +104,7 @@ Behavior matches the priority-queue–based resolution used when creating orders
 
 **`providerIds` is ranked, best first**, and is the same queue an order created from this quote will walk. **`providerIds[0]`** is the provider whose rate is quoted in **`rate`**; the remaining ids are the ones assignment falls through to if the head declines, expires, or exhausts its retries.
 
-Routing is **optimistic**: the queue is resolved **once, at order creation**, rather than re-ranked on every retry. Two ways to use that:
+The queue is resolved **once, at order creation**, and the order carries it for its whole life. Two ways to use that:
 
 <Steps>
   <Step title="Let the API resolve it">
@@ -119,6 +119,6 @@ Routing is **optimistic**: the queue is resolved **once, at order creation**, ra
   **Exhausting the queue is not an immediate refund.** After the last entry, the order falls through to **fallback assignment**, and only then to refund after the refund window and its guards. Don't model this as "3 tries then refund".
 </Note>
 
-Queues are built for **open, standard-tier** providers only. Pinned, restricted, and OTC quotes return a single id and keep the pre-existing single-provider behavior.
+Queues are built for **open, standard-tier** providers only. Pinned and restricted quotes return a single id, and the order routes to that one provider.
 
 See also [Get Token Rate (v1)](/api-reference/general/get-token-rate-v1) for the legacy scalar response.

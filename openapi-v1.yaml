@@ -80,7 +80,7 @@ components:
             Optional ordered provider queue (max 3). Assignment tries entries in order, moving to the next
             when one declines, expires, or exhausts its retries. Mutually exclusive with `providerId` —
             sending both returns **400**. Entries must be open, standard-tier providers serving this corridor;
-            OTC, restricted, and fallback providers are rejected — pin those with `providerId` instead.
+            restricted and fallback providers are rejected — pin those with `providerId` instead.
             Accepted on create only; order responses and webhooks return the singular assigned `providerId`.
         metadata:
           type: object

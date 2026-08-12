@@ -386,7 +386,7 @@ Set **`destination.providerIds`** when you want routing pinned to providers you 
 | Mutually exclusive with `providerId` | Sending **both** returns **400**. Use `providerIds` for a queue, `providerId` to pin exactly one. |
 | No duplicates, no empty strings | Both return **400**. |
 | Offramp only | `destination.providerIds` applies to `destination.type: "fiat"`. Onramp supports only the singular `providerId`. |
-| Eligible providers only | Entries must be **open, standard-tier** providers serving this corridor. **OTC**, **restricted**, and **fallback** providers are rejected—pin those with `providerId` instead. |
+| Eligible providers only | Entries must be **open, standard-tier** providers serving this corridor. **Restricted** and **fallback** providers are rejected—pin those with `providerId` instead. |
 
 Validation failures return **400** with `message: "Failed to validate payload"` and `data` as a single object—`{ "field": "Destination", "message": "..." }`—not an array:
 
@@ -398,7 +398,7 @@ Validation failures return **400** with `message: "Failed to validate payload"` 
 | `providerIds contains an empty provider ID` | Empty-string entry |
 | `providerIds contains duplicate provider ID: AbCdEfGh` | Repeated entry |
 | `provider AbCdEfGh cannot be queued explicitly` | Entry is the fallback provider |
-| `provider AbCdEfGh cannot serve this order` | Entry is inactive, restricted, OTC-only, or has no live offer for this corridor |
+| `provider AbCdEfGh cannot serve this order` | Entry is inactive, restricted, or has no live offer for this corridor |
 
 <Note>
   **Exhausting the queue does not refund immediately.** After the last entry, the order falls through to **fallback assignment**, and only then to refund after the refund window. `providerIds` is accepted on create but **not echoed back**—order responses and webhooks return the singular assigned **`providerId`**.

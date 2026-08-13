@@ -10,7 +10,7 @@ Jira Issue: <!-- e.g. https://paycrest-io.atlassian.net/browse/KAN-123 -->
 ### Self-review
 
 - [ ] Reviewed diff against Jira acceptance criteria (including failure cases)
-- [ ] CodeRabbit / CI green
+- [ ] Automated checks / CI green
 
 ### References
 

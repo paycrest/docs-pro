@@ -11,7 +11,7 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ### Onchain sender attribution via ERC-8021 (August 2026)
 
-**New:** The aggregator now stamps the EVM transactions it submits with an [ERC-8021](https://eip.tools/eip/8021) schema-0 data suffix carrying the sender's **trading name** from their KYB profile. It is applied on the native EIP-7702 relayer path for create, settle, and refund transactions, so orders placed through the Sender API carry public onchain attribution with no integration work.
+**New:** The aggregator now stamps the EVM transactions it submits with an [ERC-8021](https://eip.tools/eip/8021) schema-0 data suffix carrying the sender's **trading name** from their KYB profile. It is applied to the transactions the aggregator submits for an order: creation, settlement, and refunds. Orders placed through the Sender API carry public onchain attribution with no integration work.
 
 - **Sender code**: the sender's KYB trading name (for example, `AcmeCorp`). Senders with no trading name on file get no suffix.
 - **Suffix layout** (parsed backwards from the end of calldata): comma-joined ASCII `codes` · 1-byte length · 1-byte schema `0x00` · 16-byte marker `0x8021...8021`.

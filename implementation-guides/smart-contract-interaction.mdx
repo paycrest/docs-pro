@@ -607,7 +607,7 @@ The suffix is execution-inert: the Gateway contract ignores trailing bytes beyon
 | **Direct Gateway integration** (this guide) | You, on your own `createOrder` calldata | Whatever you choose to publish |
 | **Noblocks** on Base mainnet | The Noblocks app | Its registered Base Builder Code |
 
-On the Sender API path the aggregator appends the suffix to the keeper transactions it submits on its native EIP-7702 relayer, covering create, settle, and refund. Senders with no trading name on their KYB profile get no suffix. There is nothing to configure.
+On the Sender API path the aggregator appends the suffix to the transactions it submits for an order: creation, settlement, and refunds. Senders with no trading name on their KYB profile get no suffix. There is nothing to configure.
 
 If you call the Gateway contract directly, nothing is appended for you. The rest of this section covers appending your own.
 
@@ -655,6 +655,11 @@ import { concatHex, stringToHex, toHex } from "viem";
 const ERC8021_MARKER = `0x${"8021".repeat(8)}`;
 
 function encodeAttributionSuffix(codes) {
+  for (const code of codes) {
+    if (!code || code.includes(",")) {
+      throw new Error("ERC-8021 codes must be non-empty and comma-free");
+    }
+  }
   const joined = codes.join(",");
   if (!joined || joined.length > 255) {
     throw new Error("ERC-8021 codes must be 1-255 bytes once joined");
@@ -679,6 +684,9 @@ function encodeAttributionSuffix(codes) {
 ERC8021_MARKER = bytes.fromhex("8021" * 8)
 
 def encode_attribution_suffix(codes):
+    for code in codes:
+        if not code or "," in code:
+            raise ValueError("ERC-8021 codes must be non-empty and comma-free")
     joined = ",".join(codes)
     if not joined or len(joined) > 255:
         raise ValueError("ERC-8021 codes must be 1-255 bytes once joined")
@@ -700,6 +708,11 @@ import (
 var erc8021Marker = common.Hex2Bytes("80218021802180218021802180218021")
 
 func encodeAttributionSuffix(codes []string) ([]byte, error) {
+    for _, code := range codes {
+        if code == "" || strings.Contains(code, ",") {
+            return nil, fmt.Errorf("ERC-8021 codes must be non-empty and comma-free")
+        }
+    }
     joined := strings.Join(codes, ",")
     if joined == "" || len(joined) > 255 {
         return nil, fmt.Errorf("ERC-8021 codes must be 1-255 bytes once joined")
@@ -867,7 +880,7 @@ The `codes` field is a list, so a transaction can carry more than one code, comm
   Appending a suffix does **not** replace `metadata.apiKey`. An order created with a suffix but without `metadata.apiKey` will not be linked to your sender profile, and you will not receive webhooks for it.
 </Callout>
 
-The suffix is unauthenticated calldata that anyone can write, which is exactly why it stays a display tag and never feeds sender resolution. Adding one can never break order indexing: a malformed suffix, an unknown code, or no suffix at all leaves processing untouched.
+Adding a suffix can never break order indexing. A malformed suffix, an unrecognized code, or no suffix at all leaves order processing untouched.
 
 ### Network support
 

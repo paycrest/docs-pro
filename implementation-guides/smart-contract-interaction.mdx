@@ -591,25 +591,37 @@ curl -X GET "https://api.paycrest.io/v2/pubkey"
 
 ## Onchain Attribution (ERC-8021)
 
-On EVM networks you can attribute your `createOrder` transactions onchain by appending an [ERC-8021](https://eip.tools/eip/8021) data suffix to the transaction calldata. The suffix carries your **trading name** as a public, human-readable attribution tag.
+Paycrest tags EVM transactions with an [ERC-8021](https://eip.tools/eip/8021) schema-0 data suffix that carries a sender's **trading name** as a public, human-readable attribution tag.
 
-The suffix is execution-inert: the Gateway contract ignores trailing bytes beyond its expected ABI arguments, so the suffix passes through without affecting execution. Cost is roughly 16 gas per non-zero byte.
+The suffix is execution-inert: the Gateway contract ignores trailing bytes beyond its expected ABI arguments, so it passes through without affecting execution. Cost is roughly 16 gas per non-zero byte.
 
 <Note>
-  The on-chain suffix is for **public attribution only**. Sender identification for order processing (webhooks, order lookup) continues to use `metadata.apiKey` inside the encrypted `messageHash`. The suffix is a human-readable tag; the encrypted metadata is the authoritative source for sender resolution.
+  **The suffix is public attribution only.** It is not read for sender identification. Sender resolution, webhook delivery, and order lookup use `metadata.apiKey` inside the encrypted `messageHash`, which remains the authoritative and only mechanism.
 </Note>
+
+### Who appends the suffix
+
+| Path | Who appends it | Code used |
+|------|----------------|-----------|
+| **Sender API** (aggregator-relayed orders) | The aggregator, automatically | The sender's KYB trading name |
+| **Direct Gateway integration** (this guide) | You, on your own `createOrder` calldata | Whatever you choose to publish |
+| **Noblocks** on Base mainnet | The Noblocks app | Its registered Base Builder Code |
+
+On the Sender API path the aggregator appends the suffix to the keeper transactions it submits on its native EIP-7702 relayer, covering create, settle, and refund. Senders with no trading name on their KYB profile get no suffix. There is nothing to configure.
+
+If you call the Gateway contract directly, nothing is appended for you. The rest of this section covers appending your own.
 
 ### Your sender code
 
-Your sender code is your **trading name** from your KYB profile — a human-readable business identifier. Find it in the dashboard at [app.paycrest.io](https://app.paycrest.io).
+Pick a printable-ASCII code that identifies you publicly. Paycrest uses the **trading name** from the KYB profile for its own attribution, so matching that keeps your direct transactions consistent with your Sender API ones.
 
 ```javascript
-// Your trading name from KYB profile
+// Your trading name from your KYB profile at app.paycrest.io
 const senderCode = "AcmeCorp";
 ```
 
 <Callout type="warning">
-  The trading name is **public attribution material** and is permanently visible onchain once used. It's a human-readable tag for attribution purposes. Your API **secret** is never placed onchain and remains for webhooks and REST authentication only.
+  Whatever you put in the suffix is **permanently public onchain**. Use a business identifier you are happy to publish. Never place an API secret, key ID, or any credential in the suffix: your API secret stays for webhooks and REST authentication only.
 </Callout>
 
 ### Suffix layout
@@ -623,9 +635,9 @@ Schema 0, parsed **backwards from the end** of the calldata:
 | `schemaId` | 1 byte | `0x00` |
 | `marker` | 16 bytes | `0x8021` repeated 8 times |
 
-Constraints: `codes` must be printable ASCII (`0x20`–`0x7e`) and at most **255 bytes** once joined. Violating either makes the suffix unparseable, and the order silently falls back to `metadata.apiKey` attribution.
+Constraints: `codes` must be non-empty printable ASCII (`0x20` to `0x7e`), individual codes must not contain a comma (the delimiter), and the joined string must be at most **255 bytes**. Violating any of these makes the suffix unparseable by ERC-8021 readers. It has no effect on your order, which is processed from `metadata.apiKey` either way.
 
-**Worked example** for trading name `AcmeCorp` on a non-Base EVM chain:
+**Worked example** for trading name `AcmeCorp`:
 
 ```text
 41636d65436f7270 08 00 80218021802180218021802180218021
@@ -715,7 +727,7 @@ func encodeAttributionSuffix(codes []string) ([]byte, error) {
 
 ### Appending to createOrder
 
-The suffix must be appended to the calldata **before signing and gas estimation** so it is covered by the signature and paid for in the gas limit.
+The suffix must be appended to the calldata **before signing and gas estimation** so it is covered by the signature and paid for in the gas limit. Keep sending `metadata.apiKey`: the suffix is additive, not a replacement.
 
 <Callout type="warning">
   Viem's `writeContract` and `simulate` helpers build calldata internally and give you no place to append raw bytes. To attach a suffix, encode the call yourself with `encodeFunctionData` and send it with `sendTransaction`.
@@ -732,7 +744,7 @@ async function createOffRampOrderAttributed(amount, recipient, refundAddress) {
   const messageHash = await encryptRecipientData({
     ...recipient,
     accountName,
-    // Optional once the onchain suffix is in place; see Precedence below.
+    // Required: this is how the aggregator identifies you. The suffix does not replace it.
     metadata: { apiKey: process.env.PAYCREST_API_KEY },
   });
   await approveUSDT(amount);
@@ -751,7 +763,7 @@ async function createOffRampOrderAttributed(amount, recipient, refundAddress) {
     ],
   });
 
-  const senderCode = "AcmeCorp"; // Your trading name from KYB profile
+  const senderCode = "AcmeCorp"; // Your public attribution code
   const data = concatHex([callData, encodeAttributionSuffix([senderCode])]);
 
   const hash = await walletClient.sendTransaction({
@@ -778,7 +790,7 @@ tx = gateway.functions.createOrder(
     'nonce': w3.eth.get_transaction_count(user_address),
 })
 
-sender_code = "AcmeCorp"  # Your trading name from KYB profile
+sender_code = "AcmeCorp"  # Your public attribution code
 tx['data'] = tx['data'] + encode_attribution_suffix([sender_code]).hex()
 
 # Estimate gas AFTER appending so the suffix is covered.
@@ -799,7 +811,7 @@ if err != nil {
     return err
 }
 
-senderCode := "AcmeCorp" // Your trading name from KYB profile
+senderCode := "AcmeCorp" // Your public attribution code
 suffix, err := encodeAttributionSuffix([]string{senderCode})
 if err != nil {
     return err
@@ -824,50 +836,45 @@ gasLimit, err := client.EstimateGas(ctx, ethereum.CallMsg{
 
 ### Where the suffix must live
 
-The indexer reads the **outer transaction calldata** for the transaction that emitted the `OrderCreated` event, then parses backwards from its final byte.
+ERC-8021 readers parse the **outer transaction calldata** backwards from its final byte, so the suffix has to be the last thing in the top-level input.
 
 - **EOA senders**: append to `tx.data`.
-- **Account abstraction / smart accounts**: append to the **outer** `userOp.callData` — the top-level input that lands onchain.
-- **Do not** bury the suffix inside a nested or inner call. A suffix on an inner call is not visible to the parser, because ABI encoding pads inner `bytes` fields and the outer calldata will not end with the marker.
+- **Account abstraction / smart accounts**: append to the **outer** `userOp.callData`, the top-level input that lands onchain.
+- **Do not** bury the suffix inside a nested or inner call. A suffix on an inner call is invisible to the parser, because ABI encoding pads inner `bytes` fields and the outer calldata will not end with the marker.
 
-Anything that appends bytes after your suffix will also break parsing, since only the trailing suffix is read.
+Anything that appends bytes after your suffix breaks parsing too, since only the trailing suffix is read.
 
 ### Codes and the Base Builder Code
 
-The `codes` field is a list, so a transaction can carry more than one code. For direct integrators the default is **your trading name alone**, on every EVM network including Base.
+The `codes` field is a list, so a transaction can carry more than one code, comma-joined. For direct integrators the default is **your own code alone**, on every EVM network including Base.
 
 <Callout type="warning">
-  `bc_julg9gbq` is **Paycrest/noblocks' own registered Base Builder Code**, used for base.dev analytics and rewards on Base mainnet. It identifies Paycrest as the originating app. Do not include it in your own transactions unless you have an explicit co-branding arrangement with Paycrest; it is not a code for arbitrary senders to claim.
+  `bc_julg9gbq` is **Paycrest/Noblocks' own registered Base Builder Code**, appended by the Noblocks app on Base mainnet for base.dev analytics and rewards. It identifies Noblocks as the originating app. Do not include it in your own transactions unless you have an explicit co-branding arrangement with Paycrest: it is not a code for arbitrary senders to claim.
 </Callout>
 
-The on-chain suffix is for public attribution only. Sender identification for order processing uses `metadata.apiKey` inside the encrypted `messageHash`.
+### Relationship to `metadata.apiKey`
 
-### Precedence and backward compatibility
-
-`metadata.apiKey` continues to work unchanged and is **not deprecated**. It is the **primary mechanism** for sender identification. The onchain suffix is a **public attribution tag** only.
+`metadata.apiKey` is unchanged, **not deprecated**, and remains the single mechanism by which the aggregator identifies the sender behind an order. Keep sending it exactly as before.
 
 | Present | Sender resolution |
 |---------|-------------------|
-| `metadata.apiKey` only | `metadata.apiKey` — this is the standard path |
-| Onchain suffix only | `metadata.apiKey` fallback (suffix is not used for sender resolution) |
-| Both | `metadata.apiKey` is authoritative |
-| Suffix malformed | No impact — sender resolution uses `metadata.apiKey` |
+| `metadata.apiKey` only | `metadata.apiKey` |
+| Onchain suffix only | **Order is not attributed to a sender.** The suffix is not read for identification |
+| Both | `metadata.apiKey` |
+| Suffix malformed or absent | No effect: resolution uses `metadata.apiKey` |
 
 <Callout type="warning">
-  The on-chain suffix is a **public, human-readable attribution tag** (e.g., your trading name). It is not used for sender identification or order processing. Sender resolution always uses `metadata.apiKey` inside the encrypted `messageHash`.
+  Appending a suffix does **not** replace `metadata.apiKey`. An order created with a suffix but without `metadata.apiKey` will not be linked to your sender profile, and you will not receive webhooks for it.
 </Callout>
 
-Onchain attribution never breaks order indexing: any parse failure or RPC error has no impact on sender resolution, which continues to use `metadata.apiKey`.
+The suffix is unauthenticated calldata that anyone can write, which is exactly why it stays a display tag and never feeds sender resolution. Adding one can never break order indexing: a malformed suffix, an unknown code, or no suffix at all leaves processing untouched.
 
 ### Network support
 
-Onchain attribution applies to **EVM networks only**. On **Starknet** and **Tron**, the suffix is not read and attribution continues to use `metadata.apiKey` exclusively.
-
-<Note>
-  Embed host attribution — the `e_`-prefixed codes emitted by the Noblocks widget to identify an embedding partner site — is a separate concern handled by the widget itself. Direct smart contract integrators do not need it.
-</Note>
+Onchain attribution applies to **EVM networks only**. On **Starknet** and **Tron** no suffix is appended or read, and attribution works from `metadata.apiKey` exclusively.
 
 **References:** [ERC-8021 specification](https://eip.tools/eip/8021)
+
 
 ## Token Approval
 

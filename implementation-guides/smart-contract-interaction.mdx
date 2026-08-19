@@ -587,26 +587,25 @@ curl -X GET "https://api.paycrest.io/v2/pubkey"
 
 ## Onchain Attribution (ERC-8021)
 
-On EVM networks you can attribute your `createOrder` transactions onchain by appending an [ERC-8021](https://eip.tools/eip/8021) data suffix to the transaction calldata. The aggregator's indexer reads the suffix from the transaction and links the resulting order to your sender profile, enabling webhooks and order attribution without depending solely on `metadata.apiKey` inside the encrypted `messageHash`.
+On EVM networks you can attribute your `createOrder` transactions onchain by appending an [ERC-8021](https://eip.tools/eip/8021) data suffix to the transaction calldata. The suffix carries your **trading name** as a public, human-readable attribution tag.
 
 The suffix is execution-inert: the Gateway contract ignores trailing bytes beyond its expected ABI arguments, so the suffix passes through without affecting execution. Cost is roughly 16 gas per non-zero byte.
 
 <Note>
-  One suffix covers **every order in the transaction**, whereas `metadata.apiKey` is carried per order inside that order's encrypted `messageHash`. This matters for the precedence rules below.
+  The on-chain suffix is for **public attribution only**. Sender identification for order processing (webhooks, order lookup) continues to use `metadata.apiKey` inside the encrypted `messageHash`. The suffix is a human-readable tag; the encrypted metadata is the authoritative source for sender resolution.
 </Note>
 
 ### Your sender code
 
-Your sender code is your **API Key ID** with dashes stripped — a 32-character hex string. Find it in the dashboard at [app.paycrest.io](https://app.paycrest.io).
+Your sender code is your **trading name** from your KYB profile — a human-readable business identifier. Find it in the dashboard at [app.paycrest.io](https://app.paycrest.io).
 
 ```javascript
-// 7f3a9c21-4b6e-4d18-9a52-c0e8d1f24b7a
-const senderCode = process.env.PAYCREST_API_KEY_ID.replaceAll("-", "");
-// "7f3a9c214b6e4d189a52c0e8d1f24b7a"
+// Your trading name from KYB profile
+const senderCode = "AcmeCorp";
 ```
 
 <Callout type="warning">
-  The API Key ID is **public attribution material** and is permanently visible onchain once used. Your API **secret** is never placed onchain and remains for webhooks and REST authentication only.
+  The trading name is **public attribution material** and is permanently visible onchain once used. It's a human-readable tag for attribution purposes. Your API **secret** is never placed onchain and remains for webhooks and REST authentication only.
 </Callout>
 
 ### Suffix layout
@@ -622,12 +621,12 @@ Schema 0, parsed **backwards from the end** of the calldata:
 
 Constraints: `codes` must be printable ASCII (`0x20`–`0x7e`) and at most **255 bytes** once joined. Violating either makes the suffix unparseable, and the order silently falls back to `metadata.apiKey` attribution.
 
-**Worked example** for API Key ID `7f3a9c21-4b6e-4d18-9a52-c0e8d1f24b7a` on a non-Base EVM chain:
+**Worked example** for trading name `AcmeCorp` on a non-Base EVM chain:
 
 ```text
-3766336139633231346236653464313839613532633065386431663234623761 20 00 80218021802180218021802180218021
-└──────── "7f3a9c214b6e4d189a52c0e8d1f24b7a" (32 bytes) ────────┘ len schema        marker
-                                                                 0x20  0x00
+41636d65436f7270 08 00 80218021802180218021802180218021
+└── "AcmeCorp" ──┘ len schema        marker
+                  0x08  0x00
 ```
 
 ### Encoding the suffix
@@ -748,7 +747,7 @@ async function createOffRampOrderAttributed(amount, recipient, refundAddress) {
     ],
   });
 
-  const senderCode = process.env.PAYCREST_API_KEY_ID.replaceAll("-", "");
+  const senderCode = "AcmeCorp"; // Your trading name from KYB profile
   const data = concatHex([callData, encodeAttributionSuffix([senderCode])]);
 
   const hash = await walletClient.sendTransaction({
@@ -775,7 +774,7 @@ tx = gateway.functions.createOrder(
     'nonce': w3.eth.get_transaction_count(user_address),
 })
 
-sender_code = os.environ['PAYCREST_API_KEY_ID'].replace('-', '')
+sender_code = "AcmeCorp"  # Your trading name from KYB profile
 tx['data'] = tx['data'] + encode_attribution_suffix([sender_code]).hex()
 
 # Estimate gas AFTER appending so the suffix is covered.
@@ -796,7 +795,7 @@ if err != nil {
     return err
 }
 
-senderCode := strings.ReplaceAll(os.Getenv("PAYCREST_API_KEY_ID"), "-", "")
+senderCode := "AcmeCorp" // Your trading name from KYB profile
 suffix, err := encodeAttributionSuffix([]string{senderCode})
 if err != nil {
     return err
@@ -831,31 +830,30 @@ Anything that appends bytes after your suffix will also break parsing, since onl
 
 ### Codes and the Base Builder Code
 
-The `codes` field is a list, so a transaction can carry more than one code. For direct integrators the default is **your sender code alone**, on every EVM network including Base.
+The `codes` field is a list, so a transaction can carry more than one code. For direct integrators the default is **your trading name alone**, on every EVM network including Base.
 
 <Callout type="warning">
   `bc_julg9gbq` is **Paycrest/noblocks' own registered Base Builder Code**, used for base.dev analytics and rewards on Base mainnet. It identifies Paycrest as the originating app. Do not include it in your own transactions unless you have an explicit co-branding arrangement with Paycrest; it is not a code for arbitrary senders to claim.
 </Callout>
 
-Sender resolution scans the code list for the first entry that is exactly 32 characters and parses as a UUID, so non-UUID codes such as `bc_julg9gbq` are skipped and code ordering does not matter.
+The on-chain suffix is for public attribution only. Sender identification for order processing uses `metadata.apiKey` inside the encrypted `messageHash`.
 
 ### Precedence and backward compatibility
 
-`metadata.apiKey` continues to work unchanged and is **not deprecated**. The onchain suffix is the preferred mechanism for new EVM integrations, and the two can be used together.
+`metadata.apiKey` continues to work unchanged and is **not deprecated**. It is the **primary mechanism** for sender identification. The onchain suffix is a **public attribution tag** only.
 
-| Present | Resolved sender |
-|---------|-----------------|
-| Onchain suffix only | Onchain suffix — this is the direct-integrator path |
-| `metadata.apiKey` only | `metadata.apiKey` |
-| Both, naming the same key | Onchain suffix |
-| **Both, naming different keys** | **`metadata.apiKey` wins**, and the divergence is logged as a possible spoofing attempt |
-| Suffix malformed, or key not found | Falls back to `metadata.apiKey` |
+| Present | Sender resolution |
+|---------|-------------------|
+| `metadata.apiKey` only | `metadata.apiKey` — this is the standard path |
+| Onchain suffix only | `metadata.apiKey` fallback (suffix is not used for sender resolution) |
+| Both | `metadata.apiKey` is authoritative |
+| Suffix malformed | No impact — sender resolution uses `metadata.apiKey` |
 
 <Callout type="warning">
-  The suffix is **unauthenticated**. It rides on attacker-controllable calldata and can name any active API Key ID, with no signature binding it to the transaction sender. `metadata.apiKey` is forgeable in the same way on its own, but it is scoped to a single order inside that order's encrypted `messageHash`, whereas one suffix covers every order in the transaction. That is why metadata is authoritative when the two disagree.
+  The on-chain suffix is a **public, human-readable attribution tag** (e.g., your trading name). It is not used for sender identification or order processing. Sender resolution always uses `metadata.apiKey` inside the encrypted `messageHash`.
 </Callout>
 
-Onchain attribution never breaks order indexing: any parse failure, RPC error, or unresolvable key falls back to metadata rather than rejecting the order.
+Onchain attribution never breaks order indexing: any parse failure or RPC error has no impact on sender resolution, which continues to use `metadata.apiKey`.
 
 ### Network support
 

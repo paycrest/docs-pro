@@ -11,14 +11,16 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ### Onchain sender attribution via ERC-8021 (August 2026)
 
-**New:** Direct Gateway integrators can attribute `createOrder` transactions onchain by appending an [ERC-8021](https://eip.tools/eip/8021) schema-0 data suffix to the outer transaction calldata. The indexer parses the suffix and links the order to the sender profile, so webhooks and attribution no longer depend solely on `metadata.apiKey`.
+**New:** Direct Gateway integrators can attribute `createOrder` transactions onchain by appending an [ERC-8021](https://eip.tools/eip/8021) schema-0 data suffix to the outer transaction calldata. The suffix carries the sender's **trading name** (from their KYB profile) as a public, human-readable attribution tag.
 
-- **Sender code** — your API Key ID with dashes stripped (32 hex chars).
+- **Sender code** — your trading name from your KYB profile (e.g., "AcmeCorp").
 - **Suffix layout** (parsed backwards from the end of calldata): comma-joined ASCII `codes` · 1-byte length · 1-byte schema `0x00` · 16-byte marker `0x8021…8021`.
 - **Placement** — the suffix must sit on the outer `tx.data` / `userOp.callData`, not on a nested inner call.
 - **EVM only** — Starknet and Tron continue to use `metadata.apiKey` exclusively.
 
-**Unchanged:** `metadata.apiKey` still works and is not deprecated. Where both are present and name **different** keys, `metadata.apiKey` wins and the divergence is logged, because the suffix is unauthenticated and covers every order in the transaction while metadata is scoped to a single order inside its encrypted `messageHash`.
+**Important:** The on-chain suffix is for **public attribution only**. Sender identification for order processing (webhooks, order lookup) continues to use `metadata.apiKey` inside the encrypted `messageHash`. The suffix is a human-readable tag; the encrypted metadata is the authoritative source for sender resolution.
+
+**Unchanged:** `metadata.apiKey` still works and is not deprecated. It remains the primary mechanism for sender identification.
 
 See [Onchain Attribution (ERC-8021)](/implementation-guides/smart-contract-interaction#onchain-attribution-erc-8021).
 

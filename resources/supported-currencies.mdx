@@ -13,8 +13,6 @@ Paycrest supports fiat currencies across multiple countries and regions, with de
 | **Kenya** | 🇰🇪 | Kenyan Shilling | KES | Bank, Mobile |
 | **Uganda** | 🇺🇬 | Ugandan Shilling | UGX | Bank, Mobile |
 | **Tanzania** | 🇹🇿 | Tanzanian Shilling | TZS | Bank, Mobile |
-| **Malawi** | 🇲🇼 | Malawi Kwacha | MWK | Bank, Mobile |
-| **Brazil** | 🇧🇷 | Brazilian Real | BRL | Mobile (PIX) |
 
 ## Delivery Channel Matrix
 
@@ -24,8 +22,6 @@ Paycrest supports fiat currencies across multiple countries and regions, with de
 | **KES** | ✅ | ✅ |
 | **UGX** | ✅ | ✅ |
 | **TZS** | ✅ | ✅ |
-| **MWK** | ✅ | ✅ |
-| **BRL** | ❌ | ✅ (PIX) |
 
 ## Integration Examples
 
@@ -104,29 +100,6 @@ recipient: {
   memo: "Bill pay",
   metadata: { channel: "Paybill", businessNumber: "400200" }
 }
-```
-
-### PIX (Brazil)
-```javascript
-const order = {
-  amount: "200",
-  source: {
-    type: "crypto",
-    currency: "USDT",
-    network: "arbitrum-one",
-    refundAddress: "0xYourAddress"
-  },
-  destination: {
-    type: "fiat",
-    currency: "BRL",
-    recipient: {
-      institution: "PIXKBRPC",
-      accountIdentifier: "johndoe@email.com",
-      accountName: "João Silva",
-      memo: "PIX payment"
-    }
-  }
-};
 ```
 
 ## Rate Information

@@ -11,18 +11,30 @@ This page tracks significant changes to the Paycrest API and protocol. For full 
 
 ### Onchain sender attribution via ERC-8021 (August 2026)
 
-**New:** Direct Gateway integrators can attribute `createOrder` transactions onchain by appending an [ERC-8021](https://eip.tools/eip/8021) schema-0 data suffix to the outer transaction calldata. The suffix carries the sender's **trading name** (from their KYB profile) as a public, human-readable attribution tag.
+**New:** The aggregator now stamps the EVM transactions it submits with an [ERC-8021](https://eip.tools/eip/8021) schema-0 data suffix carrying the sender's **trading name** from their KYB profile. It is applied on the native EIP-7702 relayer path for create, settle, and refund transactions, so orders placed through the Sender API carry public onchain attribution with no integration work.
 
-- **Sender code** — your trading name from your KYB profile (e.g., "AcmeCorp").
-- **Suffix layout** (parsed backwards from the end of calldata): comma-joined ASCII `codes` · 1-byte length · 1-byte schema `0x00` · 16-byte marker `0x8021…8021`.
-- **Placement** — the suffix must sit on the outer `tx.data` / `userOp.callData`, not on a nested inner call.
-- **EVM only** — Starknet and Tron continue to use `metadata.apiKey` exclusively.
+- **Sender code**: the sender's KYB trading name (for example, `AcmeCorp`). Senders with no trading name on file get no suffix.
+- **Suffix layout** (parsed backwards from the end of calldata): comma-joined ASCII `codes` · 1-byte length · 1-byte schema `0x00` · 16-byte marker `0x8021...8021`.
+- **EVM only**: Starknet and Tron transactions carry no suffix.
 
-**Important:** The on-chain suffix is for **public attribution only**. Sender identification for order processing (webhooks, order lookup) continues to use `metadata.apiKey` inside the encrypted `messageHash`. The suffix is a human-readable tag; the encrypted metadata is the authoritative source for sender resolution.
+**Important:** the suffix is a public, human-readable attribution tag. It is **not** used for sender identification. Sender resolution, webhook delivery, and order lookup continue to use `metadata.apiKey` inside the encrypted `messageHash`, which is unchanged and not deprecated.
 
-**Unchanged:** `metadata.apiKey` still works and is not deprecated. It remains the primary mechanism for sender identification.
+Direct Gateway integrators can append their own suffix to `createOrder` calldata for public attribution. See [Onchain Attribution (ERC-8021)](/implementation-guides/smart-contract-interaction#onchain-attribution-erc-8021).
 
-See [Onchain Attribution (ERC-8021)](/implementation-guides/smart-contract-interaction#onchain-attribution-erc-8021).
+---
+
+### Optional `senderFeeAddress` on V2 create order (July 2026)
+
+**Updated:** `POST /v2/sender/orders` accepts an optional top-level **`senderFeeAddress`**.
+
+| Effective sender fee | `senderFeeAddress` |
+|----------------------|--------------------|
+| Greater than zero (from `senderFee`, `senderFeePercent`, or a profile-configured fee) | **Required** — pass it on the request, or configure a fee address on the sender profile for that token |
+| Zero | **Not required** |
+
+`senderFee` and `senderFeePercent` remain mutually exclusive. Applies to both offramp and onramp. V1 create order is unchanged (still requires fee and refund addresses on the sender profile).
+
+See [Sender API Integration — Sender Fees](/implementation-guides/sender-api-integration#sender-fees) and [Initiate Order](/api-reference/sender/initiate-payment-order-v2).
 
 ---
 
@@ -44,6 +56,26 @@ See [Get Markets](/api-reference/general/get-markets).
 ---
 
 ## Q2 2026
+
+### Starknet and Tron network support (July 2026)
+
+**Starknet** (chain ID `23448594291968334`) and **Tron** (chain ID `728126428`) are fully supported by the aggregator.
+
+**Starknet**
+- Gateway: `0x06ff3a3b1532da65594fc98f9ca7200af6c3dbaf37e7339b0ebd3b3f2390c583`
+- Network identifier: `starknet`
+- Tokens: USDT and USDC (6 decimals)
+- Addresses: felt hex (`0x` + 63–64 hex characters)
+
+**Tron**
+- Gateway: `THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU`
+- Network identifier: `tron`
+- Tokens: USDT (6 decimals; contract `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`)
+- Addresses: Base58Check starting with `T`
+
+**Docs cleanup:** Scroll and Asset Chain are no longer listed as supported networks. Prefer the [Sender API](/implementation-guides/sender-api-integration) for Starknet and Tron orders; see [Gateway Contract Addresses](/resources/gateway-contract-addresses) and [Supported Stablecoins](/resources/supported-stablecoins).
+
+---
 
 ### Public markets orderbook & provider rate position (June 2026)
 
@@ -83,7 +115,7 @@ See [Webhook delivery logs & retry](/implementation-guides/sender-api-integratio
 
 ### Verify-account mobile money normalization (June 2026)
 
-**`POST /v1/verify-account`** and **`POST /v2/verify-account`** now normalize **mobile_money** `accountIdentifier` values before provider verification (country dial code, strip `+` and leading `0`). Supported fiat dial codes: KES `254`, UGX `256`, TZS `255`, GHS `233`, MWK `265`.
+**`POST /v1/verify-account`** and **`POST /v2/verify-account`** now normalize **mobile_money** `accountIdentifier` values before provider verification (country dial code, strip `+` and leading `0`). Supported fiat dial codes: KES `254`, UGX `256`, TZS `255`, GHS `233`.
 
 - Optional request field **`metadata`** (KES Till/Paybill) skips normalization when appropriate.
 - Response **`data`** may still be `"OK"` when the account is valid but no display name is returned (e.g. some M-Pesa corridors).
@@ -163,7 +195,7 @@ The v2 API introduces a unified endpoint for both offramp and onramp flows, repl
 | Direction support | Offramp only | Offramp + onramp |
 | Request schema | Flat: `token`, `network`, `recipient` | Polymorphic: `source`, `destination` with `type` discriminator |
 | Amount direction | Always crypto | `amountIn: "fiat"` or `"crypto"` |
-| Sender fee | Fixed amount via dashboard | Dashboard required; `senderFeePercent` on request overrides it |
+| Sender fee | Fixed amount via dashboard | Optional; `senderFee` / `senderFeePercent` on request. If fee > 0, `senderFeeAddress` (or profile fee address) is required |
 | Numeric field types | `decimal.Decimal` | `string` |
 | Webhook version | `webhookVersion: "1"` | `webhookVersion: "2"` |
 
@@ -205,10 +237,6 @@ cNGN (Compliant Naira) is now supported as a stablecoin across Ethereum, Base, P
 ### Lisk network support
 
 Lisk (chain ID 1135) added to the aggregator. Gateway contract: `0xff0E00E0110C1FBb5315D276243497b66D3a4d8a`.
-
-### BRL corridor live
-
-Brazilian Real (BRL) via PIX now available as an active corridor. Mobile/PIX delivery only.
 
 ### Protocol launch (February 2025)
 

@@ -32,7 +32,7 @@ A **KYB-verified entity** that initiates either a fiat-to-stablecoin or stableco
 - **E-commerce**: Accept crypto payments and settle in fiat
 
 <Note>
-  **Sender Fee Model:** Sender businesses can optionally charge fees to their users. Configure a fixed fee via the dashboard, or pass `senderFeePercent` on each order request (overrides the dashboard setting). The fee is settled atomically onchain upon successful order settlement, with no offchain billing required.
+  **Sender Fee Model:** Sender businesses can optionally charge fees to their users. Configure a default fee via the dashboard, or pass `senderFee` / `senderFeePercent` on each V2 order request. When the effective fee is greater than zero, a fee recipient is required — either configured on the profile or passed as `senderFeeAddress` on the request. The fee is settled atomically onchain upon successful order settlement, with no offchain billing required.
 </Note>
 
 ## Recipient
@@ -49,7 +49,7 @@ The **beneficiary** of the transaction who receives funds without interacting wi
 ### Delivery Methods
 
 - **Bank Transfer**: Direct deposit to local bank account
-- **Mobile**: Transfer to mobile wallet (M-Pesa, etc.) or mobile payment systems (UPI, PIX)
+- **Mobile**: Transfer to mobile wallet (M-Pesa, etc.) or other mobile payment systems
 - **Crypto Wallet**: Receive stablecoins in specified wallet
 
 > **Note:** Cash pickup is not supported. All off-ramps are to fiat accounts or wallets.

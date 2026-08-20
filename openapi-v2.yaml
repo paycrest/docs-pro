@@ -1076,7 +1076,7 @@ components:
       properties:
         event:
           type: string
-          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired]
+          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired, payment_order.compliance_hold]
         webhookVersion:
           type: string
           enum: ["2"]
@@ -1147,7 +1147,7 @@ components:
           description: Unique ID of this delivery record.
         event:
           type: string
-          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired]
+          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired, payment_order.compliance_hold]
           description: The webhook event that was delivered.
         eventId:
           type: string

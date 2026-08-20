@@ -142,20 +142,20 @@ A KYB-verified entity that coordinates the entire order routing process:
   <Step title="Fulfillment">
     Providers execute the payment:
     <ul>
-      <li><b>Offramp:</b> Provider delivers fiat to the recipient via PSP integration.</li>
-      <li><b>Onramp:</b> Provider receives fiat from the sender via local payment rails.</li>
+      <li><b>Off-ramp:</b> Provider delivers fiat to the recipient via PSP integration.</li>
+      <li><b>On-ramp:</b> Provider receives fiat from the sender via local payment rails.</li>
     </ul>
   </Step>
   <Step title="Validation">
     <ul>
-      <li><b>Offramp:</b> Provision node validates fulfillment by checking the status of the fiat transfer via PSP APIs.</li>
-      <li><b>Onramp:</b> Aggregator validates fulfillment by confirming the onchain stablecoin transfer to the recipient.</li>
+      <li><b>Off-ramp:</b> Provision node validates fulfillment by checking the status of the fiat transfer via PSP APIs.</li>
+      <li><b>On-ramp:</b> Aggregator validates fulfillment by confirming the onchain stablecoin transfer to the recipient.</li>
     </ul>
   </Step>
   <Step title="Settlement">
     <ul>
-      <li><b>Offramp:</b> Smart contract releases escrowed stablecoins to the provider after successful validation.</li>
-      <li><b>Onramp:</b> Fulfillment, validation, and settlement occur in one step: after the provision node confirms fiat receipt, the stablecoins are released onchain to the recipient.</li>
+      <li><b>Off-ramp:</b> Smart contract releases escrowed stablecoins to the provider after successful validation.</li>
+      <li><b>On-ramp:</b> Fulfillment, validation, and settlement occur in one step: after the provision node confirms fiat receipt, the stablecoins are released onchain to the recipient.</li>
     </ul>
   </Step>
   <Step title="Refund">
@@ -164,9 +164,9 @@ A KYB-verified entity that coordinates the entire order routing process:
 </Steps>
 
 <Callout type="info">
-<b>Offramp:</b> Fulfillment = Provider delivers fiat to recipient. Validation = Provision node checks fiat transfer status via PSP API. Settlement = Escrowed stablecoins released to provider.
+<b>Off-ramp:</b> Fulfillment = Provider delivers fiat to recipient. Validation = Provision node checks fiat transfer status via PSP API. Settlement = Escrowed stablecoins released to provider.
 
-<b>Onramp:</b> Fulfillment = Provider receives fiat from sender. Validation = Aggregator confirms onchain stablecoin transfer to recipient. Settlement = All three steps happen atomically after fiat receipt is confirmed.
+<b>On-ramp:</b> Fulfillment = Provider receives fiat from sender. Validation = Aggregator confirms onchain stablecoin transfer to recipient. Settlement = All three steps happen atomically after fiat receipt is confirmed.
 </Callout>
 
 ## Multi-Chain Support
@@ -283,7 +283,7 @@ If an order is not fulfilled, it is automatically refunded. The aggregator does 
 
 Senders can create orders via:
 - The Sender API (recommended for most users)
-- Direct contract interaction (for advanced/offramp use cases)
+- Direct contract interaction (for advanced/off-ramp use cases)
 
 <Note>
   The Paycrest protocol is designed to be both Web3-native and accessible to traditional financial applications. The modular architecture allows for different deployment models while maintaining the core benefits of decentralization.

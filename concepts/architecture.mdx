@@ -39,7 +39,7 @@ The **Gateway contract** is the onchain entry point for all payment orders. It h
 
 #### Key Functions
 
-- **Order Creation**: Accepts payment orders from senders; locks stablecoins in escrow (offramp) or coordinates stablecoin release to recipients (onramp)
+- **Order Creation**: Accepts payment orders from senders; locks stablecoins in escrow (off-ramp) or coordinates stablecoin release to recipients (on-ramp)
 - **Event Emission**: Emits events that the aggregator monitors to begin routing
 - **Escrow Settlement**: Releases escrowed funds to providers after fulfillment is verified, or returns them to senders if the order can't be completed
 
@@ -47,16 +47,16 @@ The **Gateway contract** is the onchain entry point for all payment orders. It h
 
 <Steps>
   <Step title="Order Creation">
-    Sender creates an order via the Sender API or direct contract interaction. For offramp, stablecoins are locked in escrow. For onramp, the contract coordinates stablecoin release once fiat receipt is confirmed.
+    Sender creates an order via the Sender API or direct contract interaction. For off-ramp, stablecoins are locked in escrow. For on-ramp, the contract coordinates stablecoin release once fiat receipt is confirmed.
   </Step>
   <Step title="Routing">
     Aggregator picks up the onchain event and routes the order to the most suitable liquidity provider based on rate, availability, and corridor.
   </Step>
   <Step title="Fulfillment">
-    For offramp, the provider disburses fiat to the recipient via a local PSP. For onramp, the provider receives the user's fiat deposit and reports confirmation.
+    For off-ramp, the provider disburses fiat to the recipient via a local PSP. For on-ramp, the provider receives the user's fiat deposit and reports confirmation.
   </Step>
   <Step title="Completion">
-    After fulfillment is verified, the contract settles atomically: escrowed stablecoins are released to the provider (offramp), or stablecoins are transferred to the recipient's wallet (onramp). If fulfillment fails, funds are automatically returned.
+    After fulfillment is verified, the contract settles atomically: escrowed stablecoins are released to the provider (off-ramp), or stablecoins are transferred to the recipient's wallet (on-ramp). If fulfillment fails, funds are automatically returned.
   </Step>
 </Steps>
 
@@ -102,7 +102,7 @@ The **aggregator node** is the coordination layer: it monitors onchain events, m
 
 ### Provision Nodes
 
-**Provision nodes** handle fiat execution: disbursing fiat to recipients for offramp orders, or receiving and confirming fiat deposits for onramp orders. They are run by independent liquidity providers who connect their own PSP integrations.
+**Provision nodes** handle fiat execution: disbursing fiat to recipients for off-ramp orders, or receiving and confirming fiat deposits for on-ramp orders. They are run by independent liquidity providers who connect their own PSP integrations.
 
 #### Components
 
@@ -121,7 +121,6 @@ The **aggregator node** is the coordination layer: it monitors onchain events, m
   </Card>
   <Card title="Mobile Money">
     - M-Pesa, Airtel Money, MTN Mobile Money
-    - PIX (Brazil)
     - Other mobile wallets
   </Card>
 </CardGroup>

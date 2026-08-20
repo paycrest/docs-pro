@@ -36,7 +36,7 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
       <li><strong>Invalid Tron address</strong>: For `network: "tron"`, use a Base58 address starting with `T`, not an EVM `0x` address</li>
       <li><strong>Missing recipient details</strong>: All recipient fields are required</li>
       <li><strong>Invalid institution</strong>: Check supported institutions for the currency</li>
-      <li><strong>Provider routing rejected</strong>: <code>providerIds</code> and <code>providerId</code> are mutually exclusive; offramp queues cap at 3 entries and onramp at 1; entries must name providers you can route to. See <a href="/implementation-guides/sender-api-integration#pin-a-provider-queue">Pin a provider queue</a></li>
+      <li><strong>Provider routing rejected</strong>: <code>providerIds</code> and <code>providerId</code> are mutually exclusive; off-ramp queues cap at 3 entries and on-ramp at 1; entries must name providers you can route to. See <a href="/implementation-guides/sender-api-integration#pin-a-provider-queue">Pin a provider queue</a></li>
     </ul>
 
     <h4>"Recipient data too large for encryption"</h4>

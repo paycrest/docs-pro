@@ -1,0 +1,371 @@
+---
+title: "Sender Agent Guide"
+description: "Install the Paycrest sender agent (MCP) and connect it to Claude Code, Cursor, or VS Code to create and track payment orders with natural language."
+---
+
+Use **Paycrest** from **Claude Code**, **Cursor**, or **VS Code** through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). A small app runs on your machine, talks to the Paycrest API, and lets your AI agent create and track payment orders in plain language.
+
+You do **not** need Go or a local clone for normal use — only an MCP-capable client and a sender API key.
+
+For HTTP API integration (apps and backends), see [Sender API Integration](/implementation-guides/sender-api-integration).
+
+## Prerequisites
+
+1. An **MCP client** — one of:
+   - **[Claude Code](https://claude.com/claude-code)**
+   - **[Cursor](https://cursor.com/)**
+   - **[VS Code](https://code.visualstudio.com/)** with GitHub Copilot Chat (**Agent** mode)
+2. A **sender API key** from the [Paycrest dashboard](https://paycrest.io) (Settings → API keys)
+3. On Windows, **Windows PowerShell** — not Git Bash — for the install one-liner
+
+## Install the agent
+
+The installer downloads the latest release binary to a **fixed path**. It configures Cursor automatically; Claude Code and VS Code are one manual step each, below.
+
+| OS | Binary path |
+|----|-------------|
+| Windows | `%USERPROFILE%\.paycrest\paycrest-mcp.exe` |
+| macOS / Linux | `~/.paycrest/paycrest-mcp` |
+
+### Windows (PowerShell — not Git Bash)
+
+Open **Windows PowerShell** (or Terminal → PowerShell). Do **not** use Git Bash for this one-liner.
+
+```powershell
+irm https://raw.githubusercontent.com/paycrest/sender-mcp/main/scripts/install.ps1 | iex
+```
+
+### macOS / Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paycrest/sender-mcp/main/scripts/install.sh | bash
+```
+
+### What the script does
+
+1. Downloads the matching binary from [Releases](https://github.com/paycrest/sender-mcp/releases)
+2. Saves it under `~/.paycrest/` with a fixed name (no manual rename)
+3. Merges a `paycrest` entry into **Cursor’s** `~/.cursor/mcp.json` (unless you skip that step)
+
+<Note>
+The script does **not** configure Claude Code or VS Code — see [Connect Claude Code](#connect-claude-code) and [Connect VS Code](#connect-vs-code).
+
+Ignore the **Source code (zip/tar.gz)** links on the Releases page — those are source archives, not the MCP binary.
+</Note>
+
+### Where the config lives
+
+All three clients run the **same binary** from the path above. Only the config file and its top-level key differ.
+
+| Client | Config | Top-level key |
+|--------|--------|---------------|
+| Claude Code | `~/.claude.json` (local / user scope), or `.mcp.json` in the repo root (project scope) — managed by `claude mcp` | `mcpServers` |
+| Cursor | `~/.cursor/mcp.json` | `mcpServers` |
+| VS Code | Command Palette → **MCP: Open User Configuration** | `servers` (plus `"type": "stdio"`) |
+
+You only ever need one environment variable: **`PAYCREST_API_KEY`**.
+
+## Connect Claude Code
+
+The installer does not touch Claude Code. Add the server with one command:
+
+<CodeGroup>
+
+```powershell Windows
+claude mcp add --env PAYCREST_API_KEY=your-sender-api-key --transport stdio --scope user paycrest -- C:/Users/YOU/.paycrest/paycrest-mcp.exe
+```
+
+```bash macOS / Linux
+claude mcp add --env PAYCREST_API_KEY=your-sender-api-key --transport stdio --scope user paycrest -- ~/.paycrest/paycrest-mcp
+```
+
+</CodeGroup>
+
+<Warning>
+Two flag-order rules, both easy to trip over:
+
+- **`--` must come before the binary path.** It separates Claude Code’s own options from the command that runs the server.
+- **Don’t put the server name straight after `--env`.** `--env` accepts multiple `KEY=value` pairs, so `paycrest` would be read as another pair and rejected. Keep at least one other option (`--transport`, `--scope`) between them, as above.
+
+Write out the full Windows path — `%USERPROFILE%` is not expanded here.
+</Warning>
+
+### Choose a scope
+
+| Scope | Loads in | Stored in |
+|-------|----------|-----------|
+| `local` (default) | Current project only | `~/.claude.json` |
+| `project` | Current project, shared with your team | `.mcp.json` in the repo root |
+| `user` | All your projects | `~/.claude.json` |
+
+Use **`--scope user`** for Paycrest — a payments agent isn’t tied to one repo.
+
+### Verify
+
+```bash
+claude mcp list
+```
+
+`paycrest` should show **`✔ Connected`**. Inside a Claude Code session, `/mcp` shows the same status and lets you inspect the server’s tools. To start over, run `claude mcp remove paycrest` and add it again.
+
+### Project config (`.mcp.json`)
+
+If you’d rather commit the server for your whole team, add it at project scope and Claude Code writes `.mcp.json` in the repo root:
+
+<CodeGroup>
+
+```json Windows
+{
+  "mcpServers": {
+    "paycrest": {
+      "command": "C:/Users/YOU/.paycrest/paycrest-mcp.exe",
+      "env": {
+        "PAYCREST_API_KEY": "your-sender-api-key"
+      }
+    }
+  }
+}
+```
+
+```json macOS / Linux
+{
+  "mcpServers": {
+    "paycrest": {
+      "command": "/Users/YOU/.paycrest/paycrest-mcp",
+      "env": {
+        "PAYCREST_API_KEY": "your-sender-api-key"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+<Warning>
+`.mcp.json` is meant to be committed. Don’t put a real sender API key in it — keep the key at user scope, or have each teammate set `PAYCREST_API_KEY` in their own environment.
+</Warning>
+
+## Connect Cursor
+
+The installer may already have done this — open `~/.cursor/mcp.json` and check for a `paycrest` entry before editing.
+
+Typical config after install (path may match your username):
+
+<CodeGroup>
+
+```json Windows
+{
+  "mcpServers": {
+    "paycrest": {
+      "command": "C:/Users/YOU/.paycrest/paycrest-mcp.exe",
+      "env": {
+        "PAYCREST_API_KEY": "your-sender-api-key"
+      }
+    }
+  }
+}
+```
+
+```json macOS / Linux
+{
+  "mcpServers": {
+    "paycrest": {
+      "command": "/Users/YOU/.paycrest/paycrest-mcp",
+      "env": {
+        "PAYCREST_API_KEY": "your-sender-api-key"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+### Set your API key in Cursor
+
+Open the MCP settings (**Cursor Settings → Tools & MCP**) and edit the `paycrest` server’s JSON to replace `your-sender-api-key` with your key.
+
+<Tabs>
+  <Tab title="Windows">
+    1. **Hover** over the **paycrest** MCP server.
+    2. Click the **edit** (pencil) icon.
+    3. Update `PAYCREST_API_KEY` in the JSON with your key.
+  </Tab>
+  <Tab title="macOS">
+    1. Click the **three dots** on the right of the **paycrest** MCP server.
+    2. Click **Configure**.
+    3. Choose **User**.
+    4. Update `PAYCREST_API_KEY` in the JSON with your key.
+  </Tab>
+</Tabs>
+
+### Reload MCP
+
+After install or editing `mcp.json`:
+
+1. Open **Cursor Settings → Tools & MCP**, or
+2. Restart Cursor
+
+Confirm **paycrest** shows as connected / no error on the server.
+
+## Connect VS Code
+
+The installer does not touch VS Code either, and its MCP config shape differs from Cursor’s.
+
+<Note>
+VS Code uses `"servers"` at the top level and requires `"type": "stdio"`. Cursor and Claude Code use `"mcpServers"`.
+</Note>
+
+Open **Command Palette → MCP: Open User Configuration** (or **MCP: Add Server** for a guided flow), then add:
+
+<CodeGroup>
+
+```json Windows
+{
+  "servers": {
+    "paycrest": {
+      "type": "stdio",
+      "command": "C:/Users/YOU/.paycrest/paycrest-mcp.exe",
+      "env": {
+        "PAYCREST_API_KEY": "your-sender-api-key"
+      }
+    }
+  }
+}
+```
+
+```json macOS / Linux
+{
+  "servers": {
+    "paycrest": {
+      "type": "stdio",
+      "command": "/Users/YOU/.paycrest/paycrest-mcp",
+      "env": {
+        "PAYCREST_API_KEY": "your-sender-api-key"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+### Keep the key out of the file
+
+VS Code can prompt for the key instead of storing it in plain text. Use an `inputs` entry and reference it from `env`:
+
+```json
+{
+  "inputs": [
+    {
+      "id": "paycrest-api-key",
+      "type": "promptString",
+      "description": "Paycrest sender API key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "paycrest": {
+      "type": "stdio",
+      "command": "/Users/YOU/.paycrest/paycrest-mcp",
+      "env": {
+        "PAYCREST_API_KEY": "${input:paycrest-api-key}"
+      }
+    }
+  }
+}
+```
+
+### Start the server
+
+1. Open **GitHub Copilot Chat**.
+2. Switch chat mode to **Agent**.
+3. Start or enable the `paycrest` MCP server when VS Code prompts (or run **MCP: List Servers**).
+4. Try the smoke tests below.
+
+## Smoke tests
+
+In Claude Code, Cursor Agent, or VS Code Copilot Chat (**Agent** mode), try:
+
+- “List Paycrest currencies”
+- “What’s the rate for 100 USDC on base to NGN?”
+
+If those succeed, the MCP server and API key are working.
+
+## Order flow (create → pay → watch)
+
+Typical flow the agent should follow:
+
+<Steps>
+  <Step title="Create">
+    Create an order (on-ramp or off-ramp) via natural language.
+  </Step>
+  <Step title="Pay-in details">
+    The agent shows pay-in details (bank / wallet / account info) and the order id.
+  </Step>
+  <Step title="Send funds">
+    You send the funds (fiat or crypto, as instructed).
+  </Step>
+  <Step title="Confirm payment">
+    Reply **`paid`** (or “I have paid” / “transfer confirmed”).
+  </Step>
+  <Step title="Watch until terminal">
+    The agent runs **one continuous watch** until the order is **settled**, **cancelled**, **refunded**, or **expired**.
+  </Step>
+</Steps>
+
+You can also use the MCP prompt **“After payment — watch order”** and paste the order id if the chat lost context.
+
+### Example prompts
+
+**Off-ramp** (crypto → fiat):
+
+```text
+offramp 0.5 USDC Base, refund 0x0c89b146E1dB0A1cf325e0bBA4FfFF24e3F1d0D4, NGN OPay 0987654321, John Doe.
+```
+
+**On-ramp** (fiat → crypto):
+
+```text
+onramp 1000 NGN to USDC on Base at 0xCfb28A38b6083B2Ef0B4F99C7cC3aB76b71F0426, refund OPay 0987654321, name John Doe.
+```
+
+After you’ve paid:
+
+```text
+paid
+```
+
+## Upgrade
+
+1. **Quit every client running the server** — exit your Claude Code sessions, quit Cursor, quit VS Code. The running MCP process holds a lock on the `.exe` / binary.
+2. Re-run the same install one-liner.
+3. Reconnect:
+   - **Claude Code** — start a new session, then `claude mcp list`
+   - **Cursor** — **Cursor Settings → Tools & MCP**
+   - **VS Code** — restart the `paycrest` server from **MCP: List Servers**
+
+If a client is still running, Windows often fails with “file in use” / access denied.
+
+<Note>
+Re-running the installer replaces the **binary** only. Your client config and API key are untouched.
+</Note>
+
+## Troubleshooting
+
+| Problem | What to do |
+|---------|------------|
+| `irm` / curl returns **404** | Repo or raw script URL not reachable. Use a [Release](https://github.com/paycrest/sender-mcp/releases) download, or clone and run `.\scripts\install.ps1` / `./scripts/install.sh` with `gh auth login`. |
+| **File in use** / cannot overwrite binary | Quit **every** MCP client running the server — Claude Code sessions, Cursor, VS Code — then re-run install. |
+| Install fails in **Git Bash** | Use **PowerShell** on Windows for `irm … \| iex`. |
+| Auth / **401** / sender tools fail | Check `PAYCREST_API_KEY` in your client’s config (see [Where the config lives](#where-the-config-lives)) — wrong, expired, or missing key. In Claude Code, `claude mcp remove paycrest` then re-run the add command. Reload MCP after fixing. |
+| Downloaded something that isn’t an app | Ignore **Source code (zip/tar.gz)** on Releases. Use the platform asset (e.g. `…_windows_amd64.exe`, `…_darwin_arm64`). |
+| MCP server red / not listed / failed to connect | Confirm the `command` path exists (`ls ~/.paycrest`), then reload: `claude mcp list` (Claude Code), **Cursor Settings → Tools & MCP**, or **MCP: List Servers** (VS Code). |
+| `claude mcp add` rejected the name, or the server never starts | Flag order. `--env` must not sit immediately before the server name, and `--` must come before the binary path. Run `claude mcp remove paycrest`, then re-run the exact command above. |
+
+## Links
+
+- [GitHub Releases (binaries)](https://github.com/paycrest/sender-mcp/releases)
+- [sender-mcp repository](https://github.com/paycrest/sender-mcp)
+- [Sender API Integration](/implementation-guides/sender-api-integration)

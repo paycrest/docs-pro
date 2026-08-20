@@ -18,7 +18,6 @@ For institutions with type **mobile_money**, the API **normalizes** `accountIden
 | UGX | 256 |
 | TZS | 255 |
 | GHS | 233 |
-| MWK | 265 |
 
 **KES M-Pesa example:** `0712345678`, `+254712345678`, and `254712345678` all normalize to `254712345678`.
 
@@ -36,6 +35,6 @@ Pass optional **`metadata`** on the verify request for Till/Paybill validation.
 ## Response `data`
 
 - A **real name** (e.g. `"JOHN DOE"`) — use that exact string as `accountName` on the order.
-- **`"OK"`** — account treated as valid but name lookup is unavailable for that corridor (common for some KES/GHS/UGX/MWK mobile flows). Provide your own `accountName` on the order.
+- **`"OK"`** — account treated as valid but name lookup is unavailable for that corridor (common for some KES/GHS/UGX mobile flows). Provide your own `accountName` on the order.
 
 The same checks run again when you create an order; calling verify first improves checkout UX.

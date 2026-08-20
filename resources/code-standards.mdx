@@ -14,8 +14,6 @@ Paycrest uses **ISO 4217** standard currency codes, which are the internationall
 - **KES** - Kenyan Shilling  
 - **UGX** - Ugandan Shilling
 - **TZS** - Tanzanian Shilling
-- **MWK** - Malawi Kwacha
-- **BRL** - Brazilian Real
 
 <Note>
   All currency codes used in Paycrest API calls must follow the ISO 4217 standard. These codes are case-sensitive and should be provided in uppercase.
@@ -73,7 +71,7 @@ For KES **Till** and **Paybill** offramps, keep **`SAFAKEPC`** (or the same mobi
 
 ## API Usage
 
-When making API calls, always use the correct code format. For **new integrations**, use **[POST /v2/sender/orders](/api-reference/sender/initiate-payment-order-v2)** (offramp: stablecoin → fiat). Fiat currency is **`destination.currency`**; the bank or mobile-money institution is **`destination.recipient.institution`**. Crypto asset and chain are on **`source`** (`source.currency`, `source.network`).
+When making API calls, always use the correct code format. For **new integrations**, use **[POST /v2/sender/orders](/api-reference/sender/initiate-payment-order-v2)** (off-ramp: stablecoin → fiat). Fiat currency is **`destination.currency`**; the bank or mobile-money institution is **`destination.recipient.institution`**. Crypto asset and chain are on **`source`** (`source.currency`, `source.network`).
 
 ```javascript
 // v2 offramp — correct institution and currency codes (see OpenAPI for full required fields)

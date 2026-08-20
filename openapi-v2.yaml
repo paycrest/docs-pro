@@ -694,7 +694,7 @@ components:
           description: |
             Bank account number, mobile wallet MSISDN, Till/Paybill identifier, or other account identifier.
 
-            For **mobile_money** institutions, the API normalizes phone numbers before verification: strips `+`, removes a leading domestic `0`, and adds the country dial code when missing (KES 254, UGX 256, TZS 255, GHS 233, MWK 265). Examples for KES M-Pesa — `0712345678`, `+254712345678`, and `254712345678` all normalize to `254712345678`.
+            For **mobile_money** institutions, the API normalizes phone numbers before verification: strips `+`, removes a leading domestic `0`, and adds the country dial code when missing (KES 254, UGX 256, TZS 255, GHS 233). Examples for KES M-Pesa — `0712345678`, `+254712345678`, and `254712345678` all normalize to `254712345678`.
 
             KES Till/Paybill identifiers are not normalized when `metadata` indicates Till/Paybill, or when the value looks like Paybill (`business|reference`) or Till (fewer than 9 digits).
         metadata:
@@ -824,7 +824,7 @@ components:
           enum: [fiat]
         currency:
           type: string
-          description: Fiat currency code (e.g. NGN, KES, BRL)
+          description: Fiat currency code (e.g. NGN, KES, TZS)
         country:
           type: string
           description: ISO 3166-1 alpha-2 country code (optional)
@@ -1120,7 +1120,7 @@ components:
       properties:
         event:
           type: string
-          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired]
+          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired, payment_order.compliance_hold]
         webhookVersion:
           type: string
           enum: ["2"]
@@ -1191,7 +1191,7 @@ components:
           description: Unique ID of this delivery record.
         event:
           type: string
-          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired]
+          enum: [payment_order.deposited, payment_order.pending, payment_order.validated, payment_order.settling, payment_order.settled, payment_order.refunding, payment_order.refunded, payment_order.expired, payment_order.compliance_hold]
           description: The webhook event that was delivered.
         eventId:
           type: string

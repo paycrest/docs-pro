@@ -1,21 +1,25 @@
 ---
 title: "Sender API Integration"
-description: "Ship offramp and onramp with one create call; add verify-account and public rates when you want a richer checkout UX."
+description: "Ship off-ramp and on-ramp with one create call; add verify-account and public rates when you want a richer checkout UX."
 ---
 
 The Sender API lets your app create payment orders in two directions:
 
-- **Offramp** — user sends stablecoins, recipient receives local fiat (bank or mobile wallet)
-- **Onramp** — user deposits fiat into a virtual account, recipient receives stablecoins
+- **Off-ramp** — user sends stablecoins, recipient receives local fiat (bank or mobile wallet)
+- **On-ramp** — user deposits fiat into a virtual account, recipient receives stablecoins
 
 Both flows use the same endpoint: **`POST /v2/sender/orders`**. Direction comes from the `source` and `destination` types you pass.
 
 **Fastest path to production:** one authenticated create call. The API **validates** bank or mobile account details and **resolves** an acceptable rate inside that request—you are **not** required to call verify-account or the public rates URL first. The sections after [Create a payment order](#create-a-payment-order) cover what happens next (response shape, webhooks). [Optional: prefetch quotes and account names](#optional-prefetch-quotes-and-account-names) explains how to polish checkout when you want prefetching—not because it is required.
 
+<Note>
+Prefer natural language? Create and track orders from **Claude Code**, **Cursor**, or **VS Code** with the [Sender Agent Guide](/implementation-guides/sender-mcp) (MCP).
+</Note>
+
 ## Flow Overview
 
 <Tabs>
-  <Tab title="Offramp (Stablecoin → Fiat)">
+  <Tab title="Off-ramp (Stablecoin → Fiat)">
 ```mermaid
 sequenceDiagram
     participant App as Sender App
@@ -38,7 +42,7 @@ sequenceDiagram
     API-->>App: Webhook: payment_order.settled
 ```
   </Tab>
-  <Tab title="Onramp (Fiat → Stablecoin)">
+  <Tab title="On-ramp (Fiat → Stablecoin)">
 ```mermaid
 sequenceDiagram
     participant App as Sender App
@@ -78,7 +82,7 @@ const headers = {
 
 ### 2. Configure Tokens (Optional)
 
-In the dashboard settings, you can set defaults per token/network. **Offramp:** default `refundAddress` (crypto) and `feeAddress`; you can also pass `source.refundAddress` on the request. **Onramp:** you supply **`source.refundAccount`** (fiat bank or mobile details for refunds) in the order payload—configure related defaults in the dashboard where available.
+In the dashboard settings, you can set defaults per token/network. **Off-ramp:** default `refundAddress` (crypto) and `feeAddress`; you can also pass `source.refundAddress` on the request. **On-ramp:** you supply **`source.refundAccount`** (fiat bank or mobile details for refunds) in the order payload—configure related defaults in the dashboard where available.
 
 ---
 
@@ -86,14 +90,14 @@ In the dashboard settings, you can set defaults per token/network. **Offramp:** 
 
 **`POST /v2/sender/orders`**
 
-Pass a `source` and a `destination` object. The `type` field on each determines the direction. **Offramp** and **onramp** use the same endpoint; examples below include **`curl`** for both directions. The extra **JavaScript** and **Python** snippets are **offramp**-shaped—mirror the **onramp** `curl` payload (`source.type: "fiat"`, `destination.type: "crypto"`, `refundAccount`, etc.) in your language.
+Pass a `source` and a `destination` object. The `type` field on each determines the direction. **Off-ramp** and **on-ramp** use the same endpoint; examples below include **`curl`** for both directions. The extra **JavaScript** and **Python** snippets are **off-ramp**-shaped—mirror the **on-ramp** `curl` payload (`source.type: "fiat"`, `destination.type: "crypto"`, `refundAccount`, etc.) in your language.
 
 <Note>
-  **Starknet / Tron:** set `network` to **`starknet`** or **`tron`**. Crypto addresses (`source.refundAddress` on offramp, `destination.recipient.address` on onramp) must match the network: Starknet felt hex (`0x` + 63–64 hex digits) or Tron Base58 (`T…`). Do not pass EVM checksum addresses on these networks. See [Supported Stablecoins](/resources/supported-stablecoins).
+  **Starknet / Tron:** set `network` to **`starknet`** or **`tron`**. Crypto addresses (`source.refundAddress` on off-ramp, `destination.recipient.address` on on-ramp) must match the network: Starknet felt hex (`0x` + 63–64 hex digits) or Tron Base58 (`T…`). Do not pass EVM checksum addresses on these networks. See [Supported Stablecoins](/resources/supported-stablecoins).
 </Note>
 
 <Tabs>
-  <Tab title="Offramp (stablecoin → fiat)">
+  <Tab title="Off-ramp (stablecoin → fiat)">
 
 User sends stablecoins; recipient receives fiat. Set `source.type = "crypto"` and `destination.type = "fiat"`.
 
@@ -123,9 +127,9 @@ curl -X POST "https://api.paycrest.io/v2/sender/orders" \
   }'
 ```
   </Tab>
-  <Tab title="Offramp (Starknet)">
+  <Tab title="Off-ramp (Starknet)">
 
-Same shape as EVM offramp; use `network: "starknet"` and a Starknet refund address.
+Same shape as EVM off-ramp; use `network: "starknet"` and a Starknet refund address.
 
 ```bash
 curl -X POST "https://api.paycrest.io/v2/sender/orders" \
@@ -155,9 +159,9 @@ curl -X POST "https://api.paycrest.io/v2/sender/orders" \
 
 After create, transfer Starknet USDT/USDC to `providerAccount.receiveAddress` (also a Starknet address) before `validUntil`. Confirm settlement via webhooks or [GET order by ID](/api-reference/sender/get-payment-order-by-id-v2).
   </Tab>
-  <Tab title="Offramp (Tron)">
+  <Tab title="Off-ramp (Tron)">
 
-Same shape as EVM offramp; use `network: "tron"` and a Tron Base58 refund address (starts with `T`).
+Same shape as EVM off-ramp; use `network: "tron"` and a Tron Base58 refund address (starts with `T`).
 
 ```bash
 curl -X POST "https://api.paycrest.io/v2/sender/orders" \
@@ -187,7 +191,7 @@ curl -X POST "https://api.paycrest.io/v2/sender/orders" \
 
 After create, transfer Tron USDT to `providerAccount.receiveAddress` (also a Tron address) before `validUntil`. Confirm settlement via webhooks or [GET order by ID](/api-reference/sender/get-payment-order-by-id-v2).
   </Tab>
-  <Tab title="Onramp (fiat → stablecoin)">
+  <Tab title="On-ramp (fiat → stablecoin)">
 
 User deposits fiat; recipient receives stablecoins. Set `source.type = "fiat"` and `destination.type = "crypto"`.
 
@@ -220,7 +224,7 @@ curl -X POST "https://api.paycrest.io/v2/sender/orders" \
 ```
 
   </Tab>
-  <Tab title="JavaScript (offramp)">
+  <Tab title="JavaScript (off-ramp)">
 ```javascript
 const res = await fetch("https://api.paycrest.io/v2/sender/orders", {
   method: "POST",
@@ -249,7 +253,7 @@ const res = await fetch("https://api.paycrest.io/v2/sender/orders", {
 const order = await res.json();
 ```
   </Tab>
-  <Tab title="Python (offramp)">
+  <Tab title="Python (off-ramp)">
 ```python
 import requests
 
@@ -279,7 +283,7 @@ order = requests.post(
 ).json()
 ```
   </Tab>
-  <Tab title="JavaScript (onramp)">
+  <Tab title="JavaScript (on-ramp)">
 ```javascript
 const res = await fetch("https://api.paycrest.io/v2/sender/orders", {
   method: "POST",
@@ -310,7 +314,7 @@ const res = await fetch("https://api.paycrest.io/v2/sender/orders", {
 const order = await res.json();
 ```
   </Tab>
-  <Tab title="Python (onramp)">
+  <Tab title="Python (on-ramp)">
 ```python
 import requests
 
@@ -355,8 +359,8 @@ order = requests.post(
 | `senderFeePercent` | string | — | Optional fee percentage you collect, settled atomically onchain. Mutually exclusive with `senderFee`. |
 | `senderFeeAddress` | string | Conditionally | Fee recipient address. **Required when the effective sender fee is greater than zero** and no fee address is configured on the sender profile. Not required when fee is zero. |
 | `reference` | string | — | Your internal order ID. |
-| `source` | object | ✅ | `{ type: "crypto", ... }` for offramp; `{ type: "fiat", ... }` for onramp. |
-| `destination` | object | ✅ | `{ type: "fiat", ... }` for offramp; `{ type: "crypto", ... }` for onramp. |
+| `source` | object | ✅ | `{ type: "crypto", ... }` for off-ramp; `{ type: "fiat", ... }` for onramp. |
+| `destination` | object | ✅ | `{ type: "fiat", ... }` for off-ramp; `{ type: "crypto", ... }` for onramp. |
 
 ### Pin a provider queue
 
@@ -405,9 +409,9 @@ Validation failures return **400** with `message: "Failed to validate payload"` 
   **Exhausting the queue does not refund immediately.** After the last entry, the order falls through to **fallback assignment**, and only then to refund after the refund window. `providerIds` is accepted on create but **not echoed back**—order responses and webhooks return the singular assigned **`providerId`**.
 </Note>
 
-### Pinning on onramp
+### Pinning on on-ramp
 
-Onramp picks its provider while the order is being created rather than walking a queue, so **`destination.providerIds` accepts at most one entry**—it is a pin in queue form, there so you never need the singular field:
+On-ramp picks its provider while the order is being created rather than walking a queue, so **`destination.providerIds` accepts at most one entry**—it is a pin in queue form, there so you never need the singular field:
 
 ```json
 "destination": {
@@ -425,16 +429,16 @@ Onramp picks its provider while the order is being created rather than walking a
 | `provider AbCdEfGh cannot serve this order` | The provider is restricted to senders that don't include you |
 
 <Warning>
-  Pinning an onramp order to a provider restricted to other senders returns **400**. Offramp has always behaved this way; onramp now matches, and it applies to **`providerId`** as well as `providerIds`. If you pin providers on onramp, confirm you're authorized for them.
+  Pinning an on-ramp order to a provider restricted to other senders returns **400**. Off-ramp has always behaved this way; on-ramp now matches, and it applies to **`providerId`** as well as `providerIds`. If you pin providers on on-ramp, confirm you're authorized for them.
 </Warning>
 
-On the **v1** API the offramp field lives at **`recipient.providerIds`** with identical rules; its errors use `"field": "Recipient"`.
+On the **v1** API the off-ramp field lives at **`recipient.providerIds`** with identical rules; its errors use `"field": "Recipient"`.
 
 ---
 
 ## KES mobile money (M-Pesa, Till, Paybill)
 
-Kenya offramp to mobile rails uses institution **`SAFAKEPC`** (Safaricom M-Pesa) or another KES **mobile_money** code from **[GET /institutions/KES](/api-reference/general/list-supported-institutions)**. **Till** and **Paybill** are not separate institution codes—you pass them in **`destination.recipient.metadata`**.
+Kenya off-ramp to mobile rails uses institution **`SAFAKEPC`** (Safaricom M-Pesa) or another KES **mobile_money** code from **[GET /institutions/KES](/api-reference/general/list-supported-institutions)**. **Till** and **Paybill** are not separate institution codes—you pass them in **`destination.recipient.metadata`**.
 
 | Channel | `metadata.channel` | `accountIdentifier` | Notes |
 |---------|-------------------|---------------------|--------|
@@ -477,9 +481,9 @@ Kenya offramp to mobile rails uses institution **`SAFAKEPC`** (Safaricom M-Pesa)
 }
 ```
 
-**KYC on offramp:** optional **`destination.kyc`** applies to the **recipient** only. Do not send sender or provider KYB on offramp create.
+**KYC on off-ramp:** optional **`destination.kyc`** applies to the **recipient** only. Do not send sender or provider KYB on off-ramp create.
 
-**GET / webhooks (v2):** for offramp orders, **`destination.recipient.metadata`** returns the metadata you supplied on create (same shape as above). **`destination.kyc`** returns destination KYC when stored. There is no v1-style flat metadata fallback on v2 GET.
+**GET / webhooks (v2):** for off-ramp orders, **`destination.recipient.metadata`** returns the metadata you supplied on create (same shape as above). **`destination.kyc`** returns destination KYC when stored. There is no v1-style flat metadata fallback on v2 GET.
 
 **Verify-account:** Till and Paybill identifiers are not normalized as mobile phone numbers. Use the exact till or paybill values you will send on the order.
 
@@ -487,9 +491,9 @@ Kenya offramp to mobile rails uses institution **`SAFAKEPC`** (Safaricom M-Pesa)
 
 ## Handle the create response
 
-The create response includes a `providerAccount` whose shape depends on direction: **offramp** gives a **crypto receive address**; **onramp** gives **virtual account / fiat transfer** instructions.
+The create response includes a `providerAccount` whose shape depends on direction: **off-ramp** gives a **crypto receive address**; **on-ramp** gives **virtual account / fiat transfer** instructions.
 
-### Offramp — send tokens to `receiveAddress`
+### Off-ramp — send tokens to `receiveAddress`
 
 ```json
 {
@@ -507,7 +511,7 @@ The create response includes a `providerAccount` whose shape depends on directio
 
 Send **exactly** `amount + senderFee + transactionFee` (all returned in the response) in the specified token to `providerAccount.receiveAddress` before `validUntil`.
 
-### Onramp — present virtual account to user
+### On-ramp — present virtual account to user
 
 ```json
 {
@@ -536,7 +540,7 @@ Listen for webhooks or poll `GET /v2/sender/orders/:id`.
 
 ### Webhook Events
 
-Configure your webhook URL in the [Sender Dashboard](https://app.paycrest.io). Webhooks use the `payment_order.<status>` format and include a `direction` field (`"offramp"` or `"onramp"`):
+Configure your webhook URL in the [Sender Dashboard](https://app.paycrest.io). Most webhooks are named for the status the order entered (`payment_order.<status>`) and all include a `direction` field (`"offramp"` or `"onramp"`). Branch on `event` rather than `data.status` — a few events, noted below, are not status changes:
 
 ```json
 {
@@ -555,18 +559,23 @@ Configure your webhook URL in the [Sender Dashboard](https://app.paycrest.io). W
 
 | Event | When it fires |
 |-------|--------------|
-| `payment_order.deposited` | Stablecoin deposit detected (offramp) |
-| `payment_order.pending` | Assigned to provider / fiat deposit confirmed (onramp) |
+| `payment_order.deposited` | Stablecoin deposit detected (off-ramp) |
+| `payment_order.pending` | Assigned to provider / fiat deposit confirmed (on-ramp) |
 | `payment_order.validated` | Fiat payout confirmed by provider |
 | `payment_order.settling` | Onchain release in progress |
 | `payment_order.settled` | Order complete |
 | `payment_order.refunding` | Refund in progress |
 | `payment_order.refunded` | Funds returned to sender |
 | `payment_order.expired` | No deposit received before `validUntil` |
+| `payment_order.compliance_hold` | On-ramp fiat received, settlement held pending compliance review. **Not a status change** — `data.status` stays `pending` |
 
 <Note>
-  You can notify the user of a successful offramp at `payment_order.validated` — that's when the provider has confirmed fiat delivery. For onramp, use `payment_order.settled` — that's when stablecoins are confirmed onchain.
+  You can notify the user of a successful off-ramp at `payment_order.validated` — that's when the provider has confirmed fiat delivery. For on-ramp, use `payment_order.settled` — that's when stablecoins are confirmed onchain.
 </Note>
+
+<Warning>
+  **Do not prompt a retry on `payment_order.compliance_hold`.** The order will not settle and stays `pending` until its virtual account expires (you then also receive `payment_order.expired`). A second deposit into the same virtual account will be held too. Stop expecting settlement and contact support about the order — see [Compliance holds](/concepts/transaction-lifecycle#compliance-holds).
+</Warning>
 
 ### Verify Webhook Signatures
 
@@ -731,8 +740,8 @@ Use this when you want **clearer UX** before the user confirms—not because the
 
 **`POST /v2/verify-account`** runs the **same checks** again on create, but calling it first cuts down “invalid account” surprises and returns a canonical **`accountName`** for your form.
 
-- **Offramp** — verify the **fiat recipient** you will send in `destination.recipient` (same `institution` and `accountIdentifier` as the order).
-- **Onramp** — verify **`source.refundAccount`** (where fiat refunds go), not the crypto wallet in `destination.recipient`.
+- **Off-ramp** — verify the **fiat recipient** you will send in `destination.recipient` (same `institution` and `accountIdentifier` as the order).
+- **On-ramp** — verify **`source.refundAccount`** (where fiat refunds go), not the crypto wallet in `destination.recipient`.
 
 For **KES Till or Paybill**, pass the same **`accountIdentifier`** and **`metadata.channel`** you will use on create. Phone-style normalization does not apply to till or paybill numbers.
 
@@ -769,7 +778,7 @@ A `200 OK` response returns the resolved name in `data`. If `data` is a real nam
 **`GET /v2/rates/{network}/{from}/{amount}/{to}`** is **public** (no API key). **`from` and `to`** are the fiat code and token symbol in either order. Use it when you want to **show** a rate before submit, or when you will pass **`rate`** on create (it must stay within market tolerance). If you omit **`rate`** on create, the API still picks an acceptable rate.
 
 <Note>
-  The JSON `data` object includes **`buy`** and **`sell`** (unless you pass `?side=buy` or `?side=sell`). Use **`data.sell.rate`** for **offramp** and **`data.buy.rate`** for **onramp** when displaying a quote. **`provider_id`** is optional and must be exactly **8 letters** (`A–Z` or `a–z`) if you pin a provider.
+  The JSON `data` object includes **`buy`** and **`sell`** (unless you pass `?side=buy` or `?side=sell`). Use **`data.sell.rate`** for **off-ramp** and **`data.buy.rate`** for **on-ramp** when displaying a quote. **`provider_id`** is optional and must be exactly **8 letters** (`A–Z` or `a–z`) if you pin a provider.
 
   Each side also carries **`providerIds`**—up to **3** ranked provider ids, best first. Pass them to **`destination.providerIds`** on create to route the order to the providers you quoted (see [Pin a provider queue](#pin-a-provider-queue)). Add **`?limit=1|2|3`** to request fewer.
 </Note>
@@ -881,7 +890,7 @@ Fixed fee alternative:
 }
 ```
 
-**Offramp:** the total stablecoin amount the user sends to `providerAccount.receiveAddress` is `amount + senderFee + transactionFee`, all returned in the create response. **Onramp:** the user pays **fiat** using `providerAccount.amountToTransfer` (and currency); fee line items in the response still describe what applies on settlement—follow the fields returned for your order.
+**Off-ramp:** the total stablecoin amount the user sends to `providerAccount.receiveAddress` is `amount + senderFee + transactionFee`, all returned in the create response. **On-ramp:** the user pays **fiat** using `providerAccount.amountToTransfer` (and currency); fee line items in the response still describe what applies on settlement—follow the fields returned for your order.
 
 ---
 
@@ -895,10 +904,10 @@ Paycrest runs on mainnet only. Test with the minimum order size: **$0.50 on any 
 
 ## v1 Legacy API
 
-The v1 API is fully supported for existing integrations. It supports **offramp only** and uses a flat request schema.
+The v1 API is fully supported for existing integrations. It supports **off-ramp only** and uses a flat request schema.
 
 <AccordionGroup>
-  <Accordion title="v1 Offramp — Create Order">
+  <Accordion title="v1 Off-ramp — Create Order">
 
 `POST /v1/sender/orders`
 
@@ -927,10 +936,10 @@ The response includes `receiveAddress` (string) and `validUntil`. Send tokens to
 
 | Feature | v1 | v2 |
 |---------|----|----|
-| Offramp | ✅ | ✅ |
-| Onramp | ❌ | ✅ |
+| Off-ramp | ✅ | ✅ |
+| On-ramp | ❌ | ✅ |
 | Schema | Flat: `token`, `network`, `recipient` | Polymorphic: `source`, `destination` with `type` |
-| `refundAddress` | `returnAddress` (top-level) | `source.refundAddress` (offramp); onramp uses `source.refundAccount` |
+| `refundAddress` | `returnAddress` (top-level) | `source.refundAddress` (off-ramp); on-ramp uses `source.refundAccount` |
 | Amount direction | Always crypto | `amountIn: "fiat"` or `"crypto"` |
 | Sender fee | Fixed via dashboard (fee + refund addresses required on profile) | Optional; `senderFee` / `senderFeePercent` on request. If fee > 0, `senderFeeAddress` (or profile fee address) is required |
 | Numeric types | Number | String |
@@ -947,3 +956,4 @@ The response includes `receiveAddress` (string) and `validUntil`. Send tokens to
 - [Supported Stablecoins](/resources/supported-stablecoins) — tokens, networks, contract addresses
 - [Supported Currencies](/resources/supported-currencies) — active fiat corridors
 - [API Reference — Sender](/api-reference/sender/initiate-payment-order-v2) — full endpoint spec
+- [Sender Agent Guide](/implementation-guides/sender-mcp) — run Paycrest from Claude Code, Cursor, or VS Code via MCP

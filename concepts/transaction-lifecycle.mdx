@@ -3,9 +3,9 @@ title: "Transaction Lifecycle"
 description: "Understanding how payment messages flow through the Paycrest protocol from order creation to settlement"
 ---
 
-Paycrest supports two payment directions: **offramp** (stablecoin → fiat) and **onramp** (fiat → stablecoin). Both flows follow a similar lifecycle through the protocol.
+Paycrest supports two payment directions: **off-ramp** (stablecoin → fiat) and **on-ramp** (fiat → stablecoin). Both flows follow a similar lifecycle through the protocol.
 
-## Offramp Lifecycle (Stablecoin → Fiat)
+## Off-ramp Lifecycle (Stablecoin → Fiat)
 
 ```mermaid
 stateDiagram-v2
@@ -55,10 +55,10 @@ stateDiagram-v2
 </Note>
 
 <Warning>
-  **expired vs refunded**: These are two distinct failure modes. `expired` means the receive address (offramp) or virtual account (onramp) was never funded — no deposit was received. `refunded` means a deposit was received but the order could not be fulfilled (e.g. no available provider, PSP unavailability, rate constraints) — and the deposited funds have been returned to the sender.
+  **expired vs refunded**: These are two distinct failure modes. `expired` means the receive address (off-ramp) or virtual account (on-ramp) was never funded — no deposit was received. `refunded` means a deposit was received but the order could not be fulfilled (e.g. no available provider, PSP unavailability, rate constraints) — and the deposited funds have been returned to the sender.
 </Warning>
 
-## Onramp Lifecycle (Fiat → Stablecoin)
+## On-ramp Lifecycle (Fiat → Stablecoin)
 
 ```mermaid
 stateDiagram-v2
@@ -79,7 +79,7 @@ stateDiagram-v2
 
 <Steps>
   <Step title="initiated">
-    Sender creates an onramp order via the API. The protocol returns provider account details (virtual bank account or mobile wallet) for the user to deposit fiat into.
+    Sender creates an on-ramp order via the API. The protocol returns provider account details (virtual bank account or mobile wallet) for the user to deposit fiat into.
   </Step>
   <Step title="pending">
     The aggregator has matched the order to a provider. Waiting for the user's fiat deposit to be confirmed by the provider.
@@ -109,7 +109,7 @@ The complete set of order status values:
 | Status | Description |
 |--------|-------------|
 | `initiated` | Order created, awaiting deposit |
-| `deposited` | Deposit confirmed (offramp only) |
+| `deposited` | Deposit confirmed (off-ramp only) |
 | `pending` | Assigned to provider, awaiting fulfillment |
 | `fulfilling` | Provider is disbursing fiat or stablecoins |
 | `fulfilled` | Fulfillment completed by provider (internal) |
@@ -123,7 +123,7 @@ The complete set of order status values:
 
 ## Webhook Events
 
-Paycrest sends webhooks to your configured endpoint as an order progresses. The event name format is `payment_order.<status>`. Failed deliveries are retried automatically with exponential backoff, and every delivery is queryable and replayable via the [sender webhook endpoints](/implementation-guides/sender-api-integration#webhook-delivery-logs--retry).
+Paycrest sends webhooks to your configured endpoint as an order progresses. Most events are named after the status the order just entered (`payment_order.<status>`); a small number report an event that is not a status change, and are marked below. Failed deliveries are retried automatically with exponential backoff, and every delivery is queryable and replayable via the [sender webhook endpoints](/implementation-guides/sender-api-integration#webhook-delivery-logs--retry).
 
 | Event | Triggered When |
 |-------|---------------|
@@ -135,9 +135,25 @@ Paycrest sends webhooks to your configured endpoint as an order progresses. The 
 | `payment_order.refunding` | Refund initiated |
 | `payment_order.refunded` | Refund complete |
 | `payment_order.expired` | Order expired after 5 minutes |
+| `payment_order.compliance_hold` | On-ramp fiat received, settlement held pending compliance review (**not a status change** — see below) |
 
 <Note>
   Not all statuses emit webhooks. Intermediate states like `initiated`, `fulfilling`, and `cancelled` do not trigger webhook events.
+</Note>
+
+### Compliance holds
+
+`payment_order.compliance_hold` fires when an on-ramp order's fiat has been received but Paycrest cannot settle it while a compliance review is open. It is sent at most once per order.
+
+Two things make this event different from the rest:
+
+- **It is not a status change.** The order deliberately remains `pending`, so `data.status` reads `pending`, not `compliance_hold`. If you route webhooks by `data.status`, this event will look like a duplicate `pending` — branch on `event` instead.
+- **It is terminal in practice.** The order will not settle. It stays `pending` until its virtual account expires, at which point you also receive `payment_order.expired`. Do not prompt the customer to retry the payment — a second deposit into the same virtual account will be held as well.
+
+Treat it as a signal to stop expecting settlement and to contact Paycrest support about the affected order. What you tell your own customer is your decision.
+
+<Note>
+  Not every held order produces this event. Where a hold concerns your account rather than the counterparty, no webhook is sent and you will observe only `payment_order.expired`.
 </Note>
 
 ### Webhook Payload (v1)
@@ -179,7 +195,7 @@ Paycrest sends webhooks to your configured endpoint as an order progresses. The 
 
 ### Webhook Payload (v2)
 
-The v2 payload adds a `direction` field and uses polymorphic `source`/`destination` objects that vary based on whether the order is an offramp or onramp:
+The v2 payload adds a `direction` field and uses polymorphic `source`/`destination` objects that vary based on whether the order is an off-ramp or on-ramp:
 
 ```json
 {
@@ -298,7 +314,7 @@ func verifyWebhook(payload []byte, signature, secret string) bool {
 
 There are two distinct failure paths:
 
-**`expired`** — No deposit was ever received. The receive address (offramp) or virtual account (onramp) expired without being funded. The order closes with no funds moved. Common causes:
+**`expired`** — No deposit was ever received. The receive address (off-ramp) or virtual account (on-ramp) expired without being funded. The order closes with no funds moved. Common causes:
 - User abandoned the payment flow
 - Deposit was sent to the wrong address or after the address expired
 

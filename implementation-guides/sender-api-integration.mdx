@@ -468,7 +468,7 @@ Listen for webhooks or poll `GET /v2/sender/orders/:id`.
 
 ### Webhook Events
 
-Configure your webhook URL in the [Sender Dashboard](https://app.paycrest.io). Webhooks use the `payment_order.<status>` format and include a `direction` field (`"offramp"` or `"onramp"`):
+Configure your webhook URL in the [Sender Dashboard](https://app.paycrest.io). Most webhooks are named for the status the order entered (`payment_order.<status>`) and all include a `direction` field (`"offramp"` or `"onramp"`). Branch on `event` rather than `data.status` — a few events, noted below, are not status changes:
 
 ```json
 {
@@ -495,10 +495,15 @@ Configure your webhook URL in the [Sender Dashboard](https://app.paycrest.io). W
 | `payment_order.refunding` | Refund in progress |
 | `payment_order.refunded` | Funds returned to sender |
 | `payment_order.expired` | No deposit received before `validUntil` |
+| `payment_order.compliance_hold` | Onramp fiat received, settlement held pending compliance review. **Not a status change** — `data.status` stays `pending` |
 
 <Note>
   You can notify the user of a successful offramp at `payment_order.validated` — that's when the provider has confirmed fiat delivery. For onramp, use `payment_order.settled` — that's when stablecoins are confirmed onchain.
 </Note>
+
+<Warning>
+  **Do not prompt a retry on `payment_order.compliance_hold`.** The order will not settle and stays `pending` until its virtual account expires (you then also receive `payment_order.expired`). A second deposit into the same virtual account will be held too. Stop expecting settlement and contact support about the order — see [Compliance holds](/concepts/transaction-lifecycle#compliance-holds).
+</Warning>
 
 ### Verify Webhook Signatures
 

@@ -123,7 +123,7 @@ The complete set of order status values:
 
 ## Webhook Events
 
-Paycrest sends webhooks to your configured endpoint as an order progresses. The event name format is `payment_order.<status>`. Failed deliveries are retried automatically with exponential backoff, and every delivery is queryable and replayable via the [sender webhook endpoints](/implementation-guides/sender-api-integration#webhook-delivery-logs--retry).
+Paycrest sends webhooks to your configured endpoint as an order progresses. Most events are named after the status the order just entered (`payment_order.<status>`); a small number report an event that is not a status change, and are marked below. Failed deliveries are retried automatically with exponential backoff, and every delivery is queryable and replayable via the [sender webhook endpoints](/implementation-guides/sender-api-integration#webhook-delivery-logs--retry).
 
 | Event | Triggered When |
 |-------|---------------|
@@ -135,9 +135,25 @@ Paycrest sends webhooks to your configured endpoint as an order progresses. The 
 | `payment_order.refunding` | Refund initiated |
 | `payment_order.refunded` | Refund complete |
 | `payment_order.expired` | Order expired after 5 minutes |
+| `payment_order.compliance_hold` | Onramp fiat received, settlement held pending compliance review (**not a status change** — see below) |
 
 <Note>
   Not all statuses emit webhooks. Intermediate states like `initiated`, `fulfilling`, and `cancelled` do not trigger webhook events.
+</Note>
+
+### Compliance holds
+
+`payment_order.compliance_hold` fires when an onramp order's fiat has been received but Paycrest cannot settle it while a compliance review is open. It is sent at most once per order.
+
+Two things make this event different from the rest:
+
+- **It is not a status change.** The order deliberately remains `pending`, so `data.status` reads `pending`, not `compliance_hold`. If you route webhooks by `data.status`, this event will look like a duplicate `pending` — branch on `event` instead.
+- **It is terminal in practice.** The order will not settle. It stays `pending` until its virtual account expires, at which point you also receive `payment_order.expired`. Do not prompt the customer to retry the payment — a second deposit into the same virtual account will be held as well.
+
+Treat it as a signal to stop expecting settlement and to contact Paycrest support about the affected order. What you tell your own customer is your decision.
+
+<Note>
+  Not every held order produces this event. Where a hold concerns your account rather than the counterparty, no webhook is sent and you will observe only `payment_order.expired`.
 </Note>
 
 ### Webhook Payload (v1)

@@ -401,6 +401,7 @@ Set up webhooks to receive real-time updates:
 - **`payment_order.refunding`** - Refund transaction initiated
 - **`payment_order.refunded`** - Deposit refunded to sender (fulfillment failed)
 - **`payment_order.expired`** - Order expired with no deposit received
+- **`payment_order.compliance_hold`** - Onramp fiat received, but settlement is held pending compliance review. Unlike the events above, this one is not named after a status: the order stays `pending`, so `data.status` reports `pending`
 
 ### Webhook Payload
 

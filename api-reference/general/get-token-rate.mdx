@@ -18,7 +18,7 @@ Get buy and/or sell quotes on a **specific network**—either a **token + fiat**
 | `amount` | For **token + fiat**: crypto (token) notional. For **fiat + fiat**: amount in **`from`** fiat. |
 | `to` | Fiat currency code **or** token symbol on `network` (paired with `from`) |
 
-**Token + fiat:** exactly **one** fiat and **one** token (`.../USDT/100/NGN` ≡ `.../NGN/100/USDT`). **`from`/`to` cannot both be tokens.** **Path order does not imply trade direction**—use `side` or read **`data.buy`** / **`data.sell`** for onramp vs offramp display.
+**Token + fiat:** exactly **one** fiat and **one** token (`.../USDT/100/NGN` ≡ `.../NGN/100/USDT`). **`from`/`to` cannot both be tokens.** **Path order does not imply trade direction**—use `side` or read **`data.buy`** / **`data.sell`** for on-ramp vs off-ramp display.
 
 **Fiat + fiat:** both are fiat codes; the server quotes through **USDC** on the same network. **`sell.rate`** = **`to` per 1 `from`**. **`buy.rate`** = **`from` per 1 `to`** (inverse corridor, **not** the reciprocal of `sell`—each side uses the appropriate leg bid/ask).
 
@@ -92,6 +92,6 @@ When `side=buy` or `side=sell`, only that key is present under `data`.
 
 ## Rate resolution
 
-Behavior matches the priority-queue–based resolution used when creating orders: the quote reflects provider selection and validation for the requested **side** (`buy` vs `sell`). **Path segment order (`from` / `to`) does not select direction**—use `?side=`, or read **`data.sell`** for **offramp** (crypto → fiat) display and **`data.buy`** for **onramp** (fiat → crypto) before `POST /v2/sender/orders`.
+Behavior matches the priority-queue–based resolution used when creating orders: the quote reflects provider selection and validation for the requested **side** (`buy` vs `sell`). **Path segment order (`from` / `to`) does not select direction**—use `?side=`, or read **`data.sell`** for **off-ramp** (crypto → fiat) display and **`data.buy`** for **on-ramp** (fiat → crypto) before `POST /v2/sender/orders`.
 
 See also [Get Token Rate (v1)](/api-reference/general/get-token-rate-v1) for the legacy scalar response.

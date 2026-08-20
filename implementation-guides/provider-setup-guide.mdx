@@ -109,12 +109,12 @@ PAYAZA_TRANSACTION_PIN=
 - **How to generate it**: Create a new dedicated EVM wallet (do not reuse a personal wallet) and use that wallet's private key.
 - **Security**: Treat this as a production secret. Never commit it to git, store it in a secure secret manager or protected `.env`, and rotate it immediately if exposed.
 
-#### Starknet onramp envs explained
+#### Starknet on-ramp envs explained
 
 - **What they are**:
   - `STARKNET_SNIP9_USER_ADDRESS` — Starknet account address used to sign SNIP-9 OutsideExecution payin messages
   - `STARKNET_SNIP9_PRIVATE_KEY` — private key for that Starknet account
-- **When you need them**: Required when fulfilling **Starknet onramp (payin)** orders. If you only handle EVM/Tron or offramp-only flows, you can leave them unset.
+- **When you need them**: Required when fulfilling **Starknet on-ramp (payin)** orders. If you only handle EVM/Tron or offramp-only flows, you can leave them unset.
 - **Address format**: Use a Starknet felt hex address (`0x` + 63–64 hex characters), not an EVM checksum address.
 - **Security**: Treat both as production secrets. Never commit them to git, store them in a secure secret manager or protected `.env`, and rotate them immediately if exposed.
 

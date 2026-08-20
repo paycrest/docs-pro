@@ -3,7 +3,7 @@ title: "Quickstart"
 description: "Create your first Paycrest payment order in minutes."
 ---
 
-This guide walks through creating a payment order using the Sender API, the recommended path for all new integrations. You'll have a working offramp in under 10 minutes. You do **not** need to call the public rates API first—`POST /v2/sender/orders` resolves an acceptable rate unless you pass a locked **`rate`** on create (see the [Sender API integration guide](/implementation-guides/sender-api-integration)).
+This guide walks through creating a payment order using the Sender API, the recommended path for all new integrations. You'll have a working off-ramp in under 10 minutes. You do **not** need to call the public rates API first—`POST /v2/sender/orders` resolves an acceptable rate unless you pass a locked **`rate`** on create (see the [Sender API integration guide](/implementation-guides/sender-api-integration)).
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ If you want to **show** an exchange rate in checkout before create, call the pub
 Use `POST /v2/sender/orders`. Set `source.type` and `destination.type` to choose the direction.
 
 <Tabs>
-  <Tab title="Offramp — stablecoin → fiat">
+  <Tab title="Off-ramp — stablecoin → fiat">
 ```bash
 curl -X POST "https://api.paycrest.io/v2/sender/orders" \
   -H "API-Key: YOUR_API_KEY" \
@@ -51,7 +51,7 @@ curl -X POST "https://api.paycrest.io/v2/sender/orders" \
   }'
 ```
   </Tab>
-  <Tab title="Onramp — fiat → stablecoin">
+  <Tab title="On-ramp — fiat → stablecoin">
 ```bash
 curl -X POST "https://api.paycrest.io/v2/sender/orders" \
   -H "API-Key: YOUR_API_KEY" \
@@ -256,7 +256,7 @@ fmt.Println(string(body))
   <Card title="Order Statuses" icon="list">
     <ul>
       <li><strong>initiated</strong> — order created, awaiting deposit</li>
-      <li><strong>deposited</strong> — deposit confirmed (offramp)</li>
+      <li><strong>deposited</strong> — deposit confirmed (off-ramp)</li>
       <li><strong>pending</strong> — assigned to provider</li>
       <li><strong>fulfilling</strong> — fiat/crypto disbursement in progress</li>
       <li><strong>validated</strong> — payout confirmed by provider</li>

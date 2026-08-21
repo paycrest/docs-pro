@@ -36,6 +36,15 @@ This guide helps you resolve common issues when integrating with the Paycrest AP
       <li><strong>Invalid Tron address</strong>: For `network: "tron"`, use a Base58 address starting with `T`, not an EVM `0x` address</li>
       <li><strong>Missing recipient details</strong>: All recipient fields are required</li>
       <li><strong>Invalid institution</strong>: Check supported institutions for the currency</li>
+      <li><strong>Provider routing rejected</strong>: <code>providerIds</code> and <code>providerId</code> are mutually exclusive; off-ramp queues cap at 3 entries and on-ramp at 1; entries must name providers you can route to. See <a href="/implementation-guides/sender-api-integration#pin-a-provider-queue">Pin a provider queue</a></li>
+    </ul>
+
+    <h4>"Recipient data too large for encryption"</h4>
+    <p>The recipient object is capped at <strong>500 bytes</strong> of JSON before encryption. The size check reserves room for a full 3-provider routing queue on <strong>every</strong> order — including orders that send no <code>providerIds</code> — because the aggregator may resolve one onto the order and it rides in the message hash at gateway submit.</p>
+    <ul>
+      <li>That reservation costs about <strong>49 bytes</strong> (<strong>~41</strong> when you pin a <code>providerId</code>), leaving roughly <strong>450 bytes</strong> for <code>accountIdentifier</code> + <code>accountName</code> + <code>memo</code> + <code>metadata</code> combined</li>
+      <li>Trim <code>memo</code> first, then <code>metadata</code> — keep only <code>apiKey</code> and corridor-required keys like <code>channel</code></li>
+      <li><code>accountName</code> from <a href="/api-reference/general/verify-account">verify-account</a> is often longer than what you supplied; count the resolved value</li>
     </ul>
     
     <h4>Example Error Response</h4>

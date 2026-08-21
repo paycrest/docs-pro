@@ -40,11 +40,14 @@ All error responses follow a consistent format:
 - **Unsupported combinations**: Token/currency pairs not supported
 - **Amount validation**: Amounts outside provider limits
 - **Provider issues**: Provider not found or misconfigured
+- **Provider queue**: `providerId` and `providerIds` sent together, more than 3 entries, duplicates, or an entry that can't serve the corridor — see [Pin a provider queue](/implementation-guides/sender-api-integration#pin-a-provider-queue)
 
 ### 503 Service Unavailable
 - **No provider available**: When no providers can handle the specific request
 - **Service temporarily unavailable**: During maintenance or high load
 - **Geographic restrictions**: Service not available in your region
+
+A 503 means no provider could be found **at create time**. Once an order is created it is never 503'd: routing walks the order's provider queue, and exhausting that queue falls through to fallback assignment, then to refund after the refund window — not to an immediate refund.
 
 ## Handling Service Unavailability
 

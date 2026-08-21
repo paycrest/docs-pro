@@ -327,6 +327,8 @@ func createOffRampOrder(amount string, recipient map[string]interface{}, refundA
   For **mobile money** recipients, you may pass local MSISDN (e.g. KES `07…`); **`POST /v2/verify-account`** normalizes dial codes server-side. Optional **`metadata`** on verify applies for KES Till/Paybill. See [Verify Account](/api-reference/general/verify-account).
 </Note>
 
+The same rates response also returns **`data.sell.providerIds`**—the ranked provider queue for the corridor. Read it alongside `rate` if you want to carry that queue into the encrypted recipient as `providerIds` (see [Routing fields](#routing-fields)).
+
 <Tabs>
   <Tab title="JavaScript">
 ```javascript
@@ -474,6 +476,29 @@ The recipient object is encrypted with the aggregator's public key to produce th
 
 <Note>
   Your API Key is available in the dashboard at [app.paycrest.io](https://app.paycrest.io).
+</Note>
+
+### Routing fields
+
+The recipient object may carry routing hints—this is the only channel for them onchain, since `createOrder` has no provider argument:
+
+| Field | Description |
+|-------|-------------|
+| `providerIds` | Ordered **provider queue** (max 3). Assignment tries entries in order. Typically the ids from [`GET /v2/rates`](/api-reference/general/get-token-rate). A one-entry queue routes to a single provider. |
+| `providerId` | Single provider, 8 alphabetic characters. Retained for backward compatibility—prefer `providerIds`. |
+
+The two are **mutually exclusive**. A hash carrying both is not rejected—the queue wins and `providerId` is ignored. A queue whose entries can't serve the corridor is **dropped silently** and the order routes as unpinned; there is no onchain rejection and no error webhook, so validate ids against a rate quote before encrypting.
+
+Omit both and the aggregator resolves a queue itself at order creation. Entries in a multi-entry queue must name providers that can serve the corridor—active, with a live standard offer, and, for a provider restricted to specific senders, one whose list includes the sender resolved from `metadata.apiKey`. A one-entry queue is simply a pin. The fallback provider may be listed but is ignored.
+
+<Warning>
+  **Budget ~450 bytes for recipient data.** `MESSAGE_HASH_MAX_SIZE` caps the recipient JSON at **500 bytes**, measured **before** encryption. The size check reserves room for a full 3-provider queue on **every** order—including orders that send no `providerIds`—because the aggregator may resolve one onto the order, and it rides in the message hash at gateway submit.
+
+  That reservation costs about **49 bytes** (**~41** if you pin a `providerId`), leaving roughly **450 bytes** for `accountIdentifier` + `accountName` + `memo` + `metadata` combined. Exceeding it returns **400** with `"Recipient data too large for encryption"`. Trim `memo` and `metadata` first—see [Troubleshooting](/resources/troubleshooting).
+</Warning>
+
+<Note>
+  **Reading a hash the aggregator produced:** queued orders publish `"ProviderID": ""` plus a `ProviderIDs` array. Anything downstream that parses `ProviderID` must fall back to `ProviderIDs[0]`. Keys decode case-insensitively, so `providerIds` and `ProviderIDs` are equivalent on the way in.
 </Note>
 
 <Tabs>

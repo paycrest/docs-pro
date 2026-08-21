@@ -29,7 +29,8 @@ Get buy and/or sell quotes on a **specific network**—either a **token + fiat**
 | `side` | No | `buy` or `sell` to return **only** that side. Omit to receive **both** when available. |
 | `from_source` | No | If `from` matches **both** a fiat currency and a crypto asset on the network, set to **`fiat`** or **`crypto`**. Omit when unambiguous. |
 | `to_source` | No | If `to` matches **both** a fiat currency and a crypto asset on the network, set to **`fiat`** or **`crypto`**. Omit when unambiguous. |
-| `provider_id` | No | Exactly **8 alphabetic** characters (`A–Z`, `a–z`) to pin the quote to one provider. |
+| `provider_id` | No | Exactly **8 alphabetic** characters (`A–Z`, `a–z`) to pin the quote to one provider. Returns a **single** entry in `providerIds`. |
+| `limit` | No | Max ranked provider ids per side in `providerIds`. Integer **1–3**, default **3**. Anything else returns **400**. |
 
 ## Example
 
@@ -45,6 +46,9 @@ GET https://api.paycrest.io/v2/rates/base/USDT/100/NGN?side=sell
 
 # Specific provider
 GET https://api.paycrest.io/v2/rates/base/USDT/100/NGN?provider_id=AbCdEfGh
+
+# Best provider only (single id in providerIds)
+GET https://api.paycrest.io/v2/rates/base/USDT/100/NGN?limit=1
 ```
 
 ## Success response (`data`)
@@ -53,9 +57,9 @@ Each populated side includes:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `rate` | string | For token+fiat: fiat per crypto. For fiat+fiat: see path rules above (`sell` = `to` per `from`, `buy` = `from` per `to`). |
-| `providerIds` | string[] | Provider id(s) for the quote |
-| `orderType` | string | e.g. `regular` or `otc` |
+| `rate` | string | For token+fiat: fiat per crypto. For fiat+fiat: see path rules above (`sell` = `to` per `from`, `buy` = `from` per `to`). This is the rate of **`providerIds[0]`**. |
+| `providerIds` | string[] | **Ranked provider queue**, best first—up to **3** ids, in the order assignment would try them. See [Rate resolution](#rate-resolution). |
+| `orderType` | string | e.g. `regular` |
 | `refundTimeoutMinutes` | integer | Minutes until automatic refund for that flow |
 
 ```json
@@ -71,7 +75,7 @@ Each populated side includes:
     },
     "sell": {
       "rate": "1500.50",
-      "providerIds": ["AbCdEfGh"],
+      "providerIds": ["AbCdEfGh", "IjKlMnOp", "QrStUvWx"],
       "orderType": "regular",
       "refundTimeoutMinutes": 60
     }
@@ -81,11 +85,13 @@ Each populated side includes:
 
 When `side=buy` or `side=sell`, only that key is present under `data`.
 
+**`providerIds` is always an array**—`[]` when no provider is available, never `null`. It carries **exactly one** id when you pass `?provider_id=` or `?limit=1`. Fewer than 3 ids means fewer eligible providers for that corridor and notional. The **fallback provider is never listed**.
+
 ## Errors
 
 | HTTP | Typical cause |
 |------|----------------|
-| **400** | Invalid `amount`, invalid `side`, invalid `from_source`/`to_source` (must be `fiat` or `crypto`), ambiguous segment without disambiguation, invalid `provider_id`, unsupported asset on network, or conversion rules (e.g. stable only to its base fiat) |
+| **400** | Invalid `amount`, invalid `side`, invalid `from_source`/`to_source` (must be `fiat` or `crypto`), ambiguous segment without disambiguation, invalid `provider_id`, `limit` outside **1–3**, unsupported asset on network, or conversion rules (e.g. stable only to its base fiat) |
 | **404** | No provider available for the amount/currency/network |
 | **503** | Banking/mobile network issues affecting providers for the currency |
 | **500** | Internal error while resolving the rate |
@@ -93,5 +99,26 @@ When `side=buy` or `side=sell`, only that key is present under `data`.
 ## Rate resolution
 
 Behavior matches the priority-queue–based resolution used when creating orders: the quote reflects provider selection and validation for the requested **side** (`buy` vs `sell`). **Path segment order (`from` / `to`) does not select direction**—use `?side=`, or read **`data.sell`** for **off-ramp** (crypto → fiat) display and **`data.buy`** for **on-ramp** (fiat → crypto) before `POST /v2/sender/orders`.
+
+### The provider queue
+
+**`providerIds` is ranked, best first**, and is the same queue an order created from this quote will walk. **`providerIds[0]`** is the provider whose rate is quoted in **`rate`**; the remaining ids are the ones assignment falls through to if the head declines, expires, or exhausts its retries.
+
+The queue is resolved **once, at order creation**, and the order carries it for its whole life. Two ways to use that:
+
+<Steps>
+  <Step title="Let the API resolve it">
+    Omit **`destination.providerId`** and **`destination.providerIds`** on create. The API resolves a fresh queue at creation time. Nothing to do—this is the default.
+  </Step>
+  <Step title="Pass the queue you quoted">
+    Send **`data.sell.providerIds`** straight through as **`destination.providerIds`** on `POST /v2/sender/orders`. Routing is then pinned to the providers your user actually saw a rate from. See [Pin a provider queue](/implementation-guides/sender-api-integration#pin-a-provider-queue).
+  </Step>
+</Steps>
+
+<Note>
+  **Exhausting the queue is not an immediate refund.** After the last entry, the order falls through to **fallback assignment**, and only then to refund after the refund window and its guards. Don't model this as "3 tries then refund".
+</Note>
+
+Quotes rank the **public** book, so `providerIds` lists only providers open to every sender. If you route to a provider dedicated to you, name it directly in **`destination.providerIds`** on create—it will not appear in a public quote.
 
 See also [Get Token Rate (v1)](/api-reference/general/get-token-rate-v1) for the legacy scalar response.

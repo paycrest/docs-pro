@@ -47,7 +47,7 @@ The Paycrest API is organized into three main categories:
 
 For entities that create payment orders:
 
-- **`POST /sender/orders`** - Create a new payment order (offramp or onramp)
+- **`POST /sender/orders`** - Create a new payment order (off-ramp or on-ramp)
 - **`GET /sender/orders`** - List payment orders with filtering
 - **`GET /sender/orders/{id}`** - Get a specific payment order
 - **`GET /sender/stats`** - Get sender statistics
@@ -401,6 +401,7 @@ Set up webhooks to receive real-time updates:
 - **`payment_order.refunding`** - Refund transaction initiated
 - **`payment_order.refunded`** - Deposit refunded to sender (fulfillment failed)
 - **`payment_order.expired`** - Order expired with no deposit received
+- **`payment_order.compliance_hold`** - On-ramp fiat received, but settlement is held pending compliance review. Unlike the events above, this one is not named after a status: the order stays `pending`, so `data.status` reports `pending`
 
 ### Webhook Payload
 
